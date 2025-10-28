@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./database.db"
+}
+
+model School {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  code      String?   @unique
+  approved  Boolean   @default(false)
+  region    String?   // distrito ou região
+  createdAt DateTime  @default(now())
+  teachers  Teacher[]
+  classes   Class[]
+}
+
+
+model Teacher {
+  id             Int      @id @default(autoincrement())
+  name           String
+  email          String   @unique
+  password       String
+  phone          String?
+  blocked        Boolean  @default(false)
+  schoolApproved Boolean  @default(false)
+  schoolId       Int
+  school         School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  classes        Class[]  
+}
+
+model Class {
+  id         Int       @id @default(autoincrement())
+  name       String
+  students   Int
+  cycle      String
+  year       String
+  teacherId  Int
+  teacher    Teacher   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  schoolId   Int
+  school     School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  code       String?   @unique
+  kit        Kit?
+  feedbacks  Feedback[]
+  status     String    @default("Registered")
+  createdAt  DateTime  @default(now())
+}
+
+model Kit {
+  id        Int      @id @default(autoincrement())
+  type      String
+  status    String   @default("em stock")
+  classId   Int?     @unique
+  class     Class?   @relation(fields: [classId], references: [id], onDelete: SetNull)
+}
+
+model Feedback {
+  id        Int      @id @default(autoincrement())
+  text      String?
+  imageUrl  String?
+  classId   Int?
+  class     Class?   @relation(fields: [classId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+}
+
+
