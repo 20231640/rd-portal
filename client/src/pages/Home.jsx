@@ -40,7 +40,7 @@ export default function Home() {
               <GraduationCap className="w-6 h-6 text-white" />
             </div>
             <span className="text-2xl font-bold text-white tracking-tight">
-              No Drama Information
+              Information Without Drama
             </span>
           </div>
           <ThemeToggle />
@@ -51,7 +51,7 @@ export default function Home() {
       <HeroSection
         title={
           <span className="rd-gradient-text animate-fade-in-up">
-            No Drama Information
+            Information Without Drama
           </span>
         }
         subtitle="Informar sem Dramas"

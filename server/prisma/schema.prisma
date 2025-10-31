@@ -19,6 +19,23 @@ model School {
 }
 
 
+model TrainingSession {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String?
+  date        DateTime
+  zoomLink    String
+  createdAt   DateTime  @default(now())
+  teacherId   Int
+  teacher     Teacher   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  completed   Boolean   @default(false)
+  certificateUrl String?
+  adminRating Int?      // 1-5 estrelas
+  feedback    String?   // Comentário do admin
+  certificateGeneratedAt DateTime?
+}
+
+
 model Teacher {
   id             Int      @id @default(autoincrement())
   name           String
@@ -30,7 +47,12 @@ model Teacher {
   schoolId       Int
   school         School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   classes        Class[]  
+  
+  // 🔥 RELAÇÃO COM TRAINING SESSIONS (1 para muitos)
+  trainings      TrainingSession[]
 }
+
+
 
 model Class {
   id         Int       @id @default(autoincrement())
@@ -65,5 +87,4 @@ model Feedback {
   class     Class?   @relation(fields: [classId], references: [id], onDelete: SetNull)
   createdAt DateTime @default(now())
 }
-
 

@@ -5,6 +5,8 @@ import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { Sidebar } from "../components/ui/sidebar";
 import ProfilePicture from "../components/ui/profile-picture";
+import TeacherTrainingsPage from "./TeacherTrainingsPage";
+
 
 export default function TeacherDashboard() {
   const navigate = useNavigate();
@@ -63,10 +65,6 @@ export default function TeacherDashboard() {
     console.log('Foto atualizada:', newPhoto);
   };
 
-  function handleLogout() {
-    localStorage.removeItem("loggedInTeacher");
-    navigate("/login");
-  }
 
   const handleSave = () => {
     setTeacher(formData);
@@ -259,6 +257,7 @@ export default function TeacherDashboard() {
                   </div>
                 </div>
               )}
+              {/* No final do Card principal */}
             </Card>
           </div>
         </div>

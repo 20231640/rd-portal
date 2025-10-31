@@ -3,13 +3,17 @@ import cors from "cors";
 import { PrismaClient } from "@prisma/client";
 import authRoutes from "./routes/auth.js";
 import classesRouter from "./routes/classes.js";
-
+import trainingsRouter from "./routes/trainings.js";
+import path from "path";
 
 const app = express();
 const prisma = new PrismaClient();
 
 app.use(cors());
 app.use(express.json());
+
+app.use('/certificates', express.static(path.join(process.cwd(), 'public/certificates')));
+
 
 app.get("/", (req, res) => {
   res.send("✅ API do RD-Portal a funcionar!");
@@ -18,6 +22,7 @@ app.get("/", (req, res) => {
 // Rotas
 app.use("/api/auth", authRoutes);
 app.use("/api/classes", classesRouter);
+app.use("/api/trainings", trainingsRouter);
 
 
 const PORT = 4000;

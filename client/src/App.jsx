@@ -8,6 +8,10 @@ import AdminDashboard from "./pages/AdminDashboard";
 import OverviewPage from "./pages/OverviewPage";
 import ClassesPage from "./pages/ClassesPage";
 import { useAutoLogout } from "./hooks/useAutoLogout";
+import AdminStatistics from "./pages/AdminStatistics";
+import AdminTrainingsPage from "./pages/AdminTrainingsPage";
+import TeacherTrainingsPage from "./pages/TeacherTrainingsPage";
+
 
 export default function App() {
   const { showWarning, countdown, resetTimer } = useAutoLogout(15 * 60 * 1000);
@@ -40,8 +44,11 @@ export default function App() {
           <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
           <Route path="/overview" element={<OverviewPage />} />
           <Route path="/classes" element={<ClassesPage />} />
+          <Route path="/trainings" element={<TeacherTrainingsPage />} /> {/* 🔥 NOVA ROTA */}
           <Route path="/admin" element={<AdminDashboard />} />
-        </Routes>
+          <Route path="/admin/stats" element={<AdminStatistics />} />
+          <Route path="/admin/trainings" element={<AdminTrainingsPage />} />
+        </Routes> 
       </main>
     </div>
   );

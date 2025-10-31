@@ -18,6 +18,11 @@ export default function Register() {
   });
   const [message, setMessage] = useState("");
   const [schools, setSchools] = useState([]);
+  const regions = [
+  "Aveiro", "Beja", "Braga", "Bragança", "Castelo Branco", "Coimbra",
+  "Évora", "Faro", "Guarda", "Leiria", "Lisboa", "Portalegre",
+  "Porto", "Santarém", "Setúbal", "Viana do Castelo", "Vila Real", "Viseu",
+  "Região Autónoma da Madeira", "Região Autónoma dos Açores"];
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -30,13 +35,38 @@ export default function Register() {
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
-
   async function handleSubmit(e) {
     e.preventDefault();
     setMessage("");
 
+    // Validação: password e confirmação
     if (form.password !== form.confirmPassword) {
       setMessage("❌ Password e confirmação não coincidem.");
+      return;
+    }
+
+    // Validação: password mínima
+    if (form.password.length < 6) {
+      setMessage("❌ Password deve ter pelo menos 6 caracteres.");
+      return;
+    }
+
+    // Validação: email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(form.email)) {
+      setMessage("❌ Email inválido.");
+      return;
+    }
+
+    // Validação: telefone
+    if (!form.phone) {
+      setMessage("❌ Preenche o telefone.");
+      return;
+    }
+
+    // Validação: região/distrito
+    if (!form.region) {
+      setMessage("❌ Seleciona uma região/distrito.");
       return;
     }
 
@@ -47,17 +77,20 @@ export default function Register() {
         body: JSON.stringify(form),
       });
       const data = await res.json();
+
       if (!res.ok) {
         setMessage(data.message || "Erro ao registar.");
         return;
       }
+
       setMessage("✅ Registo efetuado com sucesso! Aguarde aprovação da sua escola.");
       setTimeout(() => navigate("/login"), 2000);
-    } catch {
+    } catch (err) {
+      console.error(err);
       setMessage("Erro de rede. Verifica a ligação ao servidor.");
     }
   }
-
+  
   return (
     <div className="min-h-screen bg-background">
       {/* Header consistente */}
@@ -156,14 +189,18 @@ export default function Register() {
             </div>
             <div className="space-y-2">
               <label className="block text-sm font-medium">Região/Distrito</label>
-              <input
-                type="text"
+              <select
                 name="region"
-                placeholder="Digite a região ou distrito da escola"
-                value={form.region || ""}
+                value={form.region}
                 onChange={handleChange}
+                required
                 className="w-full rounded-xl border border-input bg-background px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
-              />
+              >
+                <option value="">Selecione a região</option>
+                {regions.map(r => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
             </div>
             {message && (
               <div className={`text-center text-sm font-medium py-3 rounded-xl ${

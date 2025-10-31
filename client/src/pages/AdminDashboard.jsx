@@ -27,11 +27,16 @@ export default function AdminDashboard() {
   const [newRegion, setNewRegion] = useState("");
   const [editingSchoolId, setEditingSchoolId] = useState(null);
   const [editingTeacherId, setEditingTeacherId] = useState(null);
-  const [tempEditValue, setTempEditValue] = useState("");
+  const [tempEditValue, setTempEditValue] = useState({ name: "", region: "" });
   const [toast, setToast] = useState(null);
   const [expandedSchool, setExpandedSchool] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("schools");
+  const districts = [
+  "Aveiro", "Beja", "Braga", "Bragança", "Castelo Branco", 
+  "Coimbra", "Évora", "Faro", "Guarda", "Leiria", 
+  "Lisboa", "Portalegre", "Porto", "Santarém", "Setúbal", 
+  "Viana do Castelo", "Vila Real", "Viseu", "Região Autónoma da Madeira", "Região Autónoma dos Açores"];
   const navigate = useNavigate();
 
   // Toast helper
@@ -132,24 +137,25 @@ export default function AdminDashboard() {
   }
 
   // Escolas - Editar
-  async function saveSchoolEdit(id, newName) {
+  async function saveSchoolEdit(id, { name, region }) {
     try {
       const res = await fetch(`http://localhost:4000/api/auth/schools/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newName }),
+        body: JSON.stringify({ name, region }),
       });
       if (!res.ok) throw new Error("Erro ao atualizar escola.");
-      setSchools((prev) =>
-        prev.map((s) => (s.id === id ? { ...s, name: newName } : s))
+      setSchools(prev =>
+        prev.map(s => s.id === id ? { ...s, name, region } : s)
       );
       setEditingSchoolId(null);
-      showToast("Nome da escola atualizado!");
+      showToast("Escola atualizada com sucesso!");
     } catch (err) {
       console.error(err);
       showToast("Erro ao atualizar escola.", "error");
     }
   }
+
 
   // Professores - Bloquear/Desbloquear
   async function toggleTeacherBlock(id, blocked) {
@@ -335,20 +341,25 @@ export default function AdminDashboard() {
                   required
                   className="flex-1 h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
-                <input
+
+                <select
                   value={newRegion}
                   onChange={(e) => setNewRegion(e.target.value)}
-                  placeholder="Região/Distrito"
                   required
                   className="flex-1 h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                />
+                >
+                  <option value="">Selecionar Distrito</option>
+                  {districts.map((d) => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
+
                 <Button type="submit">
                   <Plus className="w-4 h-4 mr-2" />
                   Criar Escola
                 </Button>
               </form>
             </Card>
-
             {/* Schools List */}
             <Card className="p-6">
               <h2 className="text-xl font-semibold mb-4">Escolas Registadas</h2>
@@ -367,22 +378,43 @@ export default function AdminDashboard() {
                           <Building className="w-5 h-5 text-primary" />
                           <div>
                             {editingSchoolId === school.id ? (
-                              <input
-                                value={tempEditValue}
-                                onChange={(e) => setTempEditValue(e.target.value)}
-                                onBlur={() => saveSchoolEdit(school.id, tempEditValue)}
-                                autoFocus
-                                className="w-64 h-8 rounded border border-input bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                              />
+                              <div className="flex gap-2 items-center">
+                                {/* Nome */}
+                                <input
+                                  value={tempEditValue.name}
+                                  onChange={(e) => setTempEditValue(prev => ({ ...prev, name: e.target.value }))}
+                                  className="w-64 h-8 rounded border border-input bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                                />
+                                
+                                {/* Região */}
+                                <select
+                                  value={tempEditValue.region}
+                                  onChange={(e) => setTempEditValue(prev => ({ ...prev, region: e.target.value }))}
+                                  className="h-8 rounded border border-input bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                                >
+                                  <option value="">Selecionar Distrito</option>
+                                  {districts.map((d) => (
+                                    <option key={d} value={d}>{d}</option>
+                                  ))}
+                                </select>
+
+                                <Button
+                                  size="sm"
+                                  onClick={() => saveSchoolEdit(school.id, tempEditValue)}
+                                >
+                                  <Save className="w-4 h-4 mr-1" />
+                                  Guardar
+                                </Button>
+                              </div>
                             ) : (
                               <h3 
                                 className="font-semibold cursor-pointer hover:text-primary transition-colors"
                                 onClick={() => {
                                   setEditingSchoolId(school.id);
-                                  setTempEditValue(school.name);
+                                  setTempEditValue({ name: school.name, region: school.region || "" });
                                 }}
                               >
-                                {school.name}
+                                {school.name} {school.region && `📍 ${school.region}`}
                               </h3>
                             )}
                             <div className="flex gap-4 text-sm text-muted-foreground mt-1">
