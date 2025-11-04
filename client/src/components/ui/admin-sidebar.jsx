@@ -136,6 +136,7 @@ export function AdminSidebar() {
           {!isCollapsed && <span className="ml-3">Terminar Sessão</span>}
         </Button>
       </div>
+    <div className="border-t border-sidebar-border space-y-2"></div>
     </div>
   );
 }

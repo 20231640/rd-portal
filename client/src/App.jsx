@@ -11,7 +11,9 @@ import { useAutoLogout } from "./hooks/useAutoLogout";
 import AdminStatistics from "./pages/AdminStatistics";
 import AdminTrainingsPage from "./pages/AdminTrainingsPage";
 import TeacherTrainingsPage from "./pages/TeacherTrainingsPage";
-
+import ResetPassword from "./pages/ResetPassword"; 
+import TeacherFeedback from './pages/TeacherFeedback'; 
+import AdminFeedbackReports from './pages/AdminFeedbackReports'; // 🔥 NOVA IMPORT
 
 export default function App() {
   const { showWarning, countdown, resetTimer } = useAutoLogout(15 * 60 * 1000);
@@ -41,13 +43,23 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          
+          {/* Rotas do Teacher */}
           <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
           <Route path="/overview" element={<OverviewPage />} />
           <Route path="/classes" element={<ClassesPage />} />
-          <Route path="/trainings" element={<TeacherTrainingsPage />} /> {/* 🔥 NOVA ROTA */}
+          <Route path="/trainings" element={<TeacherTrainingsPage />} />
+          <Route path="/feedback" element={<TeacherFeedback />} />
+          
+          {/* Rotas do Admin */}
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/stats" element={<AdminStatistics />} />
           <Route path="/admin/trainings" element={<AdminTrainingsPage />} />
+          <Route path="/admin/feedback" element={<AdminFeedbackReports />} /> {/* 🔥 NOVA ROTA */}
+          
+          {/* Rotas Gerais */}
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
         </Routes> 
       </main>
     </div>

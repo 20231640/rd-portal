@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { AdminSidebar } from "../components/ui/admin-sidebar";
 import { Card } from "../components/ui/card";
 import { 
-  BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, LabelList, Cell 
+  BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, LabelList, Cell, Legend
 } from "recharts";
 
 export default function AdminStatistics() {
@@ -92,13 +92,18 @@ export default function AdminStatistics() {
                 formatter={(value, name) => [`${value}`, name === "schools" ? "Escolas" : "Professores"]}
                 labelFormatter={(label) => `Distrito: ${label}`}
               />
-              <Bar dataKey="schools" name="Escolas">
+              <Legend 
+                formatter={(value) => value === "schools" ? "Escolas" : "Professores"}
+                verticalAlign="top" 
+                height={36}
+              />
+              <Bar dataKey="schools" name="schools" fill={colors.schools}>
                 {chartData.map((entry, index) => (
                   <Cell key={`school-${index}`} fill={colors.schools} />
                 ))}
                 <LabelList dataKey="schools" position="top" />
               </Bar>
-              <Bar dataKey="teachers" name="Professores">
+              <Bar dataKey="teachers" name="teachers" fill={colors.teachers}>
                 {chartData.map((entry, index) => (
                   <Cell key={`teacher-${index}`} fill={colors.teachers} />
                 ))}
@@ -111,6 +116,5 @@ export default function AdminStatistics() {
     </div>
   );
 }
-
 
 

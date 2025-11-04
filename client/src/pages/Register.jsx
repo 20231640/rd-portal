@@ -101,7 +101,7 @@ export default function Register() {
               <GraduationCap className="w-6 h-6 text-white" />
             </div>
             <span className="text-2xl font-bold text-white tracking-tight">
-              No Drama Information
+              Information Without Drama
             </span>
           </div>
           <div className="flex items-center gap-4">

@@ -2,34 +2,50 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ===== BASE STYLES ===== */
+@layer base {
+  /* Configurações globais de fonte e tamanho */
+  html {
+    font-size: 18px;
+  }
+
+  body {
+    color: hsl(var(--foreground));
+    background: hsl(var(--background));
+    font-family: "Calibri", "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    font-size: 18px;
+    font-weight: 400 !important;
+    line-height: 1.6;
+  }
+
+  /* Garante herança consistente da fonte */
+  * {
+    font-family: "Calibri", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+}
+
+/* ===== COLOR THEMES ===== */
 @layer base {
   :root {
     /* 🎨 Tema claro */
     --background: 0 0% 100%;
     --foreground: 283 45% 36%;
-
     --card: 0 0% 100%;
     --card-foreground: 283 45% 36%;
-
     --primary: 283 45% 36%;
     --primary-foreground: 0 0% 100%;
-
     --secondary: 283 45% 36%;
     --secondary-foreground: 0 0% 100%;
-
     --muted: 283 45% 96%;
     --muted-foreground: 283 25% 40%;
-
     --accent: 76 49% 52%;
     --accent-foreground: 0 0% 100%;
-
     --border: 283 45% 36%;
     --input: 283 45% 85%;
     --ring: 283 45% 36%;
-
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-
     --section-bg: 283 45% 98%;
   }
 
@@ -37,72 +53,64 @@
     /* 🌙 Tema escuro */
     --background: 283 45% 8%;
     --foreground: 0 0% 98%;
-
     --card: 283 45% 12%;
     --card-foreground: 0 0% 98%;
-
     --primary: 76 49% 52%;
     --primary-foreground: 283 45% 8%;
-
     --secondary: 283 45% 20%;
     --secondary-foreground: 0 0% 98%;
-
     --muted: 283 45% 15%;
     --muted-foreground: 283 30% 70%;
-
     --accent: 283 45% 36%;
     --accent-foreground: 0 0% 98%;
-
     --border: 283 45% 25%;
     --input: 283 45% 25%;
     --ring: 76 49% 52%;
-
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-
     --section-bg: 283 45% 10%;
   }
 }
 
-@layer base {
-  body {
-    color: hsl(var(--foreground));
-    background: hsl(var(--background));
-    font-feature-settings: "rlig" 1, "calt" 1;
+/* ===== UTILITY CLASSES ===== */
+@layer utilities {
+  /* Background utilities */
+  .cards-section-bg {
+    background-color: hsl(var(--section-bg));
+  }
+
+  .rd-gradient-bg {
+    background: hsl(283, 45%, 33%);
+  }
+
+  .rd-header-bg {
+    background: hsl(283, 45%, 33%);
+  }
+
+  /* Text gradient utilities */
+  .rd-gradient-text {
+    background: hsl(283, 45%, 33%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 }
 
-/* Classes utilitárias */
-.cards-section-bg {
-  background-color: hsl(var(--section-bg));
+/* ===== DARK MODE OVERRIDES ===== */
+@layer utilities {
+  .dark .rd-gradient-text {
+    background: hsl(76, 49%, 52%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .dark .rd-header-bg {
+    background: hsl(283, 45%, 20%);
+  }
 }
 
-.rd-gradient-bg {
-  background: hsl(283, 45%, 33%);
-}
-
-.rd-gradient-text {
-  background: hsl(283, 45%, 33%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.rd-header-bg {
-  background: hsl(283, 45%, 33%);
-}
-
-/* Tema escuro */
-.dark .rd-gradient-text {
-  background: hsl(76, 49%, 52%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.dark .rd-header-bg {
-  background: hsl(283, 45%, 20%);
-}
+/* ===== ANIMATIONS ===== */
 @keyframes fade-in-up {
   from {
     opacity: 0;
@@ -114,10 +122,27 @@
   }
 }
 
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Animation utility classes */
 .animate-fade-in-up {
   animation: fade-in-up 0.6s ease-out;
 }
-/* Estilos customizados para o PhoneInput */
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+/* ===== PHONE INPUT CUSTOM STYLES ===== */
 .phone-input-dropdown {
   background: hsl(var(--card)) !important;
   border: 1px solid hsl(var(--border)) !important;
@@ -176,7 +201,7 @@
   background: hsl(var(--accent)) !important;
 }
 
-/* Dark mode específico */
+/* Dark mode PhoneInput styles */
 .dark .phone-input-dropdown {
   background: hsl(var(--card)) !important;
   border-color: hsl(var(--border)) !important;
@@ -186,20 +211,4 @@
   background: hsl(var(--input)) !important;
   color: hsl(var(--foreground)) !important;
   border-color: hsl(var(--border)) !important;
-}
-
-/* Animações para o dashboard */
-@keyframes slide-in-right {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.animate-slide-in-right {
-  animation: slide-in-right 0.3s ease-out;
 }

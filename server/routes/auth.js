@@ -2,6 +2,7 @@
 import express from "express";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -84,6 +85,113 @@ router.post("/login", async (req, res) => {
   } catch (err) {
     console.error("❌ Erro no login:", err);
     res.status(500).json({ error: err.message });
+  }
+});
+
+/* ============================================
+   🔹 ESQUECEU-SE DA PASSWORD (MODO DESENVOLVIMENTO)
+   ============================================ */
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: 'Email é obrigatório.' });
+    }
+
+    // Verifica se o professor existe
+    const teacher = await prisma.teacher.findUnique({
+      where: { email }
+    });
+
+    // Por segurança, não revelamos se o email existe ou não
+    if (!teacher) {
+      return res.json({ 
+        message: 'Se o email existir na nossa base de dados, enviaremos um link de recuperação.' 
+      });
+    }
+
+    // Gera token de recuperação
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hora
+
+    // Atualiza o professor com o token
+    await prisma.teacher.update({
+      where: { email },
+      data: {
+        resetPasswordToken: resetToken,
+        resetPasswordExpires: resetTokenExpiry
+      }
+    });
+
+    // URL para reset de password
+    const resetUrl = `http://localhost:3000/reset-password/${resetToken}`;
+    
+    // 🔥 APENAS CONSOLE.LOG - SEM EMAIL REAL
+    console.log('🔐 🔐 🔐 LINK DE RECUPERAÇÃO (COPIAR E COLAR NO BROWSER):');
+    console.log('📧 Email:', email);
+    console.log('🔑 Token:', resetToken);
+    console.log('🌐 URL:', resetUrl);
+    console.log('🔐 🔐 🔐');
+
+    res.json({ 
+      message: 'Se o email existir na nossa base de dados, enviaremos um link de recuperação.',
+      resetUrl: resetUrl // Para desenvolvimento
+    });
+
+  } catch (error) {
+    console.error('❌ Erro no forgot-password:', error);
+    res.status(500).json({ message: 'Erro interno do servidor.' });
+  }
+});
+
+/* ============================================
+   🔹 REDEFINIR PASSWORD
+   ============================================ */
+router.post("/reset-password", async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(400).json({ message: 'Token e nova password são obrigatórios.' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'A password deve ter pelo menos 6 caracteres.' });
+    }
+
+    // Encontra o professor com token válido
+    const teacher = await prisma.teacher.findFirst({
+      where: {
+        resetPasswordToken: token,
+        resetPasswordExpires: {
+          gt: new Date() // Verifica se não expirou
+        }
+      }
+    });
+
+    if (!teacher) {
+      return res.status(400).json({ message: 'Token inválido ou expirado.' });
+    }
+
+    // Hash da nova password
+    const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+    // Atualiza a password e limpa os campos de recuperação
+    await prisma.teacher.update({
+      where: { id: teacher.id },
+      data: {
+        password: hashedPassword,
+        resetPasswordToken: null,
+        resetPasswordExpires: null
+      }
+    });
+
+    res.json({ message: 'Password redefinida com sucesso!' });
+
+  } catch (error) {
+    console.error('❌ Erro no reset-password:', error);
+    res.status(500).json({ message: 'Erro interno do servidor.' });
   }
 });
 
@@ -247,5 +355,3 @@ router.get("/teachers/:id", async (req, res) => {
 });
 
 export default router;
-
-

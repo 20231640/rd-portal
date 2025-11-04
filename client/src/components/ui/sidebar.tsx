@@ -1,4 +1,16 @@
-import { Users, BookOpen, GraduationCap, User, LogOut, Home, Moon, Sun, ChevronLeft, ChevronRight } from "lucide-react";
+import { 
+  Users, 
+  BookOpen, 
+  GraduationCap, 
+  User, 
+  LogOut, 
+  Home, 
+  Moon, 
+  Sun, 
+  ChevronLeft, 
+  ChevronRight, 
+  FileText  // 🔥 NOVO ÍCONE ADICIONADO
+} from "lucide-react";
 import { Button } from "./button";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -17,6 +29,7 @@ export function Sidebar() {
     { id: "turmas", path: "/classes", label: "Turmas", icon: Users },
     { id: "formacoes", path: "/trainings", label: "Formações", icon: GraduationCap },
     { id: "kits", path: "/kits", label: "Kits Pedagógicos", icon: BookOpen },
+    { id: "feedback", path: "/feedback", label: "Feedback & Relatórios", icon: FileText }, // 🔥 NOVO ITEM
   ];
 
   useEffect(() => {
@@ -124,6 +137,7 @@ export function Sidebar() {
           {!isCollapsed && <span className="ml-3">Terminar Sessão</span>}
         </Button>
       </div>
+    <div className="border-t border-sidebar-border space-y-2"></div>
     </div>
   );
 }
