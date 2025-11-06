@@ -28,7 +28,8 @@ app.use("/api/trainings", trainingsRouter);
 app.use("/api/report-folders", reportFoldersRoutes);
 app.use("/api/kits", kitsRoutes);
 
-const PORT = 4000;
+const PORT = process.env.PORT || 4000;
+
 app.listen(PORT, "0.0.0.0", () => 
   console.log(`🚀 Servidor a correr em http://0.0.0.0:${PORT}`)
 );
