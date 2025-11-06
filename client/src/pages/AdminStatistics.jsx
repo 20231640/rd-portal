@@ -1,120 +1,143 @@
 import { useState, useEffect } from "react";
 import { AdminSidebar } from "../components/ui/admin-sidebar";
-import { Card } from "../components/ui/card";
-import { 
-  BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, LabelList, Cell, Legend
-} from "recharts";
+import { StatisticsTabs } from "../components/ui/StatisticsTabs";
+import { OverviewStats } from "./stats/OverviewStats";
+import { GeographyStats } from "./stats/GeographyStats";
+import { KitsStats } from "./stats/KitsStats";
+import { SchoolsStats } from "./stats/SchoolsStats";
+import { ProblemsStats } from "./stats/ProblemsStats";
 
 export default function AdminStatistics() {
   const [schools, setSchools] = useState([]);
   const [teachers, setTeachers] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [kitRequests, setKitRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedDistrict, setSelectedDistrict] = useState("");
+  const [activeTab, setActiveTab] = useState("overview");
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [schoolsRes, teachersRes] = await Promise.all([
+        const [schoolsRes, teachersRes, classesRes, kitsRes] = await Promise.all([
           fetch("http://localhost:4000/api/auth/schools"),
           fetch("http://localhost:4000/api/auth/teachers"),
+          fetch("http://localhost:4000/api/classes"),
+          fetch("http://localhost:4000/api/kits/requests")
         ]);
+        
         const schoolsData = await schoolsRes.json();
         const teachersData = await teachersRes.json();
+        const classesData = await classesRes.json();
+        const kitsData = await kitsRes.json();
+        
         setSchools(schoolsData);
         setTeachers(teachersData);
+        setClasses(classesData);
+        setKitRequests(kitsData);
         setLoading(false);
       } catch (err) {
-        console.error(err);
+        console.error("Erro ao carregar dados:", err);
         setLoading(false);
       }
     };
     fetchData();
   }, []);
 
+  // ========== CÁLCULOS ==========
+  
+  // Dados reais para evolução mensal
+  const monthlyData = kitRequests.reduce((acc, kit) => {
+    const date = new Date(kit.requestedAt);
+    const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+    const monthLabel = date.toLocaleString('pt-PT', { month: 'short', year: '2-digit' });
+    
+    if (!acc[monthKey]) {
+      acc[monthKey] = { 
+        month: monthLabel, 
+        kits: 0, 
+        schools: new Set(),
+        timestamp: date
+      };
+    }
+    
+    acc[monthKey].kits += 1;
+    const schoolId = classes.find(c => c.id === kit.classId)?.schoolId;
+    if (schoolId) acc[monthKey].schools.add(schoolId);
+    
+    return acc;
+  }, {});
+
+  // Ordenar por data e converter para array
+  const monthlyChartData = Object.values(monthlyData)
+    .sort((a, b) => a.timestamp - b.timestamp)
+    .map(item => ({
+      month: item.month,
+      kits: item.kits,
+      schools: item.schools.size
+    }));
+
+  // Métricas gerais
+  const totalMetrics = {
+    schools: schools.length,
+    teachers: teachers.length,
+    classes: classes.length,
+    students: classes.reduce((sum, cls) => sum + cls.students, 0),
+    kitsRequested: kitRequests.length,
+    kitsDelivered: kitRequests.filter(k => k.status === 'delivered').length,
+    kitsPending: kitRequests.filter(k => ['pending', 'approved', 'shipped'].includes(k.status)).length,
+    problemRate: kitRequests.filter(k => k.reports && k.reports.length > 0).length
+  };
+
+  // Dados para passar para os componentes
+  const statsData = {
+    metrics: totalMetrics,
+    monthlyData: monthlyChartData,
+    kitRequests,
+    classes,
+    schools,
+    teachers,
+    selectedDistrict,
+    districts: [...new Set(schools.map(s => s.region || "Não Definido"))].sort(),
+    onDistrictChange: setSelectedDistrict
+  };
+
   if (loading) return (
     <div className="flex min-h-screen bg-background">
       <AdminSidebar />
       <div className="flex-1 flex items-center justify-center">
-        <p className="text-muted-foreground">A carregar estatísticas...</p>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">A carregar estatísticas...</p>
+        </div>
       </div>
     </div>
   );
-
-  // Lista de distritos únicos
-  const districts = [...new Set(schools.map(s => s.region || "Não Definido"))].sort();
-
-  // Contar escolas e professores por distrito
-  const districtData = schools.reduce((acc, school) => {
-    const region = school.region || "Não Definido";
-
-    // Filtro aplicado
-    if (selectedDistrict && region !== selectedDistrict) return acc;
-
-    if (!acc[region]) acc[region] = { region, schools: 0, teachers: 0 };
-    acc[region].schools += 1;
-    acc[region].teachers += teachers.filter(t => t.schoolId === school.id).length;
-    return acc;
-  }, {});
-
-  const chartData = Object.values(districtData).sort((a, b) => b.schools - a.schools);
-
-  const colors = { schools: "#3b82f6", teachers: "#10b981" };
 
   return (
     <div className="flex min-h-screen bg-background">
       <AdminSidebar />
-      <div className="flex-1 p-8">
-        <h1 className="text-3xl font-bold mb-6">Estatísticas por Distrito</h1>
+      <div className="flex-1 p-8 space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">Estatísticas do Projeto</h1>
+          <div className="text-sm text-muted-foreground">
+            Dados atualizados em tempo real
+          </div>
+        </div>
 
-        {/* Filtro de distrito */}
-        <Card className="p-4 mb-6">
-          <label className="mr-4 font-medium">Filtrar por Distrito:</label>
-          <select
-            value={selectedDistrict}
-            onChange={(e) => setSelectedDistrict(e.target.value)}
-            className="h-10 rounded-lg border border-input bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="">Todos</option>
-            {districts.map(d => (
-              <option key={d} value={d}>{d}</option>
-            ))}
-          </select>
-        </Card>
+        {/* Navegação por Tabs */}
+        <StatisticsTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Escolas vs Professores por Distrito</h2>
-          <ResponsiveContainer width="100%" height={450}>
-            <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="region" angle={-35} textAnchor="end" interval={0} />
-              <YAxis allowDecimals={false} />
-              <Tooltip 
-                formatter={(value, name) => [`${value}`, name === "schools" ? "Escolas" : "Professores"]}
-                labelFormatter={(label) => `Distrito: ${label}`}
-              />
-              <Legend 
-                formatter={(value) => value === "schools" ? "Escolas" : "Professores"}
-                verticalAlign="top" 
-                height={36}
-              />
-              <Bar dataKey="schools" name="schools" fill={colors.schools}>
-                {chartData.map((entry, index) => (
-                  <Cell key={`school-${index}`} fill={colors.schools} />
-                ))}
-                <LabelList dataKey="schools" position="top" />
-              </Bar>
-              <Bar dataKey="teachers" name="teachers" fill={colors.teachers}>
-                {chartData.map((entry, index) => (
-                  <Cell key={`teacher-${index}`} fill={colors.teachers} />
-                ))}
-                <LabelList dataKey="teachers" position="top" />
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
+        {/* Conteúdo da Tab Ativa */}
+        <div className="min-h-[600px]">
+          {activeTab === 'overview' && <OverviewStats {...statsData} />}
+          {activeTab === 'geography' && <GeographyStats {...statsData} />}
+          {activeTab === 'kits' && <KitsStats {...statsData} />}
+          {activeTab === 'schools' && <SchoolsStats {...statsData} />}
+          {activeTab === 'problems' && <ProblemsStats {...statsData} />}
+        </div>
+
       </div>
     </div>
   );
 }
-
-

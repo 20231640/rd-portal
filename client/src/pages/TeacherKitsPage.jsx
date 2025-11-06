@@ -1,0 +1,720 @@
+// TeacherKitsPage.jsx - ATUALIZADO COM TODAS AS FUNCIONALIDADES
+import { useState, useEffect, useRef } from "react";
+import { Sidebar } from "../components/ui/sidebar";
+import { Card } from "../components/ui/card";
+import { Button } from "../components/ui/button";
+import { Skeleton } from "../components/ui/skeleton";
+import { KitJourney } from "../components/ui/kits/kit-journey";
+import { 
+  Package, Plus, Clock, Truck, CheckCircle, AlertCircle, 
+  RefreshCw, Users, BookOpen, MessageCircle 
+} from "lucide-react";
+
+export default function TeacherKitsPage() {
+  const [teacher, setTeacher] = useState(null);
+  const [classes, setClasses] = useState([]);
+  const [kitRequests, setKitRequests] = useState([]);
+  const [showRequestForm, setShowRequestForm] = useState(false);
+  const [selectedClass, setSelectedClass] = useState("");
+  const [kitType, setKitType] = useState("básico");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState(null);
+  const [newUpdates, setNewUpdates] = useState(0);
+  const [showReportForm, setShowReportForm] = useState(false);
+  const [selectedRequestForReport, setSelectedRequestForReport] = useState(null);
+  const [reportMessage, setReportMessage] = useState("");
+  
+  const previousRequestsRef = useRef([]);
+
+  // Buscar dados
+  const fetchData = async () => {
+    try {
+      const email = localStorage.getItem("loggedInTeacher");
+      if (!email) return;
+
+      const teacherRes = await fetch("http://localhost:4000/api/auth/teachers");
+      if (!teacherRes.ok) throw new Error("Erro ao carregar professores");
+      
+      const teachers = await teacherRes.json();
+      const currentTeacher = teachers.find(t => t.email === email);
+      
+      if (!currentTeacher) {
+        localStorage.removeItem("loggedInTeacher");
+        return;
+      }
+      
+      setTeacher(currentTeacher);
+
+      // Carregar turmas e kits em paralelo
+      const [classesRes, kitsRes] = await Promise.all([
+        fetch(`http://localhost:4000/api/classes?teacherId=${currentTeacher.id}`),
+        fetch(`http://localhost:4000/api/kits/teacher/${currentTeacher.id}`)
+      ]);
+
+      if (!classesRes.ok) throw new Error("Erro ao carregar turmas");
+      if (!kitsRes.ok) throw new Error("Erro ao carregar pedidos");
+
+      const [classesData, kitsData] = await Promise.all([
+        classesRes.json(),
+        kitsRes.json()
+      ]);
+
+      // Detectar mudanças para notificações
+      detectChanges(kitsData);
+
+      setClasses(classesData);
+      setKitRequests(kitsData);
+      setLastUpdate(new Date());
+      
+    } catch (err) {
+      console.error("Erro ao carregar dados:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Detectar mudanças nos pedidos
+  const detectChanges = (newRequests) => {
+    if (previousRequestsRef.current.length === 0) {
+      previousRequestsRef.current = newRequests;
+      return;
+    }
+
+    const changes = {
+      new: [],
+      updated: []
+    };
+
+    // Encontrar novos pedidos
+    newRequests.forEach(request => {
+      const existing = previousRequestsRef.current.find(r => r.id === request.id);
+      if (!existing) {
+        changes.new.push(request);
+      } else if (existing.status !== request.status) {
+        changes.updated.push({ from: existing.status, to: request.status, request });
+      }
+    });
+
+    // Atualizar contador de novas atualizações
+    if (changes.new.length > 0 || changes.updated.length > 0) {
+      setNewUpdates(prev => prev + changes.new.length + changes.updated.length);
+      
+      // Mostrar notificações (opcional)
+      if (changes.new.length > 0) {
+        console.log(`🎉 ${changes.new.length} novo(s) pedido(s) criado(s)`);
+      }
+      if (changes.updated.length > 0) {
+        changes.updated.forEach(change => {
+          console.log(`📦 Pedido atualizado: ${change.from} → ${change.to}`);
+        });
+      }
+    }
+
+    previousRequestsRef.current = newRequests;
+  };
+
+  // Verificar se uma turma já tem pedido
+  const classHasRequest = (classId) => {
+    return kitRequests.some(request => 
+      request.classId === classId && 
+      request.status !== 'rejected' && 
+      request.status !== 'cancelled'
+    );
+  };
+
+  // Obter kits disponíveis por ciclo
+  const getAvailableKitsForCycle = (cycle) => {
+    const kits = {
+      básico: "Kit Básico",
+      intermediário: "Kit Intermediário", 
+      avançado: "Kit Avançado"
+    };
+
+    // Definir kits por ciclo
+    const cycleKits = {
+      "1º Ciclo": ["básico", "intermediário"],
+      "2º Ciclo": ["básico", "intermediário", "avançado"],
+      "3º Ciclo": ["intermediário", "avançado"],
+      "Secundário": ["avançado"]
+    };
+
+    const availableKits = cycleKits[cycle] || ["básico"];
+    return availableKits.map(kit => ({
+      value: kit,
+      label: kits[kit] || kit
+    }));
+  };
+
+  // Efeito para carregamento inicial
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // Efeito para auto-refresh
+  useEffect(() => {
+    if (!autoRefresh) return;
+
+    const interval = setInterval(() => {
+      fetchData();
+    }, 30000); // 30 segundos
+
+    return () => clearInterval(interval);
+  }, [autoRefresh]);
+
+  // Limpar notificações quando o utilizador interage
+  const clearNotifications = () => {
+    setNewUpdates(0);
+  };
+
+  // Loading Skeleton
+  const RequestSkeleton = () => (
+    <div className="border border-border rounded-lg p-6 animate-pulse">
+      <div className="flex items-center justify-between">
+        <div className="flex items-start gap-4 flex-1">
+          <div className="w-10 h-10 bg-gray-300 rounded-full mt-1"></div>
+          <div className="flex-1 space-y-3">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-7 w-24 rounded-full" />
+            </div>
+            <Skeleton className="h-4 w-64" />
+            {/* Skeleton da timeline */}
+            <div className="space-y-2 mt-4">
+              <Skeleton className="h-2 w-full" />
+              <div className="flex justify-between">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-4 w-16" />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Skeleton className="h-9 w-24" />
+        </div>
+      </div>
+    </div>
+  );
+
+  // Empty State
+  const EmptyState = () => {
+    const availableClasses = classes.filter(cls => !classHasRequest(cls.id));
+    
+    return (
+      <Card className="p-8 text-center">
+        <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+        <h3 className="text-lg font-semibold mb-2">Nenhum pedido de kit</h3>
+        <p className="text-muted-foreground mb-6">
+          {availableClasses.length === 0 && classes.length > 0 
+            ? "Já fez pedidos para todas as suas turmas disponíveis."
+            : "Ainda não fez nenhum pedido de kit para as suas turmas."
+          }
+        </p>
+        <Button 
+          onClick={() => setShowRequestForm(true)} 
+          disabled={availableClasses.length === 0}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          {availableClasses.length === 0 ? "Todas as Turmas com Pedido" : "Fazer Primeiro Pedido"}
+        </Button>
+      </Card>
+    );
+  };
+
+  const handleRequestKit = async (e) => {
+    e.preventDefault();
+    if (!selectedClass) return;
+
+    try {
+      const res = await fetch("http://localhost:4000/api/kits/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          teacherId: teacher.id,
+          classId: parseInt(selectedClass),
+          kitType: kitType
+        }),
+      });
+
+      if (res.ok) {
+        const newRequest = await res.json();
+        setKitRequests(prev => [newRequest, ...prev]);
+        setShowRequestForm(false);
+        setSelectedClass("");
+        setKitType("básico");
+        
+        // Forçar atualização para sincronizar
+        setTimeout(() => fetchData(), 1000);
+      } else {
+        throw new Error("Erro ao criar pedido");
+      }
+    } catch (err) {
+      console.error("Erro ao pedir kit:", err);
+      alert("Erro ao fazer pedido: " + err.message);
+    }
+  };
+
+  const handleMarkAsDelivered = async (requestId) => {
+    try {
+      const res = await fetch(`http://localhost:4000/api/kits/${requestId}/deliver`, {
+        method: "PUT",
+      });
+
+      if (res.ok) {
+        const updatedRequest = await res.json();
+        setKitRequests(prev =>
+          prev.map(req =>
+            req.id === requestId ? updatedRequest : req
+          )
+        );
+        
+        // Forçar atualização
+        setTimeout(() => fetchData(), 1000);
+      } else {
+        throw new Error("Erro ao marcar como entregue");
+      }
+    } catch (err) {
+      console.error("Erro ao marcar como entregue:", err);
+      alert("Erro ao confirmar receção: " + err.message);
+    }
+  };
+
+  const handleReportProblem = async (e) => {
+    e.preventDefault();
+    if (!reportMessage.trim()) return;
+
+    try {
+      console.log("📤 Enviando report para kit:", selectedRequestForReport.id);
+
+      const response = await fetch(`http://localhost:4000/api/kits/${selectedRequestForReport.id}/report`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Accept": "application/json" // ← FORÇAR resposta JSON
+        },
+        body: JSON.stringify({
+          message: reportMessage,
+          teacherId: teacher.id,
+          teacherName: teacher.name
+        }),
+      });
+
+      // Verificar se a resposta é JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        console.error("❌ Resposta não é JSON:", text.substring(0, 200));
+        throw new Error("O servidor retornou uma resposta inválida");
+      }
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Erro ao reportar problema");
+      }
+
+      console.log("✅ Report criado com sucesso:", result);
+
+      // Atualizar estado
+      setKitRequests(prev =>
+        prev.map(req =>
+          req.id === selectedRequestForReport.id ? result : req
+        )
+      );
+
+      alert("Problema reportado com sucesso!");
+      setShowReportForm(false);
+      setSelectedRequestForReport(null);
+      setReportMessage("");
+
+    } catch (err) {
+      console.error("💥 Erro completo:", err);
+      alert("Erro ao reportar problema: " + err.message);
+    }
+  };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case "pending": return "Pendente";
+      case "approved": return "Aprovado";
+      case "shipped": return "Enviado";
+      case "delivered": return "Entregue";
+      default: return status;
+    }
+  };
+
+  // Turmas disponíveis para pedido (sem pedidos ativos)
+  const availableClasses = classes.filter(cls => !classHasRequest(cls.id));
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen bg-background">
+        <Sidebar />
+        <div className="flex-1 p-8">
+          <Card className="p-6 text-center">
+            <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-destructive mb-2">Erro</h2>
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()}>
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Recarregar Página
+            </Button>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex min-h-screen bg-background" onClick={clearNotifications}>
+      <Sidebar />
+      <div className="flex-1 p-8">
+        {/* Header com controles de atualização */}
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold">Gestão de Kits</h1>
+            </div>
+            <div className="flex items-center gap-4 mt-2">
+              <p className="text-muted-foreground">Pedir e acompanhar kits para as suas turmas</p>
+              {lastUpdate && (
+                <span className="text-xs text-muted-foreground">
+                  Última atualização: {lastUpdate.toLocaleTimeString('pt-PT')}
+                </span>
+              )}
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchData}
+              disabled={loading}
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Atualizar
+            </Button>
+
+            {!loading && (
+              <Button onClick={() => setShowRequestForm(true)} disabled={availableClasses.length === 0}>
+                <Plus className="w-4 h-4 mr-2" />
+                Pedir Kit
+                {availableClasses.length > 0 && ` (${availableClasses.length})`}
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Indicador de Estado */}
+        <div className="flex items-center gap-4 mb-6">
+          {loading && (
+            <div className="flex items-center gap-2 text-sm text-blue-600">
+              <RefreshCw className="w-3 h-3 animate-spin" />
+              <span>A carregar dados...</span>
+            </div>
+          )}
+        </div>
+
+        {/* Aviso se não tem turmas disponíveis */}
+        {!loading && availableClasses.length === 0 && classes.length > 0 && (
+          <Card className="p-6 mb-6 bg-blue-50 border-blue-200">
+            <div className="flex items-center gap-3">
+              <Package className="w-5 h-5 text-blue-600" />
+              <div>
+                <h3 className="font-semibold text-blue-800">Todos os pedidos realizados</h3>
+                <p className="text-blue-700 text-sm">
+                  Já fez pedidos para todas as suas turmas disponíveis.
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Aviso se não tem turmas */}
+        {!loading && classes.length === 0 && (
+          <Card className="p-6 mb-6 bg-yellow-50 border-yellow-200">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-yellow-600" />
+              <div>
+                <h3 className="font-semibold text-yellow-800">Sem turmas disponíveis</h3>
+                <p className="text-yellow-700 text-sm">
+                  Precisa de criar turmas antes de poder pedir kits.
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Formulário de Pedido */}
+        {showRequestForm && (
+          <Card className="p-6 mb-6">
+            <h3 className="text-lg font-semibold mb-4">Novo Pedido de Kit</h3>
+            <form onSubmit={handleRequestKit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Turma *</label>
+                  <select
+                    value={selectedClass}
+                    onChange={(e) => {
+                      setSelectedClass(e.target.value);
+                      // Reset kit type quando muda turma
+                      setKitType("básico");
+                    }}
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                    required
+                    disabled={availableClasses.length === 0}
+                  >
+                    <option value="">Selecionar Turma</option>
+                    {availableClasses.map(cls => (
+                      <option key={cls.id} value={cls.id}>
+                        {cls.name} - {cls.cycle} {cls.year} ({cls.studentCount} alunos)
+                      </option>
+                    ))}
+                  </select>
+                  {availableClasses.length === 0 ? (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Não tem turmas disponíveis para pedido
+                    </p>
+                  ) : (
+                    <p className="text-sm text-green-600 mt-1">
+                      {availableClasses.length} turma(s) disponível(is)
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Tipo de Kit *</label>
+                  <select
+                    value={kitType}
+                    onChange={(e) => setKitType(e.target.value)}
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                    disabled={!selectedClass}
+                    required
+                  >
+                    <option value="">Selecionar Tipo</option>
+                    {selectedClass && getAvailableKitsForCycle(classes.find(c => c.id === parseInt(selectedClass))?.cycle).map(kit => (
+                      <option key={kit.value} value={kit.value}>
+                        {kit.label}
+                      </option>
+                    ))}
+                  </select>
+                  {selectedClass && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Ciclo: {classes.find(c => c.id === parseInt(selectedClass))?.cycle} | 
+                      Alunos: {classes.find(c => c.id === parseInt(selectedClass))?.studentCount}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {selectedClass && (
+                <Card className="p-4 bg-blue-50 border-blue-200">
+                  <div className="flex items-center gap-3">
+                    <Users className="w-5 h-5 text-blue-600" />
+                    <div>
+                      <h4 className="font-medium text-blue-800">Informações da Turma Selecionada</h4>
+                      <div className="flex gap-4 text-sm text-blue-700 mt-1">
+                        <span>📚 {classes.find(c => c.id === parseInt(selectedClass))?.name}</span>
+                        <span>👥 {classes.find(c => c.id === parseInt(selectedClass))?.studentCount} alunos</span>
+                        <span>🎯 {classes.find(c => c.id === parseInt(selectedClass))?.cycle}</span>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              )}
+
+              <div className="flex gap-2">
+                <Button type="submit" disabled={!selectedClass || !kitType}>
+                  <Package className="w-4 h-4 mr-2" />
+                  Submeter Pedido
+                </Button>
+                <Button variant="outline" onClick={() => setShowRequestForm(false)}>
+                  Cancelar
+                </Button>
+              </div>
+            </form>
+          </Card>
+        )}
+
+        {/* Modal de Reportar Problema */}
+        {showReportForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <Card className="p-6 w-full max-w-md">
+              <h3 className="text-lg font-semibold mb-4">Reportar Problema</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Descreva o problema encontrado com o kit recebido.
+              </p>
+              <form onSubmit={handleReportProblem} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Descrição do Problema *</label>
+                  <textarea
+                    value={reportMessage}
+                    onChange={(e) => setReportMessage(e.target.value)}
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                    rows="4"
+                    placeholder="Ex: Material em falta, material danificado, quantidade incorreta..."
+                    required
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button type="submit">
+                    <AlertCircle className="w-4 h-4 mr-2" />
+                    Reportar Problema
+                  </Button>
+                  <Button variant="outline" onClick={() => {
+                    setShowReportForm(false);
+                    setSelectedRequestForReport(null);
+                    setReportMessage("");
+                  }}>
+                    Cancelar
+                  </Button>
+                </div>
+              </form>
+            </Card>
+          </div>
+        )}
+
+        {/* Lista de Pedidos */}
+        <Card className="p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Meus Pedidos de Kits</h3>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Package className="w-4 h-4" />
+              <span>{kitRequests.length} pedido(s)</span>
+            </div>
+          </div>
+          
+          {loading ? (
+            // Loading State
+            <div className="space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <RequestSkeleton key={i} />
+              ))}
+            </div>
+          ) : kitRequests.length === 0 ? (
+            // Empty State
+            <EmptyState />
+          ) : (
+            // Conteúdo Real COM JOURNEY VISUAL
+            <div className="space-y-6">
+              {kitRequests.map(request => {
+                const classInfo = classes.find(c => c.id === request.classId);
+                return (
+                  <Card key={request.id} className="p-6 hover:shadow-lg transition-all duration-300 border-l-4 border-l-blue-500">
+                    {/* Header do Pedido */}
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <div className="flex items-center gap-3 mb-2">
+                          <Package className="w-6 h-6 text-primary" />
+                          <h4 className="text-xl font-bold">
+                            {classInfo ? `${classInfo.name}` : "Turma não encontrada"}
+                            <span className="text-lg font-normal text-muted-foreground ml-2">
+                              - {classInfo?.cycle} {classInfo?.year} | Kit {request.kitType}
+                            </span>
+                          </h4>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Users className="w-4 h-4" />
+                            <span>{classInfo?.studentCount} alunos</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <BookOpen className="w-4 h-4" />
+                            <span>{classInfo?.cycle}</span>
+                          </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Pedido em {new Date(request.requestedAt).toLocaleDateString('pt-PT')}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                          request.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                          request.status === 'approved' ? 'bg-blue-100 text-blue-800' :
+                          request.status === 'shipped' ? 'bg-orange-100 text-orange-800' :
+                          'bg-green-100 text-green-800'
+                        }`}>
+                          {getStatusText(request.status)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Timeline Visual */}
+                    <KitJourney request={request} />
+
+                    {/* Notas do Admin */}
+                    {request.adminNotes && (
+                      <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <p className="text-sm text-blue-700">
+                          <strong>📝 Nota do Admin:</strong> {request.adminNotes}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Problemas Reportados */}
+                    {request.reports && request.reports.length > 0 && (
+                      <div className="mt-4 p-3 bg-red-50 rounded-lg border border-red-200">
+                        <p className="text-sm text-red-700">
+                          <strong>⚠️ Problema Reportado:</strong> {request.reports[request.reports.length - 1].message}
+                        </p>
+                        <p className="text-xs text-red-600 mt-1">
+                          Reportado em: {new Date(request.reports[request.reports.length - 1].createdAt).toLocaleDateString('pt-PT')}
+                          {request.reports[request.reports.length - 1].resolved && (
+                            <span className="ml-2 text-green-600">✅ Resolvido</span>
+                          )}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Actions */}
+                    <div className="flex justify-between items-center pt-4 mt-4 border-t">
+                      <div className="text-sm text-muted-foreground">
+                        ID: #{request.id}
+                        {request.approvedAt && ` • Aprovado: ${new Date(request.approvedAt).toLocaleDateString('pt-PT')}`}
+                        {request.shippedAt && ` • Enviado: ${new Date(request.shippedAt).toLocaleDateString('pt-PT')}`}
+                        {request.deliveredAt && ` • Entregue: ${new Date(request.deliveredAt).toLocaleDateString('pt-PT')}`}
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        {request.status === "shipped" && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleMarkAsDelivered(request.id)}
+                          >
+                            <CheckCircle className="w-4 h-4 mr-1" />
+                            Confirmar Receção
+                          </Button>
+                        )}
+                        
+                        {request.status === "delivered" && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedRequestForReport(request);
+                              setShowReportForm(true);
+                            }}
+                          >
+                            <AlertCircle className="w-4 h-4 mr-1" />
+                            Reportar Problema
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+      </div>
+    </div>
+  );
+}

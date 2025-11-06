@@ -9,7 +9,8 @@ import {
   Sun, 
   ChevronLeft, 
   ChevronRight, 
-  FileText  // 🔥 NOVO ÍCONE ADICIONADO
+  FileText,
+  Package // 🔥 MUDANÇA: Adicionar Package
 } from "lucide-react";
 import { Button } from "./button";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -28,8 +29,8 @@ export function Sidebar() {
     { id: "visao-geral", path: "/overview", label: "Visão Geral", icon: Home },
     { id: "turmas", path: "/classes", label: "Turmas", icon: Users },
     { id: "formacoes", path: "/trainings", label: "Formações", icon: GraduationCap },
-    { id: "kits", path: "/kits", label: "Kits Pedagógicos", icon: BookOpen },
-    { id: "feedback", path: "/feedback", label: "Feedback & Relatórios", icon: FileText }, // 🔥 NOVO ITEM
+    { id: "kits", path: "/kits", label: "Kits Pedagógicos", icon: Package }, // 🔥 MUDANÇA: BookOpen → Package
+    { id: "feedback", path: "/feedback", label: "Feedback & Relatórios", icon: FileText },
   ];
 
   useEffect(() => {

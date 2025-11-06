@@ -48,36 +48,53 @@ model Teacher {
   trainings            TrainingSession[]
   resetPasswordToken   String?
   resetPasswordExpires DateTime?
-
-  // 🔥 novo campo para relação inversa
-  reportFolders ReportFolder[]
+  reportFolders        ReportFolder[]
+  kitRequests          KitRequest[]
 }
 
 model Class {
-  id        Int      @id @default(autoincrement())
-  name      String
-  students  Int
-  cycle     String
-  year      String
-  teacherId Int
-  teacher   Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  schoolId  Int
-  school    School   @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  code      String?  @unique
-  kit       Kit?
-  status    String   @default("Registered")
-  createdAt DateTime @default(now())
-
-  // 🔥 novo campo para relação inversa
+  id           Int          @id @default(autoincrement())
+  name         String
+  students     Int
+  cycle        String
+  year         String
+  teacherId    Int
+  teacher      Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  schoolId     Int
+  school       School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  code         String?      @unique
+  status       String       @default("Registered")
+  createdAt    DateTime     @default(now())
   reportFolders ReportFolder[]
+  kitRequests  KitRequest[]
 }
 
-model Kit {
-  id      Int    @id @default(autoincrement())
-  type    String
-  status  String @default("em stock")
-  classId Int?   @unique
-  class   Class? @relation(fields: [classId], references: [id], onDelete: SetNull)
+model KitRequest {
+  id          Int      @id @default(autoincrement())
+  teacherId   Int
+  teacher     Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  classId     Int
+  class       Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  kitType     String   // "básico", "avançado", "completo"
+  status      String   @default("pending") // pending, approved, shipped, delivered
+  requestedAt DateTime @default(now())
+  approvedAt  DateTime?
+  shippedAt   DateTime?
+  deliveredAt DateTime?
+  adminNotes  String?
+  reports     KitReport[] // ← RELAÇÃO NOVA
+}
+
+model KitReport {
+  id          Int      @id @default(autoincrement())
+  requestId   Int
+  request     KitRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  message     String
+  teacherId   Int
+  teacherName String
+  createdAt   DateTime @default(now())
+  resolved    Boolean  @default(false)
+  resolvedAt  DateTime?
 }
 
 model ReportFolder {
