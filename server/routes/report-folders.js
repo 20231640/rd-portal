@@ -1,7 +1,7 @@
 // routes/report-folders.js
-const express = require("express");
+import express from 'express';
+import { PrismaClient } from '@prisma/client';
 
-const { PrismaClient } = require("@prisma/client");
 const router = express.Router();
 const prisma = new PrismaClient();
 

@@ -1,4 +1,6 @@
-
+import express from "express";
+import cors from "cors";
+import { PrismaClient } from "@prisma/client";
 import authRoutes from "./routes/auth.js";
 import classesRouter from "./routes/classes.js";
 import trainingsRouter from "./routes/trainings.js";
@@ -8,9 +10,6 @@ import path from "path";
 
 const app = express();
 const prisma = new PrismaClient();
-const express = require("express");
-const cors = require("cors");
-const { PrismaClient } = require("@prisma/client");
 
 app.use(cors());
 app.use(express.json());
