@@ -1,7 +1,6 @@
 // server/routes/auth.js
 import express from "express";
-import pkg from '@prisma/client';
-const { PrismaClient } = pkg;
+import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 

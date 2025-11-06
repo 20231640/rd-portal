@@ -1,6 +1,5 @@
 import express from "express";
-import pkg from '@prisma/client';
-const { PrismaClient } = pkg;
+import { PrismaClient } from "@prisma/client";
 import { generateCertificate } from '../services/certificateService.js';
 
 

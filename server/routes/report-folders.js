@@ -1,8 +1,6 @@
 // routes/report-folders.js
 import express from 'express';
-import pkg from '@prisma/client';
-const { PrismaClient } = pkg;
-//import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 
 const router = express.Router();
 const prisma = new PrismaClient();
