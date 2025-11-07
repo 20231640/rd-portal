@@ -9,6 +9,8 @@ import {
   Package, Plus, Clock, Truck, CheckCircle, AlertCircle, 
   RefreshCw, Users, BookOpen, MessageCircle 
 } from "lucide-react";
+import { API_URL } from "../config/api";
+
 
 export default function TeacherKitsPage() {
   const [teacher, setTeacher] = useState(null);
@@ -34,7 +36,7 @@ export default function TeacherKitsPage() {
       const email = localStorage.getItem("loggedInTeacher");
       if (!email) return;
 
-      const teacherRes = await fetch("http://localhost:4000/api/auth/teachers");
+      const teacherRes = await fetch(`${API_URL}/api/auth/teachers`);
       if (!teacherRes.ok) throw new Error("Erro ao carregar professores");
       
       const teachers = await teacherRes.json();
@@ -49,8 +51,8 @@ export default function TeacherKitsPage() {
 
       // Carregar turmas e kits em paralelo
       const [classesRes, kitsRes] = await Promise.all([
-        fetch(`http://localhost:4000/api/classes?teacherId=${currentTeacher.id}`),
-        fetch(`http://localhost:4000/api/kits/teacher/${currentTeacher.id}`)
+        fetch(`${API_URL}/api/classes?teacherId=${currentTeacher.id}`),
+        fetch(`${API_URL}/api/kits/teacher/${currentTeacher.id}`)
       ]);
 
       if (!classesRes.ok) throw new Error("Erro ao carregar turmas");
@@ -230,7 +232,7 @@ export default function TeacherKitsPage() {
     if (!selectedClass) return;
 
     try {
-      const res = await fetch("http://localhost:4000/api/kits/request", {
+      const res = await fetch(`${API_URL}/api/kits/request`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -260,7 +262,7 @@ export default function TeacherKitsPage() {
 
   const handleMarkAsDelivered = async (requestId) => {
     try {
-      const res = await fetch(`http://localhost:4000/api/kits/${requestId}/deliver`, {
+      const res = await fetch(`${API_URL}/api/kits/${requestId}/deliver`, {
         method: "PUT",
       });
 
@@ -290,7 +292,7 @@ export default function TeacherKitsPage() {
     try {
       console.log("📤 Enviando report para kit:", selectedRequestForReport.id);
 
-      const response = await fetch(`http://localhost:4000/api/kits/${selectedRequestForReport.id}/report`, {
+      const response = await fetch(`${API_URL}/api/kits/${selectedRequestForReport.id}/report`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",

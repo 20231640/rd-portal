@@ -4,6 +4,7 @@ import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Sidebar } from "../components/ui/sidebar";
 import { Folder, Upload, ExternalLink, File, Download, Calendar } from "lucide-react";
+import { API_URL } from "../config/api";
 
 export default function TeacherFeedback() {
   const [folders, setFolders] = useState([]);
@@ -24,7 +25,7 @@ export default function TeacherFeedback() {
         return;
       }
 
-      const res = await fetch(`http://localhost:4000/api/report-folders?teacherEmail=${teacherEmail}`);
+      const res = await fetch(`${API_URL}/api/report-folders?teacherEmail=${teacherEmail}`);
       
       if (res.ok) {
         const foldersData = await res.json();

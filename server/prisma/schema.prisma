@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = "file:./database.db"
+  url      = env("DATABASE_URL")
 }
 
 model School {
@@ -14,8 +14,8 @@ model School {
   approved  Boolean   @default(false)
   region    String?
   createdAt DateTime  @default(now())
-  teachers  Teacher[]
   classes   Class[]
+  teachers  Teacher[]
 }
 
 model TrainingSession {
@@ -26,12 +26,12 @@ model TrainingSession {
   zoomLink               String
   createdAt              DateTime  @default(now())
   teacherId              Int
-  teacher                Teacher   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   completed              Boolean   @default(false)
   certificateUrl         String?
   adminRating            Int?
-  feedback               String?
   certificateGeneratedAt DateTime?
+  feedback               String?
+  teacher                Teacher   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 }
 
 model Teacher {
@@ -43,58 +43,58 @@ model Teacher {
   blocked              Boolean           @default(false)
   schoolApproved       Boolean           @default(false)
   schoolId             Int
-  school               School            @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  classes              Class[]
-  trainings            TrainingSession[]
-  resetPasswordToken   String?
   resetPasswordExpires DateTime?
-  reportFolders        ReportFolder[]
+  resetPasswordToken   String?
+  classes              Class[]
   kitRequests          KitRequest[]
+  reportFolders        ReportFolder[]
+  school               School            @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  trainings            TrainingSession[]
 }
 
 model Class {
-  id           Int          @id @default(autoincrement())
-  name         String
-  students     Int
-  cycle        String
-  year         String
-  teacherId    Int
-  teacher      Teacher      @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  schoolId     Int
-  school       School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  code         String?      @unique
-  status       String       @default("Registered")
-  createdAt    DateTime     @default(now())
+  id            Int            @id @default(autoincrement())
+  name          String
+  students      Int
+  cycle         String
+  year          String
+  teacherId     Int
+  schoolId      Int
+  code          String?        @unique
+  status        String         @default("Registered")
+  createdAt     DateTime       @default(now())
+  school        School         @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  teacher       Teacher        @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  kitRequests   KitRequest[]
   reportFolders ReportFolder[]
-  kitRequests  KitRequest[]
 }
 
 model KitRequest {
-  id          Int      @id @default(autoincrement())
+  id          Int         @id @default(autoincrement())
   teacherId   Int
-  teacher     Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   classId     Int
-  class       Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
-  kitType     String   // "básico", "avançado", "completo"
-  status      String   @default("pending") // pending, approved, shipped, delivered
-  requestedAt DateTime @default(now())
+  kitType     String
+  status      String      @default("pending")
+  requestedAt DateTime    @default(now())
   approvedAt  DateTime?
   shippedAt   DateTime?
   deliveredAt DateTime?
   adminNotes  String?
-  reports     KitReport[] // ← RELAÇÃO NOVA
+  reports     KitReport[]
+  class       Class       @relation(fields: [classId], references: [id], onDelete: Cascade)
+  teacher     Teacher     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 }
 
 model KitReport {
-  id          Int      @id @default(autoincrement())
+  id          Int        @id @default(autoincrement())
   requestId   Int
-  request     KitRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
   message     String
   teacherId   Int
   teacherName String
-  createdAt   DateTime @default(now())
-  resolved    Boolean  @default(false)
+  createdAt   DateTime   @default(now())
+  resolved    Boolean    @default(false)
   resolvedAt  DateTime?
+  request     KitRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
 }
 
 model ReportFolder {
@@ -102,9 +102,9 @@ model ReportFolder {
   title     String
   driveLink String
   teacherId Int
-  teacher   Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   classId   Int?
-  class     Class?   @relation(fields: [classId], references: [id], onDelete: SetNull)
   createdAt DateTime @default(now())
   isActive  Boolean  @default(true)
+  class     Class?   @relation(fields: [classId], references: [id])
+  teacher   Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 }

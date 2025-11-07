@@ -6,6 +6,7 @@ import { Card } from "../components/ui/card";
 import { Sidebar } from "../components/ui/sidebar";
 import ProfilePicture from "../components/ui/profile-picture";
 import TeacherTrainingsPage from "./TeacherTrainingsPage";
+import { API_URL } from "../config/api";
 
 
 export default function TeacherDashboard() {
@@ -24,7 +25,7 @@ export default function TeacherDashboard() {
 
     async function loadTeacher() {
       try {
-        const res = await fetch("http://localhost:4000/api/auth/teachers");
+        const res = await fetch(`${API_URL}/api/auth/teachers`);
         if (!res.ok) throw new Error("Erro ao buscar professores.");
         const all = await res.json();
         const found = all.find(t => t.email === email);

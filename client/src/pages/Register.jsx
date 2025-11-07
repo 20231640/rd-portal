@@ -5,6 +5,7 @@ import { UserPlus, GraduationCap, Home } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { ThemeToggle } from "../components/ui/theme-toggle";
 import "react-phone-input-2/lib/style.css";
+import { API_URL } from "../config/api";
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -26,7 +27,7 @@ export default function Register() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch("http://localhost:4000/api/auth/schools")
+    fetch(`${API_URL}/api/auth/schools`)
       .then(res => res.json())
       .then(data => setSchools(data.filter(s => s.approved).map(s => s.name)))
       .catch(console.error);
@@ -71,7 +72,7 @@ export default function Register() {
     }
 
     try {
-      const res = await fetch("http://localhost:4000/api/auth/register", {
+      const res = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

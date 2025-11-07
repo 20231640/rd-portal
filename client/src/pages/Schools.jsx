@@ -7,6 +7,7 @@ import { Card } from "../components/ui/card";
 import { Sidebar } from "../components/ui/sidebar";
 import { StatsCard } from "../components/ui/stats-card";
 import { Badge } from "../components/ui/badge";
+import { API_URL } from "../config/api";
 
 export default function TeacherDashboard() {
   const navigate = useNavigate();
@@ -50,7 +51,7 @@ export default function TeacherDashboard() {
 
     async function loadTeacher() {
       try {
-        const res = await fetch("http://localhost:4000/api/auth/teachers");
+        const res = await fetch(`${API_URL}/api/auth/teachers`);
         if (!res.ok) throw new Error("Erro ao buscar professores.");
         const all = await res.json();
         const found = all.find(t => t.email === email);
@@ -61,7 +62,7 @@ export default function TeacherDashboard() {
         }
         setTeacher(found);
 
-        const classesRes = await fetch(`http://localhost:4000/api/classes?teacherId=${found.id}`);
+        const classesRes = await fetch(`${API_URL}/api/classes?teacherId=${found.id}`);
         if (classesRes.ok) {
           const classesData = await classesRes.json();
           setClasses(classesData);

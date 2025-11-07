@@ -11,6 +11,8 @@ import {
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { API_URL } from "../config/api";
+
 
 export default function AdminExport() {
   const [exporting, setExporting] = useState(false);
@@ -47,7 +49,7 @@ export default function AdminExport() {
   // Função para buscar dados da API
   const fetchData = async (endpoint) => {
     try {
-      const response = await fetch(`http://localhost:4000/api/${endpoint}`);
+      const response = await fetch(`${API_URL}/api/${endpoint}`);
       if (!response.ok) throw new Error('Erro ao buscar dados');
       return await response.json();
     } catch (error) {

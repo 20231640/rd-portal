@@ -17,6 +17,8 @@ import {
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { AdminSidebar } from "../components/ui/admin-sidebar";
+import { API_URL } from "../config/api";
+
 
 export default function AdminDashboard() {
   const [schools, setSchools] = useState([]);
@@ -53,8 +55,8 @@ export default function AdminDashboard() {
   async function fetchData() {
     try {
       const [schoolsRes, teachersRes] = await Promise.all([
-        fetch("http://localhost:4000/api/auth/schools"),
-        fetch("http://localhost:4000/api/auth/teachers"),
+        fetch(`${API_URL}/api/auth/schools`),
+        fetch(`${API_URL}/api/auth/teachers`),
       ]);
 
       if (!schoolsRes.ok || !teachersRes.ok)
@@ -82,7 +84,7 @@ export default function AdminDashboard() {
     if (!newSchool.trim()) return;
 
     try {
-      const res = await fetch("http://localhost:4000/api/auth/schools", {
+      const res = await fetch(`${API_URL}/api/auth/schools`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -106,7 +108,7 @@ export default function AdminDashboard() {
   // Escolas - Aprovar
   async function approveSchool(id) {
     try {
-      const res = await fetch(`http://localhost:4000/api/auth/schools/${id}/approve`, {
+      const res = await fetch(`${API_URL}/api/auth/schools/${id}/approve`, {
         method: "PUT",
       });
       if (!res.ok) throw new Error("Erro ao aprovar escola.");
@@ -124,7 +126,7 @@ export default function AdminDashboard() {
   async function rejectSchool(id) {
     if (!window.confirm("Rejeitar esta escola?")) return;
     try {
-      const res = await fetch(`http://localhost:4000/api/auth/schools/${id}`, {
+      const res = await fetch(`${API_URL}/api/auth/schools/${id}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Erro ao rejeitar escola");
@@ -139,7 +141,7 @@ export default function AdminDashboard() {
   // Escolas - Editar
   async function saveSchoolEdit(id, { name, region }) {
     try {
-      const res = await fetch(`http://localhost:4000/api/auth/schools/${id}`, {
+      const res = await fetch(`${API_URL}/api/auth/schools/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, region }),
@@ -160,7 +162,7 @@ export default function AdminDashboard() {
   // Professores - Bloquear/Desbloquear
   async function toggleTeacherBlock(id, blocked) {
     try {
-      const res = await fetch(`http://localhost:4000/api/auth/teachers/${id}`, {
+      const res = await fetch(`${API_URL}/api/auth/teachers/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ blocked: !blocked }),
@@ -179,7 +181,7 @@ export default function AdminDashboard() {
   // Professores - Editar
   async function saveTeacherEdit(id, field, value) {
     try {
-      const res = await fetch(`http://localhost:4000/api/auth/teachers/${id}`, {
+      const res = await fetch(`${API_URL}/api/auth/teachers/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ [field]: value }),
@@ -200,7 +202,7 @@ export default function AdminDashboard() {
   async function handleDeleteTeacher(id) {
     if (!window.confirm("Tem a certeza que quer apagar este professor?")) return;
     try {
-      const res = await fetch(`http://localhost:4000/api/auth/teachers/${id}`, {
+      const res = await fetch(`${API_URL}/api/auth/teachers/${id}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Erro ao apagar professor.");

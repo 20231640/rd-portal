@@ -5,6 +5,7 @@ import { Plus, Calendar, Video, Trash2, CheckCircle } from "lucide-react";
 import { AdminSidebar } from "../components/ui/admin-sidebar";
 import axios from "axios";
 import { CompleteTrainingModal } from "../components/ui/CompleteTrainingModal";
+import { API_URL } from "../config/api";
 
 export default function AdminTrainingsPage() {
   const [trainings, setTrainings] = useState([]);
@@ -24,8 +25,8 @@ export default function AdminTrainingsPage() {
   const fetchData = async () => {
     try {
       const [trainingsRes, teachersRes] = await Promise.all([
-        axios.get("http://localhost:4000/api/trainings"),
-        axios.get("http://localhost:4000/api/auth/teachers")
+        axios.get(`${API_URL}/api/trainings`),
+        axios.get(`${API_URL}/api/auth/teachers`)
       ]);
 
       setTrainings(trainingsRes.data);
@@ -51,7 +52,7 @@ export default function AdminTrainingsPage() {
     }
 
     try {
-      await axios.post("http://localhost:4000/api/trainings", {
+      await axios.post(`${API_URL}/api/trainings`, {
         title: formData.title,
         description: formData.description,
         date: formData.date,
@@ -80,7 +81,7 @@ export default function AdminTrainingsPage() {
     if (!confirm("Tem a certeza que quer eliminar esta sessão?")) return;
     
     try {
-      await axios.delete(`http://localhost:4000/api/trainings/${id}`);
+      await axios.delete(`${API_URL}/api/trainings/${id}`);
       fetchData();
       alert("✅ Sessão eliminada com sucesso!");
     } catch (err) {
@@ -92,7 +93,7 @@ export default function AdminTrainingsPage() {
   // Concluir sessão com avaliação
   const handleCompleteTraining = async (trainingId, data) => {
     try {
-      await axios.put(`http://localhost:4000/api/trainings/${trainingId}/complete`, data);
+      await axios.put(`${API_URL}/api/trainings/${trainingId}/complete`, data);
       setTrainingToComplete(null);
       fetchData();
       alert("✅ Sessão concluída e certificado gerado!");
@@ -327,7 +328,7 @@ export default function AdminTrainingsPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => window.open(`http://localhost:4000${training.certificateUrl}`, '_blank')}
+                        onClick={() => window.open(`${API_URL}${training.certificateUrl}`, '_blank')}
                       >
                         📄 Ver Certificado
                       </Button>

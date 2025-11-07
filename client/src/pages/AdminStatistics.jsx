@@ -6,6 +6,7 @@ import { GeographyStats } from "./stats/GeographyStats";
 import { KitsStats } from "./stats/KitsStats";
 import { SchoolsStats } from "./stats/SchoolsStats";
 import { ProblemsStats } from "./stats/ProblemsStats";
+import { API_URL } from "../config/api";
 
 export default function AdminStatistics() {
   const [schools, setSchools] = useState([]);
@@ -20,10 +21,10 @@ export default function AdminStatistics() {
     const fetchData = async () => {
       try {
         const [schoolsRes, teachersRes, classesRes, kitsRes] = await Promise.all([
-          fetch("http://localhost:4000/api/auth/schools"),
-          fetch("http://localhost:4000/api/auth/teachers"),
-          fetch("http://localhost:4000/api/classes"),
-          fetch("http://localhost:4000/api/kits/requests")
+          fetch(`${API_URL}/api/auth/schools`),
+          fetch(`${API_URL}/api/auth/teachers`),
+          fetch(`${API_URL}/api/classes`),
+          fetch(`${API_URL}/api/kits/requests`)
         ]);
         
         const schoolsData = await schoolsRes.json();

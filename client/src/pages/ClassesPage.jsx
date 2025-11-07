@@ -5,6 +5,7 @@ import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { Sidebar } from "../components/ui/sidebar";
+import { API_URL } from "../config/api";
 
 export default function ClassesPage() {
   const navigate = useNavigate();
@@ -52,7 +53,7 @@ export default function ClassesPage() {
 
     async function loadTeacher() {
       try {
-        const res = await fetch("http://localhost:4000/api/auth/teachers");
+        const res = await fetch(`${API_URL}/api/auth/teachers`);
         if (!res.ok) throw new Error("Erro ao buscar professores.");
         const all = await res.json();
         const found = all.find(t => t.email === email);
@@ -64,7 +65,7 @@ export default function ClassesPage() {
         setTeacher(found);
 
         // Buscar turmas do professor
-        const classesRes = await fetch(`http://localhost:4000/api/classes?teacherId=${found.id}`);
+        const classesRes = await fetch(`${API_URL}/api/classes?teacherId=${found.id}`);
         if (!classesRes.ok) throw new Error("Erro ao buscar turmas.");
         const classesData = await classesRes.json();
         setClasses(classesData);
@@ -109,7 +110,7 @@ export default function ClassesPage() {
     const assignedKit = kits[newClass.cycle] || "Kit Padrão";
 
     try {
-      const res = await fetch("http://localhost:4000/api/classes", {
+      const res = await fetch(`${API_URL}/api/classes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -137,7 +138,7 @@ export default function ClassesPage() {
   const handleEditClass = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`http://localhost:4000/api/classes/${editingClass.id}`, {
+      const res = await fetch(`${API_URL}/api/classes/${editingClass.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -163,7 +164,7 @@ export default function ClassesPage() {
   const handleDeleteClass = async (id) => {
     if (!window.confirm("Tem a certeza que quer apagar esta turma?")) return;
     try {
-      const res = await fetch(`http://localhost:4000/api/classes/${id}`, { method: "DELETE" });
+      const res = await fetch(`${API_URL}/api/classes/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Erro ao apagar turma");
       const updated = classes.filter(c => c.id !== id);
       setClasses(updated);
@@ -182,7 +183,7 @@ export default function ClassesPage() {
 
     const newStatus = STATUS_FLOW[currentIndex + 1];
     try {
-      const res = await fetch(`http://localhost:4000/api/classes/${id}`, {
+      const res = await fetch(`${API_URL}/api/classes/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus })

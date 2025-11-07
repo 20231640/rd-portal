@@ -5,6 +5,7 @@ import { Button } from "../components/ui/button";
 import { Sidebar } from "../components/ui/sidebar";
 import { Calendar, Video, CheckCircle, Clock, Star } from "lucide-react";
 import axios from "axios";
+import { API_URL } from "../config/api";
 
 export default function TeacherTrainingsPage() {
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ export default function TeacherTrainingsPage() {
     async function loadTeacherAndTrainings() {
       try {
         // Buscar todos os professores
-        const teachersRes = await axios.get("http://localhost:4000/api/auth/teachers");
+        const teachersRes = await axios.get(`${API_URL}/api/auth/teachers`);
         const foundTeacher = teachersRes.data.find(t => t.email === email);
         
         if (!foundTeacher) {
@@ -35,7 +36,7 @@ export default function TeacherTrainingsPage() {
         setTeacher(foundTeacher);
 
         // Buscar formações deste professor
-        const trainingsRes = await axios.get(`http://localhost:4000/api/trainings/teacher/${foundTeacher.id}`);
+        const trainingsRes = await axios.get(`${API_URL}/api/trainings/teacher/${foundTeacher.id}`);
         setTrainings(trainingsRes.data);
       } catch (err) {
         console.error("Erro ao carregar dados:", err);
@@ -199,7 +200,7 @@ export default function TeacherTrainingsPage() {
                         <Button 
                           variant="default" 
                           className="w-full bg-blue-600 hover:bg-blue-700"
-                          onClick={() => window.open(`http://localhost:4000${training.certificateUrl}`, '_blank')}
+                          onClick={() => window.open(`${API_URL}${training.certificateUrl}`, '_blank')}
                         >
                           📄 Ver Certificado
                         </Button>

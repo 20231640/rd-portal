@@ -6,6 +6,8 @@ import { Button } from "../components/ui/button";
 import { Skeleton } from "../components/ui/skeleton";
 import { ProgressCharacter } from "../components/ui/kits/progress-character";
 import { KitJourney } from "../components/ui/kits/kit-journey";
+import { API_URL } from "../config/api";
+
 
 import { 
   Package, Search, CheckCircle, Truck, X, Mail, RefreshCw, 
@@ -31,9 +33,9 @@ export default function AdminKitsPage() {
       setError("");
       
       const [requestsRes, teachersRes, classesRes] = await Promise.all([
-        fetch("http://localhost:4000/api/kits/requests"),
-        fetch("http://localhost:4000/api/auth/teachers"),
-        fetch("http://localhost:4000/api/classes")
+        fetch(`${API_URL}/api/kits/requests`),
+        fetch(`${API_URL}/api/auth/teachers`),
+        fetch(`${API_URL}/api/classes`)
       ]);
 
       if (!requestsRes.ok) throw new Error(`Erro kits: ${requestsRes.status}`);
@@ -192,7 +194,7 @@ export default function AdminKitsPage() {
 
   const handleApprove = async (requestId) => {
     try {
-      const res = await fetch(`http://localhost:4000/api/kits/${requestId}/approve`, {
+      const res = await fetch(`${API_URL}/api/kits/${requestId}/approve`, {
         method: "PUT",
       });
 
@@ -217,7 +219,7 @@ export default function AdminKitsPage() {
 
   const handleShip = async (requestId) => {
     try {
-      const res = await fetch(`http://localhost:4000/api/kits/${requestId}/ship`, {
+      const res = await fetch(`${API_URL}/api/kits/${requestId}/ship`, {
         method: "PUT",
       });
 
@@ -244,7 +246,7 @@ export default function AdminKitsPage() {
     if (!window.confirm("Tem a certeza que quer rejeitar este pedido?")) return;
     
     try {
-      const res = await fetch(`http://localhost:4000/api/kits/${requestId}`, {
+      const res = await fetch(`${API_URL}/api/kits/${requestId}`, {
         method: "DELETE",
       });
 
@@ -266,7 +268,7 @@ export default function AdminKitsPage() {
     if (!window.confirm("Tem a certeza que quer marcar este problema como resolvido?")) return;
     
     try {
-      const res = await fetch(`http://localhost:4000/api/kits/${requestId}/reports/${reportId}/resolve`, {
+      const res = await fetch(`${API_URL}/api/kits/${requestId}/reports/${reportId}/resolve`, {
         method: "PUT",
       });
 

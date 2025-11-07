@@ -4,6 +4,8 @@ import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { AdminSidebar } from "../components/ui/admin-sidebar";
 import { Folder, Plus, ExternalLink, Users, Trash2, Search, Calendar } from "lucide-react";
+import { API_URL } from "../config/api";
+
 
 export default function AdminFeedbackReports() {
   const [teachers, setTeachers] = useState([]);
@@ -27,8 +29,8 @@ export default function AdminFeedbackReports() {
     try {
       setLoading(true);
       const [teachersRes, foldersRes] = await Promise.all([
-        fetch("http://localhost:4000/api/auth/teachers"),
-        fetch("http://localhost:4000/api/report-folders")
+        fetch(`${API_URL}/api/auth/teachers`),
+        fetch(`${API_URL}/api/report-folders`)
       ]);
       
       if (teachersRes.ok) {
@@ -53,7 +55,7 @@ export default function AdminFeedbackReports() {
   async function createFolder(e) {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:4000/api/report-folders", {
+      const res = await fetch(`${API_URL}/api/report-folders`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newFolder)
@@ -79,7 +81,7 @@ export default function AdminFeedbackReports() {
     if (!confirm("Tem a certeza que quer eliminar esta pasta?")) return;
     
     try {
-      const res = await fetch(`http://localhost:4000/api/report-folders/${id}`, {
+      const res = await fetch(`${API_URL}/api/report-folders/${id}`, {
         method: "DELETE"
       });
 
