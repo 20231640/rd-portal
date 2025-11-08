@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, Plus, Trash2, Edit3, Search } from "lucide-react";
+import { Users, Plus, Trash2, Edit3, Search, BookOpen, UsersRound } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
@@ -18,15 +18,6 @@ export default function ClassesPage() {
   const [editingClass, setEditingClass] = useState(null);
   const [newClass, setNewClass] = useState({ name: "", students: "", cycle: "", year: "" });
 
-  const STATUS_FLOW = [
-    "Registered",
-    "Training completed", 
-    "Kit prepared/sent",
-    "Presentation sent",
-    "Implementation done",
-    "Reports received"
-  ];
-
   const cycles = {
     "Pré-Escolar": ["3 anos", "4 anos", "5 anos"],
     "1º Ciclo": ["1º ano", "2º ano", "3º ano", "4º ano"],
@@ -35,12 +26,10 @@ export default function ClassesPage() {
     "Secundário": ["10º ano", "11º ano", "12º ano"]
   };
 
-  const kits = {
-    "Pré-Escolar": "Kit Ilustrado Básico",
-    "1º Ciclo": "Kit Livros + Posters", 
-    "2º Ciclo": "Kit Intermédio",
-    "3º Ciclo": "Kit Avançado",
-    "Secundário": "Kit Digital + Atividades"
+  // Estados simples para as turmas - SÓ ATIVA E CONCLUÍDA
+  const classStates = {
+    ACTIVE: { label: "Ativa", color: "success", icon: UsersRound },
+    COMPLETED: { label: "Concluída", color: "secondary", icon: BookOpen }
   };
 
   // Buscar dados do professor
@@ -107,8 +96,6 @@ export default function ClassesPage() {
       return;
     }
 
-    const assignedKit = kits[newClass.cycle] || "Kit Padrão";
-
     try {
       const res = await fetch(`${API_URL}/api/classes`, {
         method: "POST",
@@ -119,8 +106,7 @@ export default function ClassesPage() {
           cycle: newClass.cycle,
           year: newClass.year,
           teacherId: teacher.id,
-          kit: assignedKit,
-          status: STATUS_FLOW[0]
+          state: "ACTIVE" // Estado padrão: Ativa
         })
       });
       if (!res.ok) throw new Error("Erro ao criar turma");
@@ -175,27 +161,21 @@ export default function ClassesPage() {
     }
   };
 
-  const handleAdvanceStatus = async (id) => {
-    const classToUpdate = classes.find(c => c.id === id);
-    if (!classToUpdate) return;
-    const currentIndex = STATUS_FLOW.indexOf(classToUpdate.status);
-    if (currentIndex >= STATUS_FLOW.length - 1) return;
-
-    const newStatus = STATUS_FLOW[currentIndex + 1];
+  const handleChangeState = async (id, newState) => {
     try {
       const res = await fetch(`${API_URL}/api/classes/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify({ state: newState })
       });
-      if (!res.ok) throw new Error("Erro ao atualizar status");
+      if (!res.ok) throw new Error("Erro ao atualizar estado");
       const updated = await res.json();
       const updatedClasses = classes.map(c => c.id === id ? updated : c);
       setClasses(updatedClasses);
       setFilteredClasses(updatedClasses);
     } catch (err) {
       console.error(err);
-      alert("Erro ao avançar status no servidor.");
+      alert("Erro ao alterar estado da turma.");
     }
   };
 
@@ -280,64 +260,61 @@ export default function ClassesPage() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {filteredClasses.map(classItem => (
-              <Card key={classItem.id} className="p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                      <Users className="w-6 h-6 text-primary" />
+            {filteredClasses.map(classItem => {
+              const stateConfig = classStates[classItem.state] || classStates.ACTIVE;
+              const StateIcon = stateConfig.icon;
+              
+              return (
+                <Card key={classItem.id} className="p-6 hover:shadow-lg transition-shadow">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <StateIcon className="w-6 h-6 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-lg">{classItem.name}</h3>
+                        <p className="text-sm text-muted-foreground">{classItem.students} alunos</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-bold text-lg">{classItem.name}</h3>
-                      <p className="text-sm text-muted-foreground">{classItem.students} alunos</p>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="sm" onClick={() => startEdit(classItem)}>
+                        <Edit3 className="w-4 h-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleDeleteClass(classItem.id)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => startEdit(classItem)}>
-                      <Edit3 className="w-4 h-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDeleteClass(classItem.id)}>
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
 
-                <div className="space-y-3 mb-4">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Ciclo:</span>
-                    <span className="font-medium">{classItem.cycle}</span>
+                  <div className="space-y-3 mb-4">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Ciclo:</span>
+                      <span className="font-medium">{classItem.cycle}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Ano:</span>
+                      <span className="font-medium">{classItem.year}</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Ano:</span>
-                    <span className="font-medium">{classItem.year}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Kit:</span>
-                    <span className="font-medium">{classItem.kit}</span>
-                  </div>
-                </div>
 
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <Badge variant={classItem.status === "Reports received" ? "success" : classItem.status === "Implementation done" ? "success" : "info"}>
-                      {classItem.status}
+                  <div className="flex justify-between items-center pt-2">
+                    <Badge variant={stateConfig.color}>
+                      {stateConfig.label}
                     </Badge>
-                    {STATUS_FLOW.indexOf(classItem.status) < STATUS_FLOW.length - 1 && (
-                      <Button size="sm" onClick={() => handleAdvanceStatus(classItem.id)}>Avançar</Button>
-                    )}
+                    <Button 
+                      size="sm" 
+                      variant={classItem.state === "COMPLETED" ? "default" : "outline"}
+                      onClick={() => handleChangeState(
+                        classItem.id, 
+                        classItem.state === "ACTIVE" ? "COMPLETED" : "ACTIVE"
+                      )}
+                    >
+                      {classItem.state === "ACTIVE" ? "Marcar Concluída" : "Marcar Ativa"}
+                    </Button>
                   </div>
-                  <div className="w-full bg-muted rounded-full h-2">
-                    <div
-                      className="bg-primary h-2 rounded-full transition-all"
-                      style={{ width: `${((STATUS_FLOW.indexOf(classItem.status)+1)/STATUS_FLOW.length)*100}%` }}
-                    />
-                  </div>
-                  <div className="text-xs text-muted-foreground text-center">
-                    Passo {STATUS_FLOW.indexOf(classItem.status)+1} de {STATUS_FLOW.length}
-                  </div>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              );
+            })}
           </div>
         )}
 
@@ -405,13 +382,6 @@ export default function ClassesPage() {
                     </select>
                   </div>
                 </div>
-
-                {editingClass && (
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Kit Atribuído</label>
-                    <p className="px-3 py-2 bg-muted rounded-lg">{kits[editingClass.cycle] || "Kit Padrão"}</p>
-                  </div>
-                )}
 
                 <div className="flex gap-3 pt-4">
                   <Button type="submit" className="flex-1">{editingClass ? "Guardar Alterações" : "Adicionar Turma"}</Button>
