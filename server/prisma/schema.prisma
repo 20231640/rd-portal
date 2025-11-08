@@ -61,7 +61,7 @@ model Class {
   teacherId     Int
   schoolId      Int
   code          String?        @unique
-  status        String         @default("Registered")
+  state         String         @default("ACTIVE")
   createdAt     DateTime       @default(now())
   school        School         @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   teacher       Teacher        @relation(fields: [teacherId], references: [id], onDelete: Cascade)
