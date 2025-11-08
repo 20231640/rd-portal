@@ -1,12 +1,14 @@
+// schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"  // Mude de sqlite para postgresql
   url      = env("DATABASE_URL")
 }
 
+// Os seus models permanecem exactamente iguais
 model School {
   id        Int       @id @default(autoincrement())
   name      String    @unique
