@@ -30,7 +30,19 @@ export default function AdminTrainingsPage() {
       ]);
 
       setTrainings(trainingsRes.data);
-      setTeachers(teachersRes.data.filter(t => !t.blocked && t.schoolApproved));
+      
+      // Filtrar professores que NÃO têm formações
+      const teachersWithTrainings = new Set(
+        trainingsRes.data.map(training => training.teacherId)
+      );
+      
+      const availableTeachers = teachersRes.data.filter(teacher => 
+        !teacher.blocked && 
+        teacher.schoolApproved && 
+        !teachersWithTrainings.has(teacher.id)
+      );
+      
+      setTeachers(availableTeachers);
     } catch (err) {
       console.error("Erro ao carregar dados:", err);
     } finally {
@@ -130,9 +142,13 @@ export default function AdminTrainingsPage() {
               Gerir sessões 1-on-1 com professores
             </p>
           </div>
-          <Button onClick={() => setShowForm(true)}>
+          <Button 
+            onClick={() => setShowForm(true)}
+            disabled={teachers.length === 0}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Nova Sessão Individual
+            {teachers.length === 0 && " (Todos os professores têm formação)"}
           </Button>
         </div>
 
@@ -157,6 +173,12 @@ export default function AdminTrainingsPage() {
                     </option>
                   ))}
                 </select>
+                {/* MENSAGEM FORA DO SELECT */}
+                {teachers.length === 0 && (
+                  <p className="text-sm text-orange-600 mt-2">
+                    ⚠️ Todos os professores já têm sessões de formação agendadas ou concluídas.
+                  </p>
+                )}
               </div>
 
               <div>

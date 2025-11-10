@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, Plus, Trash2, Edit3, Search, BookOpen, UsersRound } from "lucide-react";
+import { Users, Plus, Trash2, Edit3, Search, BookOpen, UsersRound, GraduationCap, AlertCircle } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
@@ -17,6 +17,7 @@ export default function ClassesPage() {
   const [showAddClass, setShowAddClass] = useState(false);
   const [editingClass, setEditingClass] = useState(null);
   const [newClass, setNewClass] = useState({ name: "", students: "", cycle: "", year: "" });
+  const [showTrainingAlert, setShowTrainingAlert] = useState(false);
 
   const cycles = {
     "Pré-Escolar": ["3 anos", "4 anos", "5 anos"],
@@ -72,6 +73,33 @@ export default function ClassesPage() {
     filterClasses();
   }, [classes, searchTerm, filterCycle]);
 
+  // ⬇️⬇️ FUNÇÕES NOVAS QUE FALTAM ⬇️⬇️
+
+  // VERIFICAR SE PODE CRIAR TURMA
+  const canCreateClass = () => {
+    return teacher?.hasCompletedTraining || teacher?.certificateUrl;
+  };
+
+  const handleAddClassClick = () => {
+    console.log("📊 Estado do professor:", {
+      hasCompletedTraining: teacher?.hasCompletedTraining,
+      certificateUrl: teacher?.certificateUrl,
+      canCreate: canCreateClass()
+    });
+    
+    if (!canCreateClass()) {
+      setShowTrainingAlert(true);
+      return;
+    }
+    setShowAddClass(true);
+  };
+
+  const navigateToTraining = () => {
+    navigate("/training");
+  };
+
+  // ⬆️⬆️ ATÉ AQUI ⬆️⬆️
+
   const filterClasses = () => {
     let filtered = classes;
 
@@ -91,6 +119,13 @@ export default function ClassesPage() {
 
   const handleAddClass = async (e) => {
     e.preventDefault();
+    
+    // Verificar novamente se pode criar turma
+    if (!canCreateClass()) {
+      setShowTrainingAlert(true);
+      return;
+    }
+
     if (!newClass.name || !newClass.students || !newClass.cycle || !newClass.year) {
       alert("Preencha todos os campos");
       return;
@@ -106,18 +141,29 @@ export default function ClassesPage() {
           cycle: newClass.cycle,
           year: newClass.year,
           teacherId: teacher.id,
-          state: "ACTIVE" // Estado padrão: Ativa
+          state: "ACTIVE"
         })
       });
-      if (!res.ok) throw new Error("Erro ao criar turma");
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        // MOSTRAR MENSAGEM ESPECÍFICA DO BACKEND
+        alert(errorData.message || "Erro ao criar turma");
+        return;
+      }
+      
       const created = await res.json();
       setClasses([...classes, created]);
       setFilteredClasses([...filteredClasses, created]);
       setNewClass({ name: "", students: "", cycle: "", year: "" });
       setShowAddClass(false);
+      
+      // Mensagem de sucesso
+      alert("Turma criada com sucesso!");
+      
     } catch (err) {
-      console.error(err);
-      alert("Erro ao criar turma no servidor.");
+      console.error("Erro detalhado:", err);
+      alert(err.message || "Erro ao criar turma no servidor.");
     }
   };
 
@@ -163,16 +209,19 @@ export default function ClassesPage() {
 
   const handleChangeState = async (id, newState) => {
     try {
-      const res = await fetch(`${API_URL}/api/classes/${id}`, {
+      const res = await fetch(`${API_URL}/api/classes/${id}/state`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ state: newState })
       });
+      
       if (!res.ok) throw new Error("Erro ao atualizar estado");
       const updated = await res.json();
+      
       const updatedClasses = classes.map(c => c.id === id ? updated : c);
       setClasses(updatedClasses);
       setFilteredClasses(updatedClasses);
+      
     } catch (err) {
       console.error(err);
       alert("Erro ao alterar estado da turma.");
@@ -204,15 +253,73 @@ export default function ClassesPage() {
     <div className="flex min-h-screen bg-background">
       <Sidebar />
       <div className="flex-1 p-8">
+        {/* ⬇️⬇️ ALERTA DE FORMAÇÃO NECESSÁRIA - MODAL ⬇️⬇️ */}
+        {showTrainingAlert && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <Card className="p-6 w-full max-w-md">
+              <div className="flex items-center gap-3 mb-4">
+                <AlertCircle className="w-8 h-8 text-amber-500" />
+                <h3 className="text-xl font-bold">Formação Necessária</h3>
+              </div>
+              <p className="text-muted-foreground mb-6">
+                Para criar turmas, precisa primeiro de completar a sessão de formação e obter o certificado.
+              </p>
+              <div className="flex gap-3">
+                <Button onClick={navigateToTraining} className="flex-1">
+                  <GraduationCap className="w-4 h-4 mr-2" />
+                  Ir para Formação
+                </Button>
+                <Button variant="outline" onClick={() => setShowTrainingAlert(false)}>
+                  Fechar
+                </Button>
+              </div>
+            </Card>
+          </div>
+        )}
+
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold">Gestão de Turmas</h1>
             <p className="text-muted-foreground mt-2">Gerir e acompanhar as suas turmas</p>
           </div>
-          <Button onClick={() => setShowAddClass(true)}>
-            <Plus className="w-4 h-4 mr-2" /> Nova Turma
-          </Button>
+          <div className="flex items-center gap-3">
+            {/* ⬇️⬇️ BADGE DE CERTIFICADO ⬇️⬇️ */}
+            {teacher.certificateUrl && (
+              <Badge variant="success" className="flex items-center gap-1">
+                <GraduationCap className="w-3 h-3" />
+                Certificado
+              </Badge>
+            )}
+            <Button 
+              onClick={handleAddClassClick} 
+              disabled={!canCreateClass()}
+            >
+              <Plus className="w-4 h-4 mr-2" /> Nova Turma
+            </Button>
+          </div>
         </div>
+
+        {/* ⬇️⬇️ MENSAGEM PARA PROFESSORES SEM CERTIFICADO ⬇️⬇️ */}
+        {!canCreateClass() && (
+          <Card className="p-6 mb-6 bg-amber-50 border-amber-200">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-600" />
+              <div>
+                <h3 className="font-semibold text-amber-800">Ação Necessária</h3>
+                <p className="text-amber-700 text-sm">
+                  Complete a sessão de formação para poder criar turmas. 
+                  <Button 
+                    variant="link" 
+                    className="p-0 h-auto text-amber-800 ml-1 font-semibold" 
+                    onClick={navigateToTraining}
+                  >
+                    Aceder à formação
+                  </Button>
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
 
         <Card className="p-6 mb-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -248,13 +355,20 @@ export default function ClassesPage() {
             <h3 className="text-lg font-semibold mb-2">Nenhuma turma encontrada</h3>
             <p className="text-muted-foreground mb-4">
               {classes.length === 0 
-                ? "Comece por adicionar a sua primeira turma."
+                ? canCreateClass() 
+                  ? "Comece por adicionar a sua primeira turma."
+                  : "Complete a formação para criar a sua primeira turma."
                 : "Tente ajustar os filtros de pesquisa."
               }
             </p>
-            {classes.length === 0 && (
-              <Button onClick={() => setShowAddClass(true)}>
+            {classes.length === 0 && canCreateClass() && (
+              <Button onClick={handleAddClassClick}>
                 <Plus className="w-4 h-4 mr-2" /> Criar Primeira Turma
+              </Button>
+            )}
+            {classes.length === 0 && !canCreateClass() && (
+              <Button onClick={navigateToTraining}>
+                <GraduationCap className="w-4 h-4 mr-2" /> Completar Formação
               </Button>
             )}
           </Card>

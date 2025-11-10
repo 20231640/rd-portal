@@ -30,27 +30,39 @@ router.get("/", async (req, res) => {
 // Criar nova turma
 router.post("/", async (req, res) => {
   try {
-    const { name, students, cycle, year, teacherId } = req.body;
+    const { name, students, cycle, year, teacherId, state } = req.body;
 
     // Verificar dados obrigatórios
     if (!name || !students || !cycle || !year || !teacherId) {
       return res.status(400).json({ message: "Dados incompletos" });
     }
 
-    // Buscar o professor e a escola
+    // Verificar se o professor completou a formação
     const teacher = await prisma.teacher.findUnique({
+      where: { id: parseInt(teacherId) },
+      select: { hasCompletedTraining: true, certificateUrl: true }
+    });
+
+    if (!teacher?.hasCompletedTraining && !teacher?.certificateUrl) {
+      return res.status(403).json({ 
+        message: "Não pode criar turmas sem completar a formação e obter certificado. Complete a formação primeiro." 
+      });
+    }
+
+    // Buscar o professor e a escola
+    const teacherWithSchool = await prisma.teacher.findUnique({
       where: { id: parseInt(teacherId) },
       include: { school: true },
     });
-    
-    if (!teacher) {
+
+    if (!teacherWithSchool) {
       return res.status(404).json({ message: "Professor não encontrado" });
     }
 
-    if (!teacher.school) {
+    if (!teacherWithSchool.school) {
       return res.status(400).json({ message: "Professor não tem escola associada" });
     }
-
+    
     // Contar turmas existentes do professor
     const count = await prisma.class.count({ 
       where: { teacherId: parseInt(teacherId) } 
@@ -58,10 +70,10 @@ router.post("/", async (req, res) => {
 
     // Gerar código: usar código da escola se existir, senão usar abreviação do nome
     let newCode;
-    if (teacher.school.code) {
-      newCode = `${teacher.school.code}-${count + 1}`;
+    if (teacherWithSchool.school.code) {  // ← CORRIGIDO
+      newCode = `${teacherWithSchool.school.code}-${count + 1}`;  // ← CORRIGIDO
     } else {
-      const schoolAbbrev = teacher.school.name.substring(0, 3).toUpperCase();
+      const schoolAbbrev = teacherWithSchool.school.name.substring(0, 3).toUpperCase();  // ← CORRIGIDO
       newCode = `${schoolAbbrev}-${count + 1}`;
     }
 
@@ -72,9 +84,9 @@ router.post("/", async (req, res) => {
         cycle: cycle.trim(),
         year: year.trim(),
         teacherId: parseInt(teacherId),
-        schoolId: teacher.school.id,
+        schoolId: teacherWithSchool.school.id,  // ← CORRIGIDO
         code: newCode,
-        status: "Registered",
+        state: state || "ACTIVE",
       },
       include: {
         teacher: {
@@ -136,6 +148,39 @@ router.delete("/:id", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Erro ao apagar turma" });
+  }
+});
+
+// Atualizar apenas o estado da turma
+router.put("/:id/state", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { state } = req.body;
+    
+    if (!state || !["ACTIVE", "COMPLETED"].includes(state)) {
+      return res.status(400).json({ message: "Estado inválido. Use 'ACTIVE' ou 'COMPLETED'" });
+    }
+
+    const updated = await prisma.class.update({
+      where: { id: parseInt(id) },
+      data: { state },
+      include: {
+        teacher: {
+          include: {
+            school: true
+          }
+        },
+        school: true
+      }
+    });
+    
+    res.json(updated);
+  } catch (err) {
+    console.error("Erro ao atualizar estado:", err);
+    res.status(500).json({ 
+      message: "Erro ao atualizar estado da turma",
+      error: err.message 
+    });
   }
 });
 

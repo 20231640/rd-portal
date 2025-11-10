@@ -5,7 +5,6 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
-import OverviewPage from "./pages/OverviewPage";
 import ClassesPage from "./pages/ClassesPage";
 import { useAutoLogout } from "./hooks/useAutoLogout";
 import AdminStatistics from "./pages/AdminStatistics";
@@ -49,7 +48,6 @@ export default function App() {
           
           {/* Rotas do Teacher */}
           <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
-          <Route path="/overview" element={<OverviewPage />} />
           <Route path="/classes" element={<ClassesPage />} />
           <Route path="/trainings" element={<TeacherTrainingsPage />} />
           <Route path="/feedback" element={<TeacherFeedback />} />

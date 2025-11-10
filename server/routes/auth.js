@@ -305,22 +305,38 @@ router.get("/teachers", async (req, res) => {
 });
 
 /* ============================================
-   🔹 EDITAR PROFESSOR
+   🔹 EDITAR PROFESSOR - VERSÃO CORRIGIDA
    ============================================ */
 router.put("/teachers/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const data = { ...req.body };
-    if (data.password) delete data.password;
+    const { name, phone } = req.body;
+
+    // Apenas permite atualizar name e phone (segurança)
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (phone !== undefined) updateData.phone = phone;
+
+    // Se não há nada para atualizar
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ message: "Nenhum dado válido para atualizar" });
+    }
 
     const updated = await prisma.teacher.update({
       where: { id: Number(id) },
-      data,
+      data: updateData,
       include: { school: true },
     });
+
     res.json(updated);
   } catch (err) {
     console.error("❌ Erro ao atualizar professor:", err);
+    
+    // Erro específico para professor não encontrado
+    if (err.code === 'P2025') {
+      return res.status(404).json({ message: "Professor não encontrado" });
+    }
+    
     res.status(500).json({ error: err.message });
   }
 });
@@ -351,6 +367,30 @@ router.get("/teachers/:id", async (req, res) => {
   } catch (err) {
     console.error("❌ Erro ao obter professor:", err);
     res.status(500).json({ error: err.message });
+  }
+});
+
+/* ============================================
+   🔹 ATUALIZAR CERTIFICADO DO PROFESSOR
+   ============================================ */
+router.put("/teachers/:id/certificate", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { certificateUrl, hasCompletedTraining } = req.body;
+    
+    const teacher = await prisma.teacher.update({
+      where: { id: parseInt(id) },
+      data: {
+        certificateUrl,
+        hasCompletedTraining: hasCompletedTraining !== undefined ? hasCompletedTraining : true
+      },
+      include: { school: true }
+    });
+    
+    res.json(teacher);
+  } catch (error) {
+    console.error('❌ Erro ao atualizar certificado:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
 

@@ -55,10 +55,10 @@ router.get('/teacher/:teacherId', async (req, res) => {
   }
 });
 
-// POST /api/kits/request - Novo pedido (mantida igual)
+// POST /api/kits/request - Novo pedido (SIMPLIFICADO)
 router.post('/request', async (req, res) => {
   try {
-    const { teacherId, classId, kitType } = req.body;
+    const { teacherId, classId } = req.body; // ← Remove kitType
     
     // Verificar se já existe um pedido pendente para esta turma
     const existingRequest = await prisma.kitRequest.findFirst({
@@ -78,7 +78,7 @@ router.post('/request', async (req, res) => {
       data: {
         teacherId: parseInt(teacherId),
         classId: parseInt(classId),
-        kitType,
+        kitType: 'standard', // ← Tipo fixo
         status: 'pending'
       },
       include: {

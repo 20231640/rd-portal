@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Sidebar } from "../components/ui/sidebar";
-import { Calendar, Video, CheckCircle, Clock, Star } from "lucide-react";
+import { Calendar, Video, CheckCircle, Clock } from "lucide-react";
 import axios from "axios";
 import { API_URL } from "../config/api";
 
@@ -139,27 +139,14 @@ export default function TeacherTrainingsPage() {
                         </p>
                       )}
                       
-                      {/* Avaliação do Admin */}
+                      {/* Avaliação do Admin - VERSÃO SIMPLIFICADA */}
                       {training.completed && training.adminRating && (
                         <div className="mb-3 p-3 bg-green-50 rounded-lg border border-green-200">
                           <div className="flex items-center gap-2 mb-1">
-                            <Star className="w-4 h-4 text-yellow-500 fill-current" />
                             <span className="text-sm font-medium">Avaliação do Formador:</span>
                             <span className="text-yellow-600 text-lg font-semibold">
                               {training.adminRating}/5
                             </span>
-                          </div>
-                          <div className="flex gap-1">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <Star
-                                key={star}
-                                className={`w-4 h-4 ${
-                                  star <= training.adminRating 
-                                    ? 'text-yellow-500 fill-current' 
-                                    : 'text-gray-300'
-                                }`}
-                              />
-                            ))}
                           </div>
                           {training.feedback && (
                             <p className="text-sm text-green-700 mt-2">
@@ -219,65 +206,6 @@ export default function TeacherTrainingsPage() {
                 ))}
               </div>
             </div>
-
-            {/* Estatísticas */}
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Estatísticas de Formação</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center p-4 bg-muted rounded-lg">
-                  <p className="text-2xl font-bold text-primary">{trainings.length}</p>
-                  <p className="text-sm text-muted-foreground">Total Sessões</p>
-                </div>
-                <div className="text-center p-4 bg-muted rounded-lg">
-                  <p className="text-2xl font-bold text-primary">
-                    {trainings.filter(t => t.completed).length}
-                  </p>
-                  <p className="text-sm text-muted-foreground">Concluídas</p>
-                </div>
-                <div className="text-center p-4 bg-muted rounded-lg">
-                  <p className="text-2xl font-bold text-primary">
-                    {trainings.filter(t => !t.completed && isTrainingFuture(t.date)).length}
-                  </p>
-                  <p className="text-sm text-muted-foreground">Agendadas</p>
-                </div>
-                <div className="text-center p-4 bg-muted rounded-lg">
-                  <p className="text-2xl font-bold text-primary">
-                    {trainings.filter(t => t.certificateUrl).length}
-                  </p>
-                  <p className="text-sm text-muted-foreground">Certificados</p>
-                </div>
-              </div>
-
-              {/* Estatísticas de Avaliação */}
-              {trainings.some(t => t.adminRating) && (
-                <div className="mt-6 pt-6 border-t">
-                  <h4 className="font-semibold mb-4">Avaliações Recebidas</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                    {[5, 4, 3, 2, 1].map((rating) => {
-                      const count = trainings.filter(t => t.adminRating === rating).length;
-                      return (
-                        <div key={rating} className="text-center p-3 bg-white rounded-lg border">
-                          <div className="flex justify-center gap-1 mb-2">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <Star
-                                key={star}
-                                className={`w-3 h-3 ${
-                                  star <= rating 
-                                    ? 'text-yellow-500 fill-current' 
-                                    : 'text-gray-300'
-                                }`}
-                              />
-                            ))}
-                          </div>
-                          <p className="text-xl font-bold text-primary">{count}</p>
-                          <p className="text-xs text-muted-foreground">Avaliações</p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </Card>
           </div>
         )}
       </div>

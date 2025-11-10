@@ -52,6 +52,8 @@ model Teacher {
   reportFolders        ReportFolder[]
   school               School            @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   trainings            TrainingSession[]
+  certificateUrl       String?
+  hasCompletedTraining Boolean           @default(false)
 }
 
 model Class {

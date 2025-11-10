@@ -1,4 +1,4 @@
-// TeacherKitsPage.jsx - ATUALIZADO COM TODAS AS FUNCIONALIDADES
+// TeacherKitsPage.jsx - ATUALIZADO E SIMPLIFICADO
 import { useState, useEffect, useRef } from "react";
 import { Sidebar } from "../components/ui/sidebar";
 import { Card } from "../components/ui/card";
@@ -6,11 +6,10 @@ import { Button } from "../components/ui/button";
 import { Skeleton } from "../components/ui/skeleton";
 import { KitJourney } from "../components/ui/kits/kit-journey";
 import { 
-  Package, Plus, Clock, Truck, CheckCircle, AlertCircle, 
-  RefreshCw, Users, BookOpen, MessageCircle 
+  Package, Plus, CheckCircle, AlertCircle, 
+  RefreshCw, Users, BookOpen
 } from "lucide-react";
 import { API_URL } from "../config/api";
-
 
 export default function TeacherKitsPage() {
   const [teacher, setTeacher] = useState(null);
@@ -18,12 +17,9 @@ export default function TeacherKitsPage() {
   const [kitRequests, setKitRequests] = useState([]);
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [selectedClass, setSelectedClass] = useState("");
-  const [kitType, setKitType] = useState("básico");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(null);
-  const [newUpdates, setNewUpdates] = useState(0);
   const [showReportForm, setShowReportForm] = useState(false);
   const [selectedRequestForReport, setSelectedRequestForReport] = useState(null);
   const [reportMessage, setReportMessage] = useState("");
@@ -100,21 +96,6 @@ export default function TeacherKitsPage() {
       }
     });
 
-    // Atualizar contador de novas atualizações
-    if (changes.new.length > 0 || changes.updated.length > 0) {
-      setNewUpdates(prev => prev + changes.new.length + changes.updated.length);
-      
-      // Mostrar notificações (opcional)
-      if (changes.new.length > 0) {
-        console.log(`🎉 ${changes.new.length} novo(s) pedido(s) criado(s)`);
-      }
-      if (changes.updated.length > 0) {
-        changes.updated.forEach(change => {
-          console.log(`📦 Pedido atualizado: ${change.from} → ${change.to}`);
-        });
-      }
-    }
-
     previousRequestsRef.current = newRequests;
   };
 
@@ -127,49 +108,10 @@ export default function TeacherKitsPage() {
     );
   };
 
-  // Obter kits disponíveis por ciclo
-  const getAvailableKitsForCycle = (cycle) => {
-    const kits = {
-      básico: "Kit Básico",
-      intermediário: "Kit Intermediário", 
-      avançado: "Kit Avançado"
-    };
-
-    // Definir kits por ciclo
-    const cycleKits = {
-      "1º Ciclo": ["básico", "intermediário"],
-      "2º Ciclo": ["básico", "intermediário", "avançado"],
-      "3º Ciclo": ["intermediário", "avançado"],
-      "Secundário": ["avançado"]
-    };
-
-    const availableKits = cycleKits[cycle] || ["básico"];
-    return availableKits.map(kit => ({
-      value: kit,
-      label: kits[kit] || kit
-    }));
-  };
-
   // Efeito para carregamento inicial
   useEffect(() => {
     fetchData();
   }, []);
-
-  // Efeito para auto-refresh
-  useEffect(() => {
-    if (!autoRefresh) return;
-
-    const interval = setInterval(() => {
-      fetchData();
-    }, 30000); // 30 segundos
-
-    return () => clearInterval(interval);
-  }, [autoRefresh]);
-
-  // Limpar notificações quando o utilizador interage
-  const clearNotifications = () => {
-    setNewUpdates(0);
-  };
 
   // Loading Skeleton
   const RequestSkeleton = () => (
@@ -238,7 +180,6 @@ export default function TeacherKitsPage() {
         body: JSON.stringify({
           teacherId: teacher.id,
           classId: parseInt(selectedClass),
-          kitType: kitType
         }),
       });
 
@@ -247,7 +188,6 @@ export default function TeacherKitsPage() {
         setKitRequests(prev => [newRequest, ...prev]);
         setShowRequestForm(false);
         setSelectedClass("");
-        setKitType("básico");
         
         // Forçar atualização para sincronizar
         setTimeout(() => fetchData(), 1000);
@@ -296,7 +236,7 @@ export default function TeacherKitsPage() {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
-          "Accept": "application/json" // ← FORÇAR resposta JSON
+          "Accept": "application/json"
         },
         body: JSON.stringify({
           message: reportMessage,
@@ -372,10 +312,10 @@ export default function TeacherKitsPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-background" onClick={clearNotifications}>
+    <div className="flex min-h-screen bg-background">
       <Sidebar />
       <div className="flex-1 p-8">
-        {/* Header com controles de atualização */}
+        {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
             <div className="flex items-center gap-3">
@@ -392,7 +332,6 @@ export default function TeacherKitsPage() {
           </div>
           
           <div className="flex items-center gap-2">
-
             <Button
               variant="outline"
               size="sm"
@@ -453,77 +392,60 @@ export default function TeacherKitsPage() {
           </Card>
         )}
 
-        {/* Formulário de Pedido */}
+        {/* Formulário de Pedido SIMPLIFICADO */}
         {showRequestForm && (
           <Card className="p-6 mb-6">
             <h3 className="text-lg font-semibold mb-4">Novo Pedido de Kit</h3>
             <form onSubmit={handleRequestKit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Turma *</label>
-                  <select
-                    value={selectedClass}
-                    onChange={(e) => {
-                      setSelectedClass(e.target.value);
-                      // Reset kit type quando muda turma
-                      setKitType("básico");
-                    }}
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                    required
-                    disabled={availableClasses.length === 0}
-                  >
-                    <option value="">Selecionar Turma</option>
-                    {availableClasses.map(cls => (
-                      <option key={cls.id} value={cls.id}>
-                        {cls.name} - {cls.cycle} {cls.year} ({cls.studentCount} alunos)
-                      </option>
-                    ))}
-                  </select>
-                  {availableClasses.length === 0 ? (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Não tem turmas disponíveis para pedido
-                    </p>
-                  ) : (
-                    <p className="text-sm text-green-600 mt-1">
-                      {availableClasses.length} turma(s) disponível(is)
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Tipo de Kit *</label>
-                  <select
-                    value={kitType}
-                    onChange={(e) => setKitType(e.target.value)}
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                    disabled={!selectedClass}
-                    required
-                  >
-                    <option value="">Selecionar Tipo</option>
-                    {selectedClass && getAvailableKitsForCycle(classes.find(c => c.id === parseInt(selectedClass))?.cycle).map(kit => (
-                      <option key={kit.value} value={kit.value}>
-                        {kit.label}
-                      </option>
-                    ))}
-                  </select>
-                  {selectedClass && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Ciclo: {classes.find(c => c.id === parseInt(selectedClass))?.cycle} | 
-                      Alunos: {classes.find(c => c.id === parseInt(selectedClass))?.studentCount}
-                    </p>
-                  )}
-                </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Turma *</label>
+                <select
+                  value={selectedClass}
+                  onChange={(e) => setSelectedClass(e.target.value)}
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                  required
+                  disabled={availableClasses.length === 0}
+                >
+                  <option value="">Selecionar Turma</option>
+                  {availableClasses.map(cls => (
+                    <option key={cls.id} value={cls.id}>
+                      {cls.name} - {cls.cycle} {cls.year} ({cls.students} alunos)
+                    </option>
+                  ))}
+                </select>
+                {availableClasses.length === 0 ? (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Não tem turmas disponíveis para pedido
+                  </p>
+                ) : (
+                  <p className="text-sm text-green-600 mt-1">
+                    {availableClasses.length} turma(s) disponível(is)
+                  </p>
+                )}
               </div>
 
+              {/* Informação fixa do kit */}
+              <Card className="p-4 bg-blue-50 border-blue-200">
+                <div className="flex items-center gap-3">
+                  <Package className="w-5 h-5 text-blue-600" />
+                  <div>
+                    <h4 className="font-medium text-blue-800">Kit Padrão</h4>
+                    <p className="text-sm text-blue-700">
+                      Material educativo completo para a turma selecionada
+                    </p>
+                  </div>
+                </div>
+              </Card>
+
               {selectedClass && (
-                <Card className="p-4 bg-blue-50 border-blue-200">
+                <Card className="p-4 bg-green-50 border-green-200">
                   <div className="flex items-center gap-3">
-                    <Users className="w-5 h-5 text-blue-600" />
+                    <Users className="w-5 h-5 text-green-600" />
                     <div>
-                      <h4 className="font-medium text-blue-800">Informações da Turma Selecionada</h4>
-                      <div className="flex gap-4 text-sm text-blue-700 mt-1">
+                      <h4 className="font-medium text-green-800">Informações da Turma Selecionada</h4>
+                      <div className="flex gap-4 text-sm text-green-700 mt-1">
                         <span>📚 {classes.find(c => c.id === parseInt(selectedClass))?.name}</span>
-                        <span>👥 {classes.find(c => c.id === parseInt(selectedClass))?.studentCount} alunos</span>
+                        <span>👥 {classes.find(c => c.id === parseInt(selectedClass))?.students} alunos</span>
                         <span>🎯 {classes.find(c => c.id === parseInt(selectedClass))?.cycle}</span>
                       </div>
                     </div>
@@ -532,9 +454,9 @@ export default function TeacherKitsPage() {
               )}
 
               <div className="flex gap-2">
-                <Button type="submit" disabled={!selectedClass || !kitType}>
+                <Button type="submit" disabled={!selectedClass}>
                   <Package className="w-4 h-4 mr-2" />
-                  Submeter Pedido
+                  Pedir Kit
                 </Button>
                 <Button variant="outline" onClick={() => setShowRequestForm(false)}>
                   Cancelar
@@ -603,7 +525,7 @@ export default function TeacherKitsPage() {
             // Empty State
             <EmptyState />
           ) : (
-            // Conteúdo Real COM JOURNEY VISUAL
+            // Conteúdo Real
             <div className="space-y-6">
               {kitRequests.map(request => {
                 const classInfo = classes.find(c => c.id === request.classId);
@@ -617,14 +539,14 @@ export default function TeacherKitsPage() {
                           <h4 className="text-xl font-bold">
                             {classInfo ? `${classInfo.name}` : "Turma não encontrada"}
                             <span className="text-lg font-normal text-muted-foreground ml-2">
-                              - {classInfo?.cycle} {classInfo?.year} | Kit {request.kitType}
+                              - {classInfo?.cycle} {classInfo?.year} | Kit Padrão
                             </span>
                           </h4>
                         </div>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <div className="flex items-center gap-1">
                             <Users className="w-4 h-4" />
-                            <span>{classInfo?.studentCount} alunos</span>
+                            <span>{classInfo?.students} alunos</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <BookOpen className="w-4 h-4" />

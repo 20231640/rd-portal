@@ -1,16 +1,14 @@
 import { 
   Users, 
-  BookOpen, 
   GraduationCap, 
   User, 
   LogOut, 
-  Home, 
   Moon, 
   Sun, 
   ChevronLeft, 
   ChevronRight, 
   FileText,
-  Package // 🔥 MUDANÇA: Adicionar Package
+  Package
 } from "lucide-react";
 import { Button } from "./button";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -26,10 +24,9 @@ export function Sidebar() {
 
   const menuItems = [
     { id: "perfil", path: "/teacher-dashboard", label: "Meu Perfil", icon: User },
-    { id: "visao-geral", path: "/overview", label: "Visão Geral", icon: Home },
-    { id: "turmas", path: "/classes", label: "Turmas", icon: Users },
     { id: "formacoes", path: "/trainings", label: "Formações", icon: GraduationCap },
-    { id: "kits", path: "/kits", label: "Kits Pedagógicos", icon: Package }, // 🔥 MUDANÇA: BookOpen → Package
+    { id: "turmas", path: "/classes", label: "Turmas", icon: Users },
+    { id: "kits", path: "/kits", label: "Kits Pedagógicos", icon: Package },
     { id: "feedback", path: "/feedback", label: "Feedback & Relatórios", icon: FileText },
   ];
 
@@ -138,7 +135,7 @@ export function Sidebar() {
           {!isCollapsed && <span className="ml-3">Terminar Sessão</span>}
         </Button>
       </div>
-    <div className="border-t border-sidebar-border space-y-2"></div>
+      <div className="border-t border-sidebar-border space-y-2"></div>
     </div>
   );
 }
