@@ -18,56 +18,86 @@ export default function TeacherDashboard() {
 
   // Buscar dados do professor
   useEffect(() => {
-    const email = localStorage.getItem("loggedInTeacher");
-    if (!email) {
+    const teacherData = localStorage.getItem("teacherData");
+    const loggedInTeacher = localStorage.getItem("loggedInTeacher");
+    
+    console.log('🔍 Verificando autenticação...', {
+      teacherData: teacherData ? 'Presente' : 'Ausente',
+      loggedInTeacher: loggedInTeacher || 'Ausente'
+    });
+
+    if (!teacherData || !loggedInTeacher) {
+      console.log('❌ Não autenticado, redirecionando...');
       navigate("/login");
       return;
     }
 
     async function loadTeacher() {
       try {
-        const res = await fetch(`${API_URL}/api/auth/teachers`);
-        if (!res.ok) throw new Error("Erro ao buscar professores.");
-        const all = await res.json();
-        const found = all.find(t => t.email === email);
-        if (!found) {
-          localStorage.removeItem("loggedInTeacher");
-          navigate("/login");
-          return;
+        // ✅ CORREÇÃO: Usar a rota CORRETA que existe
+        console.log('🔄 Buscando dados do professor...');
+        const response = await fetch(`${API_URL}/api/teachers/email/${loggedInTeacher}`);
+        
+        console.log('📡 Status da resposta:', response.status);
+        
+        if (!response.ok) {
+          throw new Error("Professor não encontrado");
         }
+
+        const found = await response.json();
+        console.log('✅ Professor encontrado:', found);
+        
         setTeacher(found);
         setFormData({ 
           name: found.name, 
           phone: found.phone || "" 
         });
         
-        // Buscar estatísticas REAIS
+        // ✅ CORREÇÃO: Carregar estatísticas com rotas que EXISTEM
         await loadStats(found.id);
+        
       } catch (err) {
-        console.error("Erro ao carregar perfil:", err);
+        console.error("❌ Erro ao carregar perfil:", err);
+        alert("Erro ao carregar dados. Tente fazer login novamente.");
+        localStorage.removeItem("teacherData");
+        localStorage.removeItem("loggedInTeacher");
+        navigate("/login");
       }
     }
 
     async function loadStats(teacherId) {
       try {
-        // Buscar turmas do professor
-        const classesRes = await fetch(`${API_URL}/api/classes?teacherId=${teacherId}`);
-        const classes = await classesRes.json();
+        console.log('📊 Carregando estatísticas...');
         
-        // Buscar kits do professor
-        const kitsRes = await fetch(`${API_URL}/api/kits/teacher/${teacherId}`);
-        const kits = await kitsRes.json();
-        
-        // Calcular totais
-        const totalStudents = classes.reduce((sum, cls) => sum + cls.students, 0);
-        
-        setStats({
-          classes: classes.length,
-          kits: kits.length,
-          students: totalStudents
-        });
+        // ✅ CORREÇÃO: Buscar turmas do professor
+        const classesRes = await fetch(`${API_URL}/api/classes`);
+        if (classesRes.ok) {
+          const allClasses = await classesRes.json();
+          const teacherClasses = allClasses.filter(cls => cls.teacherId === teacherId);
+          
+          // ✅ CORREÇÃO: Buscar kits do professor  
+          const kitsRes = await fetch(`${API_URL}/api/kits`);
+          const allKits = await kitsRes.ok ? await kitsRes.json() : [];
+          const teacherKits = allKits.filter(kit => kit.teacherId === teacherId);
+          
+          // Calcular totais
+          const totalStudents = teacherClasses.reduce((sum, cls) => sum + (cls.students || 0), 0);
+          
+          setStats({
+            classes: teacherClasses.length,
+            kits: teacherKits.length,
+            students: totalStudents
+          });
+          
+          console.log('✅ Estatísticas carregadas:', {
+            classes: teacherClasses.length,
+            kits: teacherKits.length,
+            students: totalStudents
+          });
+        }
       } catch (err) {
-        console.error("Erro ao carregar estatísticas:", err);
+        console.error("❌ Erro ao carregar estatísticas:", err);
+        // Não bloqueia a renderização se as estatísticas falharem
       }
     }
 

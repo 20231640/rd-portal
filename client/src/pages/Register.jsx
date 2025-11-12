@@ -6,6 +6,7 @@ import { Button } from "../components/ui/button";
 import { ThemeToggle } from "../components/ui/theme-toggle";
 import "react-phone-input-2/lib/style.css";
 import { API_URL } from "../config/api";
+import { supabase } from "../config/supabase"; // ✅ NOVO
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -19,11 +20,13 @@ export default function Register() {
   });
   const [message, setMessage] = useState("");
   const [schools, setSchools] = useState([]);
+  const [isLoading, setIsLoading] = useState(false); // ✅ NOVO
   const regions = [
-  "Aveiro", "Beja", "Braga", "Bragança", "Castelo Branco", "Coimbra",
-  "Évora", "Faro", "Guarda", "Leiria", "Lisboa", "Portalegre",
-  "Porto", "Santarém", "Setúbal", "Viana do Castelo", "Vila Real", "Viseu",
-  "Região Autónoma da Madeira", "Região Autónoma dos Açores"];
+    "Aveiro", "Beja", "Braga", "Bragança", "Castelo Branco", "Coimbra",
+    "Évora", "Faro", "Guarda", "Leiria", "Lisboa", "Portalegre",
+    "Porto", "Santarém", "Setúbal", "Viana do Castelo", "Vila Real", "Viseu",
+    "Região Autónoma da Madeira", "Região Autónoma dos Açores"
+  ];
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -36,62 +39,117 @@ export default function Register() {
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setMessage("");
+    setIsLoading(true); // ✅ NOVO
 
-    // Validação: password e confirmação
+    // Validações (mantenha as mesmas)
     if (form.password !== form.confirmPassword) {
       setMessage("❌ Password e confirmação não coincidem.");
+      setIsLoading(false);
       return;
     }
 
-    // Validação: password mínima
     if (form.password.length < 6) {
       setMessage("❌ Password deve ter pelo menos 6 caracteres.");
+      setIsLoading(false);
       return;
     }
 
-    // Validação: email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(form.email)) {
       setMessage("❌ Email inválido.");
+      setIsLoading(false);
       return;
     }
 
-    // Validação: telefone
     if (!form.phone) {
       setMessage("❌ Preenche o telefone.");
+      setIsLoading(false);
       return;
     }
 
-    // Validação: região/distrito
     if (!form.region) {
       setMessage("❌ Seleciona uma região/distrito.");
+      setIsLoading(false);
       return;
     }
 
     try {
-      const res = await fetch(`${API_URL}/api/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+      // ✅ NOVO: Registo com Supabase Auth
+      console.log('🔄 A registar com Supabase...');
+      
+      const { data, error } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+        options: {
+          data: {
+            name: form.name,
+            phone: form.phone,
+            school: form.school,
+            region: form.region
+          }
+        }
       });
-      const data = await res.json();
 
-      if (!res.ok) {
-        setMessage(data.message || "Erro ao registar.");
+      if (error) {
+        console.error('❌ Erro Supabase:', error);
+        setMessage("❌ " + error.message);
         return;
       }
 
-      setMessage("✅ Registo efetuado com sucesso! Aguarde aprovação da sua escola.");
-      setTimeout(() => navigate("/login"), 2000);
+      console.log('✅ Registo Supabase bem-sucedido:', data);
+      
+      // ✅ Criar professor na nossa base de dados
+      if (data.user) {
+        await createTeacherInDatabase(data.user, form);
+      }
+
+      setMessage("✅ Registo efetuado! Verifique o seu email para ativar a conta.");
+      setTimeout(() => navigate("/login"), 3000);
+      
     } catch (err) {
-      console.error(err);
+      console.error('💥 Erro:', err);
       setMessage("Erro de rede. Verifica a ligação ao servidor.");
+    } finally {
+      setIsLoading(false);
     }
   }
-  
+
+  // ✅ FUNÇÃO CORRIGIDA: Criar professor na nossa BD
+  async function createTeacherInDatabase(user, formData) {
+    try {
+      console.log('🔄 A criar professor na nossa BD...', user.id);
+      
+      const response = await fetch(`${API_URL}/api/teachers`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          supabaseUserId: user.id,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          school: formData.school,
+          region: formData.region
+        }),
+      });
+
+      const responseData = await response.json();
+      
+      if (!response.ok) {
+        console.error('❌ Erro ao criar professor na BD:', responseData);
+        throw new Error(responseData.error || 'Erro ao criar professor');
+      } else {
+        console.log('✅ Professor criado com sucesso na nossa BD:', responseData);
+        return responseData;
+      }
+    } catch (err) {
+      console.error('💥 Erro ao criar professor:', err);
+      throw err; // Propaga o erro para tratamento superior
+    }
+  }
   return (
     <div className="min-h-screen bg-background">
       {/* Header consistente */}
@@ -188,6 +246,7 @@ export default function Register() {
                 {schools.map(school => <option key={school} value={school} />)}
               </datalist>
             </div>
+
             <div className="space-y-2">
               <label className="block text-sm font-medium">Região/Distrito</label>
               <select
@@ -203,6 +262,7 @@ export default function Register() {
                 ))}
               </select>
             </div>
+
             {message && (
               <div className={`text-center text-sm font-medium py-3 rounded-xl ${
                 message.includes("✅") 
@@ -213,8 +273,13 @@ export default function Register() {
               </div>
             )}
 
-            <Button type="submit" size="lg" className="w-full mt-2 rounded-xl">
-              Registar
+            <Button 
+              type="submit" 
+              size="lg" 
+              className="w-full mt-2 rounded-xl"
+              disabled={isLoading}
+            >
+              {isLoading ? "A registar..." : "Registar"}
             </Button>
           </form>
 
@@ -229,6 +294,5 @@ export default function Register() {
     </div>
   );
 }
-
 
 

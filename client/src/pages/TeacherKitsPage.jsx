@@ -26,55 +26,229 @@ export default function TeacherKitsPage() {
   
   const previousRequestsRef = useRef([]);
 
-  // Buscar dados
+  // ✅ CORREÇÃO MELHORADA: Buscar dados com diagnóstico
   const fetchData = async () => {
     try {
-      const email = localStorage.getItem("loggedInTeacher");
-      if (!email) return;
-
-      const teacherRes = await fetch(`${API_URL}/api/auth/teachers`);
-      if (!teacherRes.ok) throw new Error("Erro ao carregar professores");
+      const teacherDataStr = localStorage.getItem("teacherData");
+      const loggedInTeacher = localStorage.getItem("loggedInTeacher");
       
-      const teachers = await teacherRes.json();
-      const currentTeacher = teachers.find(t => t.email === email);
-      
-      if (!currentTeacher) {
-        localStorage.removeItem("loggedInTeacher");
+      if (!teacherDataStr || !loggedInTeacher) {
+        console.log('❌ Não autenticado');
         return;
       }
-      
+
+      // ✅ CORREÇÃO: Usar dados do localStorage
+      const currentTeacher = JSON.parse(teacherDataStr);
+      console.log('✅ Carregando professor do localStorage:', currentTeacher);
       setTeacher(currentTeacher);
 
-      // Carregar turmas e kits em paralelo
-      const [classesRes, kitsRes] = await Promise.all([
-        fetch(`${API_URL}/api/classes?teacherId=${currentTeacher.id}`),
-        fetch(`${API_URL}/api/kits/teacher/${currentTeacher.id}`)
-      ]);
+      console.log('🔄 Buscando dados...');
+      
+      let allClasses = [];
+      let allKits = [];
 
-      if (!classesRes.ok) throw new Error("Erro ao carregar turmas");
-      if (!kitsRes.ok) throw new Error("Erro ao carregar pedidos");
+      // ✅ CORREÇÃO: Buscar turmas com tratamento de erro individual
+      try {
+        const classesRes = await fetch(`${API_URL}/api/classes`);
+        console.log('📡 Status das turmas:', classesRes.status);
+        
+        if (classesRes.ok) {
+          allClasses = await classesRes.json();
+          console.log('✅ Turmas carregadas:', allClasses.length);
+        } else {
+          console.error('❌ Erro ao carregar turmas:', classesRes.status);
+          throw new Error(`Erro ${classesRes.status} ao carregar turmas`);
+        }
+      } catch (classesError) {
+        console.error('❌ Erro nas turmas:', classesError);
+        throw new Error("Falha ao carregar turmas: " + classesError.message);
+      }
 
-      const [classesData, kitsData] = await Promise.all([
-        classesRes.json(),
-        kitsRes.json()
-      ]);
+      // ✅ CORREÇÃO: Buscar kits com tratamento de erro individual
+      try {
+        const kitsRes = await fetch(`${API_URL}/api/kits`);
+        console.log('📡 Status dos kits:', kitsRes.status);
+        
+        if (kitsRes.ok) {
+          allKits = await kitsRes.json();
+          console.log('✅ Kits carregados:', allKits.length);
+        } else {
+          console.error('❌ Erro ao carregar kits:', kitsRes.status);
+          
+          // Se a rota não existir (404), usar array vazio
+          if (kitsRes.status === 404) {
+            console.warn('⚠️ Rota /api/kits não encontrada, usando array vazio');
+            allKits = [];
+          } else {
+            throw new Error(`Erro ${kitsRes.status} ao carregar pedidos`);
+          }
+        }
+      } catch (kitsError) {
+        console.error('❌ Erro nos kits:', kitsError);
+        
+        // Se for erro de rede, usar array vazio
+        if (kitsError.message.includes('Failed to fetch')) {
+          console.warn('⚠️ Erro de rede nos kits, usando array vazio');
+          allKits = [];
+        } else {
+          throw new Error("Falha ao carregar pedidos: " + kitsError.message);
+        }
+      }
+
+      console.log('📊 Dados brutos:', { 
+        turmas: allClasses.length, 
+        kits: allKits.length 
+      });
+
+      // ✅ CORREÇÃO: Filtrar turmas e kits do professor atual
+      const teacherClasses = allClasses.filter(cls => cls.teacherId === currentTeacher.id);
+      const teacherKits = allKits.filter(kit => kit.teacherId === currentTeacher.id);
+
+      console.log('✅ Dados filtrados:', { 
+        teacherClasses: teacherClasses.length, 
+        teacherKits: teacherKits.length 
+      });
 
       // Detectar mudanças para notificações
-      detectChanges(kitsData);
+      detectChanges(teacherKits);
 
-      setClasses(classesData);
-      setKitRequests(kitsData);
+      setClasses(teacherClasses);
+      setKitRequests(teacherKits);
       setLastUpdate(new Date());
       
     } catch (err) {
-      console.error("Erro ao carregar dados:", err);
+      console.error("❌ Erro ao carregar dados:", err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // Detectar mudanças nos pedidos
+  // ✅ CORREÇÃO: Função de pedir kit
+  const handleRequestKit = async (e) => {
+    e.preventDefault();
+    if (!selectedClass) return;
+
+    try {
+      console.log('🔄 Criando pedido de kit...', {
+        teacherId: teacher.id,
+        classId: parseInt(selectedClass),
+        kitType: "standard" // Valor padrão
+      });
+
+      const res = await fetch(`${API_URL}/api/kits`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          teacherId: teacher.id,
+          classId: parseInt(selectedClass),
+          kitType: "standard"
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.error('❌ Erro do servidor:', errorData);
+        throw new Error(errorData.message || "Erro ao criar pedido");
+      }
+
+      const newRequest = await res.json();
+      console.log('✅ Pedido criado:', newRequest);
+      
+      setKitRequests(prev => [newRequest, ...prev]);
+      setShowRequestForm(false);
+      setSelectedClass("");
+      
+      // Forçar atualização para sincronizar
+      setTimeout(() => fetchData(), 1000);
+      
+      alert("Pedido de kit criado com sucesso!");
+      
+    } catch (err) {
+      console.error("❌ Erro ao pedir kit:", err);
+      alert("Erro ao fazer pedido: " + err.message);
+    }
+  };
+
+  // ✅ CORREÇÃO: Função de marcar como entregue
+  const handleMarkAsDelivered = async (requestId) => {
+    try {
+      console.log('🔄 Marcando como entregue...', requestId);
+
+      const res = await fetch(`${API_URL}/api/kits/${requestId}/deliver`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" }
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Erro ao marcar como entregue");
+      }
+
+      const updatedRequest = await res.json();
+      console.log('✅ Pedido atualizado:', updatedRequest);
+      
+      setKitRequests(prev =>
+        prev.map(req =>
+          req.id === requestId ? updatedRequest : req
+        )
+      );
+      
+      // Forçar atualização
+      setTimeout(() => fetchData(), 1000);
+      
+      alert("Receção confirmada com sucesso!");
+      
+    } catch (err) {
+      console.error("❌ Erro ao marcar como entregue:", err);
+      alert("Erro ao confirmar receção: " + err.message);
+    }
+  };
+
+  // ✅ CORREÇÃO: Função de reportar problema
+  const handleReportProblem = async (e) => {
+    e.preventDefault();
+    if (!reportMessage.trim()) return;
+
+    try {
+      console.log("📤 Enviando report para kit:", selectedRequestForReport.id);
+
+      // ✅ CORREÇÃO: Usar a rota correta para reports
+      const response = await fetch(`${API_URL}/api/kits/${selectedRequestForReport.id}/reports`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          message: reportMessage,
+          teacherId: teacher.id,
+          teacherName: teacher.name
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Erro ao reportar problema");
+      }
+
+      const result = await response.json();
+      console.log("✅ Report criado com sucesso:", result);
+
+      // ✅ CORREÇÃO: Atualizar a lista de kits para refletir o report
+      await fetchData(); // Recarregar dados completos
+
+      alert("Problema reportado com sucesso!");
+      setShowReportForm(false);
+      setSelectedRequestForReport(null);
+      setReportMessage("");
+
+    } catch (err) {
+      console.error("💥 Erro completo:", err);
+      alert("Erro ao reportar problema: " + err.message);
+    }
+  };
+
+  // ✅ CORREÇÃO: Detectar mudanças nos pedidos (mantida igual)
   const detectChanges = (newRequests) => {
     if (previousRequestsRef.current.length === 0) {
       previousRequestsRef.current = newRequests;
@@ -99,7 +273,7 @@ export default function TeacherKitsPage() {
     previousRequestsRef.current = newRequests;
   };
 
-  // Verificar se uma turma já tem pedido
+  // ✅ CORREÇÃO: Verificar se uma turma já tem pedido (mantida igual)
   const classHasRequest = (classId) => {
     return kitRequests.some(request => 
       request.classId === classId && 
@@ -108,12 +282,12 @@ export default function TeacherKitsPage() {
     );
   };
 
-  // Efeito para carregamento inicial
+  // ✅ CORREÇÃO: Efeito para carregamento inicial
   useEffect(() => {
     fetchData();
   }, []);
 
-  // Loading Skeleton
+  // ✅ CORREÇÃO: Loading Skeleton (mantido igual)
   const RequestSkeleton = () => (
     <div className="border border-border rounded-lg p-6 animate-pulse">
       <div className="flex items-center justify-between">
@@ -144,7 +318,7 @@ export default function TeacherKitsPage() {
     </div>
   );
 
-  // Empty State
+  // ✅ CORREÇÃO: Empty State (mantido igual)
   const EmptyState = () => {
     const availableClasses = classes.filter(cls => !classHasRequest(cls.id));
     
@@ -169,116 +343,7 @@ export default function TeacherKitsPage() {
     );
   };
 
-  const handleRequestKit = async (e) => {
-    e.preventDefault();
-    if (!selectedClass) return;
-
-    try {
-      const res = await fetch(`${API_URL}/api/kits/request`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          teacherId: teacher.id,
-          classId: parseInt(selectedClass),
-        }),
-      });
-
-      if (res.ok) {
-        const newRequest = await res.json();
-        setKitRequests(prev => [newRequest, ...prev]);
-        setShowRequestForm(false);
-        setSelectedClass("");
-        
-        // Forçar atualização para sincronizar
-        setTimeout(() => fetchData(), 1000);
-      } else {
-        throw new Error("Erro ao criar pedido");
-      }
-    } catch (err) {
-      console.error("Erro ao pedir kit:", err);
-      alert("Erro ao fazer pedido: " + err.message);
-    }
-  };
-
-  const handleMarkAsDelivered = async (requestId) => {
-    try {
-      const res = await fetch(`${API_URL}/api/kits/${requestId}/deliver`, {
-        method: "PUT",
-      });
-
-      if (res.ok) {
-        const updatedRequest = await res.json();
-        setKitRequests(prev =>
-          prev.map(req =>
-            req.id === requestId ? updatedRequest : req
-          )
-        );
-        
-        // Forçar atualização
-        setTimeout(() => fetchData(), 1000);
-      } else {
-        throw new Error("Erro ao marcar como entregue");
-      }
-    } catch (err) {
-      console.error("Erro ao marcar como entregue:", err);
-      alert("Erro ao confirmar receção: " + err.message);
-    }
-  };
-
-  const handleReportProblem = async (e) => {
-    e.preventDefault();
-    if (!reportMessage.trim()) return;
-
-    try {
-      console.log("📤 Enviando report para kit:", selectedRequestForReport.id);
-
-      const response = await fetch(`${API_URL}/api/kits/${selectedRequestForReport.id}/report`, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
-        body: JSON.stringify({
-          message: reportMessage,
-          teacherId: teacher.id,
-          teacherName: teacher.name
-        }),
-      });
-
-      // Verificar se a resposta é JSON
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        const text = await response.text();
-        console.error("❌ Resposta não é JSON:", text.substring(0, 200));
-        throw new Error("O servidor retornou uma resposta inválida");
-      }
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Erro ao reportar problema");
-      }
-
-      console.log("✅ Report criado com sucesso:", result);
-
-      // Atualizar estado
-      setKitRequests(prev =>
-        prev.map(req =>
-          req.id === selectedRequestForReport.id ? result : req
-        )
-      );
-
-      alert("Problema reportado com sucesso!");
-      setShowReportForm(false);
-      setSelectedRequestForReport(null);
-      setReportMessage("");
-
-    } catch (err) {
-      console.error("💥 Erro completo:", err);
-      alert("Erro ao reportar problema: " + err.message);
-    }
-  };
-
+  // ✅ CORREÇÃO: Função auxiliar para status (mantida igual)
   const getStatusText = (status) => {
     switch (status) {
       case "pending": return "Pendente";
@@ -289,7 +354,7 @@ export default function TeacherKitsPage() {
     }
   };
 
-  // Turmas disponíveis para pedido (sem pedidos ativos)
+  // ✅ CORREÇÃO: Turmas disponíveis para pedido (mantida igual)
   const availableClasses = classes.filter(cls => !classHasRequest(cls.id));
 
   if (error) {
@@ -310,7 +375,7 @@ export default function TeacherKitsPage() {
       </div>
     );
   }
-
+  
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar />

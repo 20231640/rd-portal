@@ -33,40 +33,58 @@ export default function ClassesPage() {
     COMPLETED: { label: "Concluída", color: "secondary", icon: BookOpen }
   };
 
-  // Buscar dados do professor
+  // ✅ CORREÇÃO: Buscar dados do professor
   useEffect(() => {
-    const email = localStorage.getItem("loggedInTeacher");
-    if (!email) {
+    const teacherDataStr = localStorage.getItem("teacherData");
+    const loggedInTeacher = localStorage.getItem("loggedInTeacher");
+
+    if (!teacherDataStr || !loggedInTeacher) {
       navigate("/login");
       return;
     }
 
-    async function loadTeacher() {
+    async function loadTeacherAndClasses() {
       try {
-        const res = await fetch(`${API_URL}/api/auth/teachers`);
-        if (!res.ok) throw new Error("Erro ao buscar professores.");
-        const all = await res.json();
-        const found = all.find(t => t.email === email);
-        if (!found) {
-          localStorage.removeItem("loggedInTeacher");
-          navigate("/login");
-          return;
-        }
-        setTeacher(found);
+        // ✅ CORREÇÃO: Usar dados do localStorage
+        const teacherData = JSON.parse(teacherDataStr);
+        console.log('✅ Carregando professor do localStorage:', teacherData);
+        setTeacher(teacherData);
 
-        // Buscar turmas do professor
-        const classesRes = await fetch(`${API_URL}/api/classes?teacherId=${found.id}`);
-        if (!classesRes.ok) throw new Error("Erro ao buscar turmas.");
-        const classesData = await classesRes.json();
-        setClasses(classesData);
-        setFilteredClasses(classesData);
+        // ✅ CORREÇÃO: Buscar todas as turmas e filtrar
+        console.log('🔄 Buscando turmas...');
+        try {
+          const classesRes = await fetch(`${API_URL}/api/classes`);
+          if (classesRes.ok) {
+            const allClasses = await classesRes.json();
+            console.log('📊 Todas as turmas:', allClasses);
+            
+            // Filtrar turmas deste professor
+            const teacherClasses = allClasses.filter(cls => cls.teacherId === teacherData.id);
+            console.log('✅ Turmas do professor:', teacherClasses);
+            
+            setClasses(teacherClasses);
+            setFilteredClasses(teacherClasses);
+          } else {
+            console.error('❌ Erro ao buscar turmas:', classesRes.status);
+            setClasses([]);
+            setFilteredClasses([]);
+          }
+        } catch (classesError) {
+          console.error('❌ Erro ao buscar turmas:', classesError);
+          setClasses([]);
+          setFilteredClasses([]);
+        }
+
       } catch (err) {
-        console.error(err);
-        alert("Erro ao carregar dados do professor ou turmas.");
+        console.error("❌ Erro ao carregar dados:", err);
+        alert("Erro ao carregar dados. Tente fazer login novamente.");
+        localStorage.removeItem("teacherData");
+        localStorage.removeItem("loggedInTeacher");
+        navigate("/login");
       }
     }
 
-    loadTeacher();
+    loadTeacherAndClasses();
   }, [navigate]);
 
   useEffect(() => {
@@ -76,6 +94,7 @@ export default function ClassesPage() {
   // ⬇️⬇️ FUNÇÕES NOVAS QUE FALTAM ⬇️⬇️
 
   // VERIFICAR SE PODE CRIAR TURMA
+  // ✅ CORREÇÃO: Funções mantidas mas com melhor tratamento de erro
   const canCreateClass = () => {
     return teacher?.hasCompletedTraining || teacher?.certificateUrl;
   };
@@ -98,15 +117,13 @@ export default function ClassesPage() {
     navigate("/training");
   };
 
-  // ⬆️⬆️ ATÉ AQUI ⬆️⬆️
-
   const filterClasses = () => {
     let filtered = classes;
 
     if (searchTerm) {
       filtered = filtered.filter(cls =>
         cls.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        cls.cycle.toLowerCase().includes(searchTerm.toLowerCase())
+        (cls.cycle && cls.cycle.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
@@ -117,6 +134,7 @@ export default function ClassesPage() {
     setFilteredClasses(filtered);
   };
 
+  // ✅ CORREÇÃO: Função de adicionar turma com melhor tratamento
   const handleAddClass = async (e) => {
     e.preventDefault();
     
@@ -132,6 +150,12 @@ export default function ClassesPage() {
     }
 
     try {
+      console.log('🔄 Criando nova turma...', {
+        ...newClass,
+        teacherId: teacher.id,
+        schoolId: teacher.schoolId // ✅ IMPORTANTE: Adicionar schoolId
+      });
+
       const res = await fetch(`${API_URL}/api/classes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -141,35 +165,40 @@ export default function ClassesPage() {
           cycle: newClass.cycle,
           year: newClass.year,
           teacherId: teacher.id,
+          schoolId: teacher.schoolId, // ✅ CORREÇÃO: Adicionar schoolId
           state: "ACTIVE"
         })
       });
       
       if (!res.ok) {
         const errorData = await res.json();
-        // MOSTRAR MENSAGEM ESPECÍFICA DO BACKEND
+        console.error('❌ Erro do servidor:', errorData);
         alert(errorData.message || "Erro ao criar turma");
         return;
       }
       
       const created = await res.json();
+      console.log('✅ Turma criada:', created);
+      
       setClasses([...classes, created]);
       setFilteredClasses([...filteredClasses, created]);
       setNewClass({ name: "", students: "", cycle: "", year: "" });
       setShowAddClass(false);
       
-      // Mensagem de sucesso
       alert("Turma criada com sucesso!");
       
     } catch (err) {
-      console.error("Erro detalhado:", err);
+      console.error("❌ Erro detalhado:", err);
       alert(err.message || "Erro ao criar turma no servidor.");
     }
   };
 
+  // ✅ CORREÇÃO: Função de editar turma
   const handleEditClass = async (e) => {
     e.preventDefault();
     try {
+      console.log('🔄 Editando turma...', editingClass);
+      
       const res = await fetch(`${API_URL}/api/classes/${editingClass.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -180,51 +209,78 @@ export default function ClassesPage() {
           year: editingClass.year
         })
       });
-      if (!res.ok) throw new Error("Erro ao atualizar turma");
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Erro ao atualizar turma");
+      }
+      
       const updated = await res.json();
+      console.log('✅ Turma atualizada:', updated);
+      
       const updatedClasses = classes.map(c => c.id === updated.id ? updated : c);
       setClasses(updatedClasses);
       setFilteredClasses(updatedClasses);
       setEditingClass(null);
       setShowAddClass(false);
+      
+      alert("Turma atualizada com sucesso!");
     } catch (err) {
-      console.error(err);
-      alert("Erro ao atualizar turma no servidor.");
+      console.error("❌ Erro ao editar turma:", err);
+      alert(err.message || "Erro ao atualizar turma no servidor.");
     }
   };
 
+  // ✅ CORREÇÃO: Função de deletar turma
   const handleDeleteClass = async (id) => {
     if (!window.confirm("Tem a certeza que quer apagar esta turma?")) return;
     try {
+      console.log('🔄 Apagando turma...', id);
+      
       const res = await fetch(`${API_URL}/api/classes/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Erro ao apagar turma");
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Erro ao apagar turma");
+      }
+      
       const updated = classes.filter(c => c.id !== id);
       setClasses(updated);
       setFilteredClasses(updated);
+      
+      alert("Turma apagada com sucesso!");
     } catch (err) {
-      console.error(err);
-      alert("Erro ao apagar turma no servidor.");
+      console.error("❌ Erro ao apagar turma:", err);
+      alert(err.message || "Erro ao apagar turma no servidor.");
     }
   };
 
+  // ✅ CORREÇÃO: Função de mudar estado
   const handleChangeState = async (id, newState) => {
     try {
+      console.log('🔄 Mudando estado da turma...', { id, newState });
+      
       const res = await fetch(`${API_URL}/api/classes/${id}/state`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ state: newState })
       });
       
-      if (!res.ok) throw new Error("Erro ao atualizar estado");
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Erro ao atualizar estado");
+      }
+      
       const updated = await res.json();
+      console.log('✅ Estado atualizado:', updated);
       
       const updatedClasses = classes.map(c => c.id === id ? updated : c);
       setClasses(updatedClasses);
       setFilteredClasses(updatedClasses);
       
     } catch (err) {
-      console.error(err);
-      alert("Erro ao alterar estado da turma.");
+      console.error("❌ Erro ao alterar estado:", err);
+      alert(err.message || "Erro ao alterar estado da turma.");
     }
   };
 

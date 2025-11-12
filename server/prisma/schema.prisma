@@ -38,6 +38,7 @@ model TrainingSession {
 
 model Teacher {
   id                   Int               @id @default(autoincrement())
+  supabaseUserId       String?           @unique // 🔥 NOVO
   name                 String
   email                String            @unique
   password             String
@@ -54,6 +55,9 @@ model Teacher {
   trainings            TrainingSession[]
   certificateUrl       String?
   hasCompletedTraining Boolean           @default(false)
+  emailVerified      Boolean   @default(false)
+  verificationToken  String?
+  verificationExpires DateTime?
 }
 
 model Class {

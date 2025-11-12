@@ -13,33 +13,52 @@ export default function TeacherTrainingsPage() {
   const [teacher, setTeacher] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Buscar dados do professor logado
+  // ✅ CORREÇÃO: Buscar dados do professor logado
   useEffect(() => {
-    const email = localStorage.getItem("loggedInTeacher");
-    if (!email) {
+    const teacherDataStr = localStorage.getItem("teacherData");
+    const loggedInTeacher = localStorage.getItem("loggedInTeacher");
+
+    if (!teacherDataStr || !loggedInTeacher) {
       navigate("/login");
       return;
     }
 
     async function loadTeacherAndTrainings() {
       try {
-        // Buscar todos os professores
-        const teachersRes = await axios.get(`${API_URL}/api/auth/teachers`);
-        const foundTeacher = teachersRes.data.find(t => t.email === email);
+        // ✅ CORREÇÃO: Usar dados do localStorage em vez de fazer fetch
+        const teacherData = JSON.parse(teacherDataStr);
+        console.log('✅ Carregando professor do localStorage:', teacherData);
         
-        if (!foundTeacher) {
-          localStorage.removeItem("loggedInTeacher");
-          navigate("/login");
-          return;
+        setTeacher(teacherData);
+
+        // ✅ CORREÇÃO: Buscar formações usando a rota CORRETA
+        console.log('🔄 Buscando formações...');
+        
+        // Primeiro tentar buscar todas as formações e filtrar
+        try {
+          const trainingsRes = await axios.get(`${API_URL}/api/trainings`);
+          console.log('📊 Todas as formações:', trainingsRes.data);
+          
+          // Filtrar formações deste professor
+          const teacherTrainings = trainingsRes.data.filter(
+            training => training.teacherId === teacherData.id
+          );
+          
+          console.log('✅ Formações do professor:', teacherTrainings);
+          setTrainings(teacherTrainings);
+          
+        } catch (trainingsError) {
+          console.error('❌ Erro ao buscar formações:', trainingsError);
+          // Se não conseguir buscar formações, definir array vazio
+          setTrainings([]);
         }
 
-        setTeacher(foundTeacher);
-
-        // Buscar formações deste professor
-        const trainingsRes = await axios.get(`${API_URL}/api/trainings/teacher/${foundTeacher.id}`);
-        setTrainings(trainingsRes.data);
       } catch (err) {
-        console.error("Erro ao carregar dados:", err);
+        console.error("❌ Erro ao carregar dados:", err);
+        alert("Erro ao carregar dados. Tente fazer login novamente.");
+        localStorage.removeItem("teacherData");
+        localStorage.removeItem("loggedInTeacher");
+        navigate("/login");
       } finally {
         setLoading(false);
       }
@@ -47,6 +66,32 @@ export default function TeacherTrainingsPage() {
 
     loadTeacherAndTrainings();
   }, [navigate]);
+
+  // ✅ CORREÇÃO: Função para verificar se formação é futura
+  const isTrainingFuture = (trainingDate) => {
+    try {
+      return new Date(trainingDate) > new Date();
+    } catch (err) {
+      console.error('❌ Erro ao verificar data:', err);
+      return false;
+    }
+  };
+
+  // ✅ CORREÇÃO: Função para abrir certificado
+  const handleOpenCertificate = (certificateUrl) => {
+    if (!certificateUrl) {
+      alert("Certificado não disponível");
+      return;
+    }
+
+    // Se a URL já é completa
+    if (certificateUrl.startsWith('http')) {
+      window.open(certificateUrl, '_blank');
+    } else {
+      // Se é um caminho relativo
+      window.open(`${API_URL}${certificateUrl}`, '_blank');
+    }
+  };
 
   if (!teacher && !loading) {
     return (
@@ -71,10 +116,6 @@ export default function TeacherTrainingsPage() {
       </div>
     );
   }
-
-  const isTrainingFuture = (trainingDate) => {
-    return new Date(trainingDate) > new Date();
-  };
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -139,7 +180,7 @@ export default function TeacherTrainingsPage() {
                         </p>
                       )}
                       
-                      {/* Avaliação do Admin - VERSÃO SIMPLIFICADA */}
+                      {/* Avaliação do Admin */}
                       {training.completed && training.adminRating && (
                         <div className="mb-3 p-3 bg-green-50 rounded-lg border border-green-200">
                           <div className="flex items-center gap-2 mb-1">
@@ -159,12 +200,22 @@ export default function TeacherTrainingsPage() {
                       <div className="space-y-2 text-sm">
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4 text-muted-foreground" />
-                          <span>{new Date(training.date).toLocaleString('pt-PT')}</span>
+                          <span>
+                            {new Date(training.date).toLocaleString('pt-PT', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
                         </div>
                         {training.certificateGeneratedAt && (
                           <div className="flex items-center gap-2 text-green-600">
                             <CheckCircle className="w-4 h-4" />
-                            <span>Certificado gerado em {new Date(training.certificateGeneratedAt).toLocaleDateString('pt-PT')}</span>
+                            <span>
+                              Certificado: {new Date(training.certificateGeneratedAt).toLocaleDateString('pt-PT')}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -187,7 +238,7 @@ export default function TeacherTrainingsPage() {
                         <Button 
                           variant="default" 
                           className="w-full bg-blue-600 hover:bg-blue-700"
-                          onClick={() => window.open(`${API_URL}${training.certificateUrl}`, '_blank')}
+                          onClick={() => handleOpenCertificate(training.certificateUrl)}
                         >
                           📄 Ver Certificado
                         </Button>

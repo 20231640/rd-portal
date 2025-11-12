@@ -52,18 +52,30 @@ export default function AdminDashboard() {
     fetchData();
   }, []);
 
+  // ✅ NO ADMIN DASHBOARD - Mude a fetchData:
   async function fetchData() {
     try {
+      console.log('🔄 Buscando dados para admin...');
+      
       const [schoolsRes, teachersRes] = await Promise.all([
         fetch(`${API_URL}/api/auth/schools`),
-        fetch(`${API_URL}/api/auth/teachers`),
+        fetch(`${API_URL}/api/auth/teachers`), // ✅ MUDOU PARA /api/auth/teachers
       ]);
 
-      if (!schoolsRes.ok || !teachersRes.ok)
+      if (!schoolsRes.ok || !teachersRes.ok) {
         throw new Error("Erro ao buscar dados do servidor.");
+      }
 
-      setSchools(await schoolsRes.json());
-      setTeachers(await teachersRes.json());
+      const schoolsData = await schoolsRes.json();
+      const teachersData = await teachersRes.json();
+      
+      console.log('✅ Dados carregados:', {
+        escolas: schoolsData.length,
+        professores: teachersData.length
+      });
+
+      setSchools(schoolsData);
+      setTeachers(teachersData);
       setLoading(false);
     } catch (err) {
       console.error(err);
@@ -71,7 +83,6 @@ export default function AdminDashboard() {
       setLoading(false);
     }
   }
-
   // Logout
   function handleLogout() {
     localStorage.removeItem("loggedInAdmin");
@@ -158,59 +169,81 @@ export default function AdminDashboard() {
     }
   }
 
-
   // Professores - Bloquear/Desbloquear
-  async function toggleTeacherBlock(id, blocked) {
+  async function toggleTeacherBlock(id, currentlyBlocked) {
     try {
-      const res = await fetch(`${API_URL}/api/auth/teachers/${id}`, {
+      const res = await fetch(`${API_URL}/api/auth/teachers/${id}/block`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ blocked: !blocked }),
+        body: JSON.stringify({ blocked: !currentlyBlocked }),
       });
-      if (!res.ok) throw new Error("Erro ao atualizar professor.");
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Erro ao atualizar professor.");
+      }
+
+      const updatedTeacher = await res.json();
+      
       setTeachers((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, blocked: !blocked } : t))
+        prev.map((t) => (t.id === id ? updatedTeacher : t))
       );
-      showToast(blocked ? "Professor desbloqueado!" : "Professor bloqueado!");
+      
+      showToast(!currentlyBlocked ? "Professor desbloqueado!" : "Professor bloqueado!");
     } catch (err) {
       console.error(err);
-      showToast("Erro ao atualizar professor.", "error");
+      showToast(err.message, "error");
     }
   }
 
   // Professores - Editar
   async function saveTeacherEdit(id, field, value) {
     try {
+      const updateData = { [field]: value };
+      
       const res = await fetch(`${API_URL}/api/auth/teachers/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ [field]: value }),
+        body: JSON.stringify(updateData),
       });
-      if (!res.ok) throw new Error("Erro ao atualizar professor.");
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Erro ao atualizar professor.");
+      }
+
+      const updatedTeacher = await res.json();
+      
       setTeachers((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, [field]: value } : t))
+        prev.map((t) => (t.id === id ? updatedTeacher : t))
       );
+      
       setEditingTeacherId(null);
-      showToast("Professor atualizado!");
+      showToast("Professor atualizado com sucesso!");
     } catch (err) {
       console.error(err);
-      showToast("Erro ao atualizar professor.", "error");
+      showToast(err.message, "error");
     }
   }
-
-  // Professores - Eliminar
+  // Professores - Eliminar (CORRIGIDA)
   async function handleDeleteTeacher(id) {
     if (!window.confirm("Tem a certeza que quer apagar este professor?")) return;
+    
     try {
       const res = await fetch(`${API_URL}/api/auth/teachers/${id}`, {
         method: "DELETE",
       });
-      if (!res.ok) throw new Error("Erro ao apagar professor.");
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Erro ao apagar professor.");
+      }
+
       setTeachers(prev => prev.filter(t => t.id !== id));
-      showToast("Professor removido.");
+      showToast("Professor removido com sucesso!");
     } catch (err) {
       console.error(err);
-      showToast("Erro ao apagar professor.", "error");
+      showToast(err.message, "error");
     }
   }
 
@@ -285,10 +318,6 @@ export default function AdminDashboard() {
                 className="pl-10 w-64 h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
-            <Button variant="outline">
-              <Download className="w-4 h-4 mr-2" />
-              Exportar
-            </Button>
           </div>
         </div>
 

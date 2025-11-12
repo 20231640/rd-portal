@@ -4,6 +4,7 @@ import { LogIn, GraduationCap, Home, Mail } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { ThemeToggle } from "../components/ui/theme-toggle";
 import { API_URL } from "../config/api";
+import { supabase } from "../config/supabase";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -11,7 +12,6 @@ export default function Login() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const navigate = useNavigate();
 
   async function handleSubmit(e) {
@@ -20,64 +20,134 @@ export default function Login() {
     setSuccess("");
     setIsLoading(true);
 
+    console.log('🔍 INICIANDO LOGIN...');
+
     try {
-      const res = await fetch(`${API_URL}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+      // ✅ VERIFICAÇÃO ESPECIAL PARA ADMIN (SEM Supabase)
+      if (email === "admin@rd.pt") {
+        console.log('👨‍💼 Tentando login como admin...');
+        
+        if (password === "admin123") {
+          console.log('✅ Login admin bem-sucedido');
+          localStorage.setItem("loggedInAdmin", "true");
+          localStorage.setItem("adminEmail", "admin@rd.pt");
+          navigate("/admin");
+          return;
+        } else {
+          setError("❌ Credenciais de admin inválidas");
+          return;
+        }
+      }
+
+      // ✅ LOGIN NORMAL PARA PROFESSORES (Supabase Auth)
+      console.log('🔄 Step 1: Fazendo login com Supabase...');
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password
       });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.message || "Erro ao iniciar sessão.");
+
+      if (error) {
+        console.error('❌ Erro no Supabase Auth:', error);
+        
+        if (error.message.includes('Email not confirmed')) {
+          setError("Por favor, verifique o seu email antes de fazer login.");
+          return;
+        }
+        
+        setError("❌ " + error.message);
         return;
       }
 
-      if (data.role === "admin") {
-        localStorage.setItem("loggedInAdmin", "true");
-        navigate("/admin");
-      } else if (data.role === "teacher") {
-        localStorage.setItem("loggedInTeacher", data.teacher.email);
-        navigate("/teacher-dashboard");
+      console.log('✅ Step 1: Login Supabase bem-sucedido:', data.user.id);
+      
+      // ✅ Login bem-sucedido
+      const user = data.user;
+      
+      console.log('👨‍🏫 Step 2: Buscando dados do professor...');
+      
+      // Buscar dados do professor da nossa tabela
+      try {
+        const teacherResponse = await fetch(`${API_URL}/api/teachers/email/${user.email}`);
+        console.log('📡 Status da resposta teacher:', teacherResponse.status);
+        
+        if (teacherResponse.ok) {
+          const teacherData = await teacherResponse.json();
+          console.log('✅ Dados do professor:', teacherData);
+          
+          localStorage.setItem("teacherData", JSON.stringify(teacherData));
+          localStorage.setItem("loggedInTeacher", user.email);
+          
+          console.log('💾 Dados salvos no localStorage');
+        } else {
+          console.warn('⚠️ Professor não encontrado na nossa BD, mas continuando...');
+          
+          // Criar dados básicos no localStorage
+          localStorage.setItem("teacherData", JSON.stringify({
+            id: user.id,
+            name: user.user_metadata?.name || user.email.split('@')[0],
+            email: user.email,
+            school: { name: "Escola não definida" }
+          }));
+          localStorage.setItem("loggedInTeacher", user.email);
+        }
+      } catch (err) {
+        console.error('❌ Erro ao buscar dados do professor:', err);
+        
+        // Criar dados básicos mesmo com erro
+        localStorage.setItem("teacherData", JSON.stringify({
+          id: user.id,
+          name: user.user_metadata?.name || user.email.split('@')[0],
+          email: user.email,
+          school: { name: "Escola não definida" }
+        }));
+        localStorage.setItem("loggedInTeacher", user.email);
       }
+
+      console.log('🔄 Step 3: Redirecionando para teacher-dashboard...');
+      
+      // ✅ FORÇAR redirecionamento
+      setTimeout(() => {
+        console.log('🎯 Executando navigate...');
+        navigate("/teacher-dashboard");
+      }, 100);
+
     } catch (err) {
-      console.error(err);
+      console.error('💥 Erro fatal no login:', err);
       setError("Erro de rede. Verifica a ligação ao servidor.");
     } finally {
+      console.log('🏁 Finalizando função handleSubmit');
       setIsLoading(false);
     }
   }
 
-  async function handleForgotPassword(e) {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
-    
+  // ✅ NOVA FUNÇÃO: Reenviar verificação de email
+  async function handleResendVerification() {
     if (!email) {
-      setError("Por favor, insira o seu email para redefinir a password.");
+      setError("Por favor, insira o seu email.");
       return;
     }
 
     setIsLoading(true);
-
     try {
-      const res = await fetch(`${API_URL}/api/auth/forgot-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+      console.log('🔄 A reenviar verificação...');
+      
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email,
       });
-      
-      const data = await res.json();
-      
-      if (!res.ok) {
-        setError(data.message || "Erro ao enviar email de recuperação.");
+
+      if (error) {
+        console.error('❌ Erro Supabase:', error);
+        setError("❌ " + error.message);
         return;
       }
 
-      setSuccess("Email de recuperação enviado! Verifique a sua caixa de entrada.");
-      setShowForgotPassword(false);
+      setSuccess("✅ Novo email de verificação enviado!");
+      setError(""); // Limpa erros anteriores
     } catch (err) {
-      console.error(err);
-      setError("Erro de rede. Verifica a ligação ao servidor.");
+      console.error('💥 Erro:', err);
+      setError("Erro de rede. Tente novamente.");
     } finally {
       setIsLoading(false);
     }
@@ -115,137 +185,92 @@ export default function Login() {
         <div className="bg-card text-card-foreground rounded-2xl p-8 shadow-xl w-full max-w-md border border-border animate-fade-in-up">
           <div className="flex flex-col items-center mb-8">
             <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
-              {showForgotPassword ? (
-                <Mail className="w-8 h-8 text-primary" />
-              ) : (
-                <LogIn className="w-8 h-8 text-primary" />
-              )}
+              <LogIn className="w-8 h-8 text-primary" />
             </div>
-            <h2 className="text-3xl font-bold text-center mb-2">
-              {showForgotPassword ? "Recuperar Password" : "Bem-vindo 👋"}
-            </h2>
+            <h2 className="text-3xl font-bold text-center mb-2">Bem-vindo 👋</h2>
             <p className="text-muted-foreground text-center">
-              {showForgotPassword 
-                ? "Enviaremos um link para redefinir a sua password" 
-                : "Entre na sua conta para continuar"}
+              Entre na sua conta para continuar
             </p>
           </div>
 
-          {!showForgotPassword ? (
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="space-y-2">
-                <label className="block text-sm font-medium">Email</label>
-                <input
-                  type="email"
-                  className="w-full rounded-xl border border-input bg-background px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
-                  placeholder="Digite seu email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-2">
+              <label className="block text-sm font-medium">Email</label>
+              <input
+                type="email"
+                className="w-full rounded-xl border border-input bg-background px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                placeholder="Digite seu email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
 
-              <div className="space-y-2">
-                <label className="block text-sm font-medium">Password</label>
-                <input
-                  type="password"
-                  className="w-full rounded-xl border border-input bg-background px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
-                  placeholder="Digite sua senha"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
+            <div className="space-y-2">
+              <label className="block text-sm font-medium">Password</label>
+              <input
+                type="password"
+                className="w-full rounded-xl border border-input bg-background px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                placeholder="Digite sua senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
 
-              {error && (
-                <p className="text-destructive text-sm font-medium text-center py-2 bg-destructive/10 rounded-lg">
+            {error && (
+              <div className="text-center space-y-2">
+                <p className="text-destructive text-sm font-medium py-2 bg-destructive/10 rounded-lg">
                   {error}
                 </p>
-              )}
+                {/* ✅ Botão para reenviar verificação */}
+                {error.includes("verifique o seu email") && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleResendVerification}
+                    disabled={isLoading}
+                    className="text-xs"
+                  >
+                    {isLoading ? "A enviar..." : "Reenviar email de verificação"}
+                  </Button>
+                )}
+              </div>
+            )}
 
-              {success && (
-                <p className="text-green-600 text-sm font-medium text-center py-2 bg-green-100 rounded-lg">
-                  {success}
-                </p>
-              )}
+            {success && (
+              <p className="text-green-600 text-sm font-medium text-center py-2 bg-green-100 rounded-lg">
+                {success}
+              </p>
+            )}
 
-              <Button 
-                type="submit" 
-                size="lg" 
-                className="w-full mt-2 rounded-xl"
-                disabled={isLoading}
+            <Button 
+              type="submit" 
+              size="lg" 
+              className="w-full mt-2 rounded-xl"
+              disabled={isLoading}
+            >
+              {isLoading ? "A processar..." : "Entrar"}
+            </Button>
+
+            {/* ✅ SIMPLIFICADO: Apenas um link para recuperação */}
+            <div className="text-center pt-4">
+              <Link 
+                to="/forgot-password" 
+                className="text-sm text-primary hover:underline font-medium"
               >
-                {isLoading ? "A processar..." : "Entrar"}
-              </Button>
-
-              {/* 🔥 AGORA O "ESQUECEU-SE DA PASSWORD?" ESTÁ AQUI - ABAIXO DO BOTÃO E CENTRADO */}
-              <div className="text-center pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowForgotPassword(true)}
-                  className="text-sm text-primary hover:underline font-medium"
-                >
-                  Esqueceu-se da password?
-                </button>
-              </div>
-            </form>
-          ) : (
-            <form onSubmit={handleForgotPassword} className="space-y-5">
-              <div className="space-y-2">
-                <label className="block text-sm font-medium">Email</label>
-                <input
-                  type="email"
-                  className="w-full rounded-xl border border-input bg-background px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
-                  placeholder="Digite seu email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-
-              {error && (
-                <p className="text-destructive text-sm font-medium text-center py-2 bg-destructive/10 rounded-lg">
-                  {error}
-                </p>
-              )}
-
-              {success && (
-                <p className="text-green-600 text-sm font-medium text-center py-2 bg-green-100 rounded-lg">
-                  {success}
-                </p>
-              )}
-
-              <div className="flex gap-3">
-                <Button 
-                  type="button"
-                  variant="outline"
-                  size="lg"
-                  className="flex-1 rounded-xl"
-                  onClick={() => setShowForgotPassword(false)}
-                  disabled={isLoading}
-                >
-                  Voltar
-                </Button>
-                <Button 
-                  type="submit" 
-                  size="lg" 
-                  className="flex-1 rounded-xl"
-                  disabled={isLoading}
-                >
-                  {isLoading ? "A enviar..." : "Enviar"}
-                </Button>
-              </div>
-            </form>
-          )}
-
-          {!showForgotPassword && (
-            <p className="text-muted-foreground text-sm text-center mt-8">
-              Não tens conta?{" "}
-              <Link to="/register" className="text-primary hover:underline font-semibold">
-                Regista-te
+                Esqueceu-se da password?
               </Link>
-            </p>
-          )}
+            </div>
+          </form>
+
+          <p className="text-muted-foreground text-sm text-center mt-8">
+            Não tens conta?{" "}
+            <Link to="/register" className="text-primary hover:underline font-semibold">
+              Regista-te
+            </Link>
+          </p>
         </div>
       </div>
     </div>

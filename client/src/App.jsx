@@ -10,12 +10,16 @@ import { useAutoLogout } from "./hooks/useAutoLogout";
 import AdminStatistics from "./pages/AdminStatistics";
 import AdminTrainingsPage from "./pages/AdminTrainingsPage";
 import TeacherTrainingsPage from "./pages/TeacherTrainingsPage";
-import ResetPassword from "./pages/ResetPassword"; 
 import TeacherFeedback from './pages/TeacherFeedback'; 
 import AdminFeedbackReports from './pages/AdminFeedbackReports'; 
-import TeacherKitsPage from "./pages/TeacherKitsPage"; // 🔥 NOVA IMPORT
-import AdminKitsPage from "./pages/AdminKitsPage";     // 🔥 NOVA IMPORT
+import TeacherKitsPage from "./pages/TeacherKitsPage";
+import AdminKitsPage from "./pages/AdminKitsPage";
 import AdminExport from "./pages/AdminExport";
+
+// 🔥 NOVAS IMPORTACOES
+import VerifyEmail from "./pages/verify-email";
+import ForgotPassword from "./pages/forgot-password";
+import ResetPassword from "./pages/reset-password";
 
 export default function App() {
   const { showWarning, countdown, resetTimer } = useAutoLogout(15 * 60 * 1000);
@@ -46,6 +50,11 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           
+          {/* 🔥 NOVAS ROTAS DE AUTENTICAÇÃO */}
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          
           {/* Rotas do Teacher */}
           <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
           <Route path="/classes" element={<ClassesPage />} />
@@ -61,9 +70,6 @@ export default function App() {
           <Route path="/admin/kits" element={<AdminKitsPage />} /> 
           <Route path="/admin/export" element={<AdminExport />} />
           
-          {/* Rotas Gerais */}
-          <Route path="/reset-password/:token" element={<ResetPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
         </Routes> 
       </main>
     </div>

@@ -6,6 +6,7 @@ import classesRouter from "./routes/classes.js";
 import trainingsRouter from "./routes/trainings.js";
 import reportFoldersRoutes from "./routes/report-folders.js";
 import kitsRoutes from "./routes/kits.js";
+import teachersRoutes from "./routes/teachers.js"; // ✅ NOVO
 import path from "path";
 
 const app = express();
@@ -23,6 +24,7 @@ app.get("/", (req, res) => {
 
 // Rotas
 app.use("/api/auth", authRoutes);
+app.use("/api/teachers", teachersRoutes); // ✅ NOVA
 app.use("/api/classes", classesRouter);
 app.use("/api/trainings", trainingsRouter);
 app.use("/api/report-folders", reportFoldersRoutes);

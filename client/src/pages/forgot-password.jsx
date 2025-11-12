@@ -1,0 +1,127 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Mail, ArrowLeft, Home } from "lucide-react";
+import { Button } from "../components/ui/button";
+import { ThemeToggle } from "../components/ui/theme-toggle";
+import { supabase } from "../config/supabase";
+
+export default function ForgotPassword() {
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setIsLoading(true);
+    setMessage("");
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) {
+        setMessage("❌ " + error.message);
+        return;
+      }
+
+      setMessage("✅ Email de recuperação enviado! Verifica a tua caixa de correio.");
+    } catch (err) {
+      setMessage("❌ Erro ao enviar email. Tenta novamente.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="rd-header-bg text-white backdrop-blur-md shadow-lg">
+        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shadow-md">
+              <Mail className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-2xl font-bold text-white tracking-tight">
+              Recuperar Password
+            </span>
+          </div>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.history.back()}
+              className="text-white border-white/30 hover:bg-white/20"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar
+            </Button>
+            <ThemeToggle />
+          </div>
+        </div>
+      </header>
+
+      <div className="flex items-center justify-center min-h-[calc(100vh-80px)] px-4 py-12">
+        <div className="bg-card text-card-foreground rounded-2xl p-8 shadow-xl w-full max-w-md border border-border">
+          <div className="flex flex-col items-center mb-8">
+            <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
+              <Mail className="w-8 h-8 text-primary" />
+            </div>
+            <h2 className="text-3xl font-bold text-center mb-2">Recuperar Password</h2>
+            <p className="text-muted-foreground text-center text-sm">
+              Introduz o teu email e enviaremos um link para redefinir a tua password
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <label className="block text-sm font-medium">Email</label>
+              <input
+                type="email"
+                placeholder="seu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full rounded-xl border border-input bg-background px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+              />
+            </div>
+
+            {message && (
+              <div className={`text-center text-sm font-medium py-3 rounded-xl ${
+                message.includes("✅") 
+                  ? "text-green-600 bg-green-50 border border-green-200" 
+                  : "text-destructive bg-destructive/10 border border-destructive/20"
+              }`}>
+                {message}
+              </div>
+            )}
+
+            <Button 
+              type="submit" 
+              size="lg" 
+              className="w-full rounded-xl"
+              disabled={isLoading}
+            >
+              {isLoading ? "A enviar..." : "Enviar Link de Recuperação"}
+            </Button>
+          </form>
+
+          <div className="text-center space-y-4 mt-8">
+            <p className="text-muted-foreground text-sm">
+              Lembraste-te da password?{" "}
+              <Link to="/login" className="text-primary hover:underline font-semibold">
+                Faz login
+              </Link>
+            </p>
+            <p className="text-muted-foreground text-sm">
+              Não tens conta?{" "}
+              <Link to="/register" className="text-primary hover:underline font-semibold">
+                Regista-te
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
