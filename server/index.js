@@ -8,26 +8,15 @@ import reportFoldersRoutes from "./routes/report-folders.js";
 import kitsRoutes from "./routes/kits.js";
 import teachersRoutes from "./routes/teachers.js"; 
 import path from "path";
-import { fileURLToPath } from 'url';
 
 const app = express();
 const prisma = new PrismaClient();
 
-// ✅ CORS PARA PRODUÇÃO
-app.use(cors({
-  origin: [
-    "http://localhost:5173",        // Dev frontend
-    "https://rd-portal.vercel.app"  // Produção
-  ],
-  credentials: true
-}));
-
+app.use(cors());
 app.use(express.json());
 
-// ✅ SERVIR FICHEIROS ESTÁTICOS (corrigido)
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-app.use('/certificates', express.static(path.join(__dirname, '../public/certificates')));
+// Usar process.cwd() em vez de __dirname (mais simples)
+app.use('/certificates', express.static(path.join(process.cwd(), 'public/certificates')));
 
 app.get("/", (req, res) => {
   res.send("🔥 API do RD-Portal a funcionar!");
@@ -46,3 +35,4 @@ const PORT = process.env.PORT || 4000;
 app.listen(PORT, "0.0.0.0", () => 
   console.log(`🚀 Servidor a correr em http://0.0.0.0:${PORT}`)
 );
+
