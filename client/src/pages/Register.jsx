@@ -121,8 +121,15 @@ export default function Register() {
   // ✅ FUNÇÃO CORRIGIDA: Criar professor na nossa BD
   async function createTeacherInDatabase(user, formData) {
     try {
-      console.log('🔄 A criar professor na nossa BD...', user.id);
-      
+      console.log('🔄 DADOS para criar teacher:', {
+        supabaseUserId: user.id,
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        school: formData.school,
+        region: formData.region
+      });
+
       const response = await fetch(`${API_URL}/api/teachers`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -136,18 +143,21 @@ export default function Register() {
         }),
       });
 
-      const responseData = await response.json();
+      console.log('📤 Response status:', response.status);
+      console.log('📤 Response ok:', response.ok);
       
+      const responseData = await response.json();
+      console.log('📦 Response data:', responseData);
+
       if (!response.ok) {
-        console.error('❌ Erro ao criar professor na BD:', responseData);
         throw new Error(responseData.error || 'Erro ao criar professor');
-      } else {
-        console.log('✅ Professor criado com sucesso na nossa BD:', responseData);
-        return responseData;
       }
+
+      console.log('✅ Professor criado com sucesso na BD');
+      return responseData;
     } catch (err) {
-      console.error('💥 Erro ao criar professor:', err);
-      throw err; // Propaga o erro para tratamento superior
+      console.error('💥 ERRO CRÍTICO ao criar professor:', err);
+      throw err;
     }
   }
   return (
