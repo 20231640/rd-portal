@@ -117,4 +117,36 @@ router.get("/supabase/:supabaseUserId", async (req, res) => {
   }
 });
 
+// ✅ ADICIONAR ESTA ROTA NO teachers.js
+router.get("/", async (req, res) => {
+  try {
+    console.log('📋 GET /api/teachers - Listar todos os professores');
+    
+    const teachers = await prisma.teacher.findMany({
+      include: {
+        school: {
+          select: {
+            id: true,
+            name: true,
+            approved: true
+          }
+        },
+        classes: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      },
+      orderBy: { name: "asc" },
+    });
+    
+    console.log(`✅ Encontrados ${teachers.length} professores`);
+    res.json(teachers);
+  } catch (err) {
+    console.error("❌ Erro ao listar professores:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

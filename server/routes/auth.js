@@ -361,50 +361,7 @@ router.delete("/teachers/:id", async (req, res) => {
   }
 });
 
-/* ============================================
-   🔹 ATUALIZAR CERTIFICADO DO PROFESSOR
-   ============================================ */
-router.put("/teachers/:id/certificate", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { certificateUrl, hasCompletedTraining } = req.body;
 
-    // Validação básica
-    if (!certificateUrl) {
-      return res.status(400).json({ error: "URL do certificado é obrigatória" });
-    }
-
-    const teacher = await prisma.teacher.update({
-      where: { id: parseInt(id) },
-      data: {
-        certificateUrl,
-        hasCompletedTraining: hasCompletedTraining !== undefined ? hasCompletedTraining : true
-      },
-      include: { 
-        school: {
-          select: {
-            id: true,
-            name: true,
-            approved: true
-          }
-        }
-      }
-    });
-
-    console.log(`✅ Certificado atualizado para professor: ${teacher.name}`);
-    res.json(teacher);
-    
-  } catch (error) {
-    console.error('❌ Erro ao atualizar certificado:', error);
-    
-    // Tratamento de erros específicos do Prisma
-    if (error.code === 'P2025') {
-      return res.status(404).json({ error: "Professor não encontrado" });
-    }
-    
-    res.status(500).json({ error: 'Erro interno do servidor' });
-  }
-});
 
 
 export default router;
