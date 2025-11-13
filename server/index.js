@@ -9,6 +9,8 @@ import kitsRoutes from "./routes/kits.js";
 import teachersRoutes from "./routes/teachers.js"; 
 import path from "path";
 
+console.log("✅ Rotas carregadas: /api/teachers, /api/auth, /api/classes, ...");
+
 const app = express();
 const prisma = new PrismaClient();
 
