@@ -50,6 +50,9 @@ export default function ClassesPage() {
         console.log('✅ Carregando professor do localStorage:', teacherData);
         setTeacher(teacherData);
 
+        // ✅ NOVO: Atualizar dados do professor do servidor
+        await refreshTeacherData();
+
         // ✅ CORREÇÃO: Buscar todas as turmas e filtrar
         console.log('🔄 Buscando turmas...');
         try {
@@ -91,10 +94,32 @@ export default function ClassesPage() {
     filterClasses();
   }, [classes, searchTerm, filterCycle]);
 
-  // ⬇️⬇️ FUNÇÕES NOVAS QUE FALTAM ⬇️⬇️
+  // ✅ NOVA FUNÇÃO: Atualizar dados do professor no localStorage
+  const refreshTeacherData = async () => {
+    try {
+      console.log('🔄 Atualizando dados do professor...');
+      
+      const teacherDataStr = localStorage.getItem("teacherData");
+      if (!teacherDataStr) return;
+
+      const currentTeacher = JSON.parse(teacherDataStr);
+      
+      // Buscar dados atualizados do professor
+      const response = await fetch(`${API_URL}/api/auth/teachers/${currentTeacher.id}`);
+      if (response.ok) {
+        const updatedTeacher = await response.json();
+        console.log('✅ Professor atualizado:', updatedTeacher);
+        
+        // Atualizar localStorage
+        localStorage.setItem("teacherData", JSON.stringify(updatedTeacher));
+        setTeacher(updatedTeacher);
+      }
+    } catch (error) {
+      console.error('❌ Erro ao atualizar dados do professor:', error);
+    }
+  };
 
   // VERIFICAR SE PODE CRIAR TURMA
-  // ✅ CORREÇÃO: Funções mantidas mas com melhor tratamento de erro
   const canCreateClass = () => {
     return teacher?.hasCompletedTraining || teacher?.certificateUrl;
   };
@@ -111,10 +136,6 @@ export default function ClassesPage() {
       return;
     }
     setShowAddClass(true);
-  };
-
-  const navigateToTraining = () => {
-    navigate("/training");
   };
 
   const filterClasses = () => {
@@ -153,7 +174,7 @@ export default function ClassesPage() {
       console.log('🔄 Criando nova turma...', {
         ...newClass,
         teacherId: teacher.id,
-        schoolId: teacher.schoolId // ✅ IMPORTANTE: Adicionar schoolId
+        schoolId: teacher.schoolId
       });
 
       const res = await fetch(`${API_URL}/api/classes`, {
@@ -165,7 +186,7 @@ export default function ClassesPage() {
           cycle: newClass.cycle,
           year: newClass.year,
           teacherId: teacher.id,
-          schoolId: teacher.schoolId, // ✅ CORREÇÃO: Adicionar schoolId
+          schoolId: teacher.schoolId,
           state: "ACTIVE"
         })
       });
@@ -321,11 +342,7 @@ export default function ClassesPage() {
                 Para criar turmas, precisa primeiro de completar a sessão de formação e obter o certificado.
               </p>
               <div className="flex gap-3">
-                <Button onClick={navigateToTraining} className="flex-1">
-                  <GraduationCap className="w-4 h-4 mr-2" />
-                  Ir para Formação
-                </Button>
-                <Button variant="outline" onClick={() => setShowTrainingAlert(false)}>
+                <Button variant="outline" onClick={() => setShowTrainingAlert(false)} className="flex-1">
                   Fechar
                 </Button>
               </div>
@@ -355,7 +372,7 @@ export default function ClassesPage() {
           </div>
         </div>
 
-        {/* ⬇️⬇️ MENSAGEM PARA PROFESSORES SEM CERTIFICADO ⬇️⬇️ */}
+        {/* ⬇️⬇️ MENSAGEM SIMPLIFICADA PARA PROFESSORES SEM CERTIFICADO ⬇️⬇️ */}
         {!canCreateClass() && (
           <Card className="p-6 mb-6 bg-amber-50 border-amber-200">
             <div className="flex items-center gap-3">
@@ -363,14 +380,7 @@ export default function ClassesPage() {
               <div>
                 <h3 className="font-semibold text-amber-800">Ação Necessária</h3>
                 <p className="text-amber-700 text-sm">
-                  Complete a sessão de formação para poder criar turmas. 
-                  <Button 
-                    variant="link" 
-                    className="p-0 h-auto text-amber-800 ml-1 font-semibold" 
-                    onClick={navigateToTraining}
-                  >
-                    Aceder à formação
-                  </Button>
+                  Complete a sessão de formação para poder criar turmas.
                 </p>
               </div>
             </div>
@@ -405,28 +415,32 @@ export default function ClassesPage() {
           </div>
         </Card>
 
-        {filteredClasses.length === 0 ? (
+        {filteredClasses.length === 0 && classes.length === 0 ? (
           <Card className="p-12 text-center">
             <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">Nenhuma turma encontrada</h3>
             <p className="text-muted-foreground mb-4">
-              {classes.length === 0 
-                ? canCreateClass() 
-                  ? "Comece por adicionar a sua primeira turma."
-                  : "Complete a formação para criar a sua primeira turma."
-                : "Tente ajustar os filtros de pesquisa."
+              {canCreateClass() 
+                ? "Comece por adicionar a sua primeira turma."
+                : "Complete a formação para criar a sua primeira turma."
               }
             </p>
-            {classes.length === 0 && canCreateClass() && (
+            {canCreateClass() && (
               <Button onClick={handleAddClassClick}>
                 <Plus className="w-4 h-4 mr-2" /> Criar Primeira Turma
               </Button>
             )}
-            {classes.length === 0 && !canCreateClass() && (
-              <Button onClick={navigateToTraining}>
-                <GraduationCap className="w-4 h-4 mr-2" /> Completar Formação
-              </Button>
-            )}
+          </Card>
+        ) : filteredClasses.length === 0 && classes.length > 0 ? (
+          <Card className="p-12 text-center">
+            <Search className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Nenhuma turma encontrada</h3>
+            <p className="text-muted-foreground mb-4">
+              Tente ajustar os filtros de pesquisa.
+            </p>
+            <Button variant="outline" onClick={() => { setSearchTerm(''); setFilterCycle(''); }}>
+              Limpar Filtros
+            </Button>
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
