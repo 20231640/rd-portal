@@ -142,26 +142,41 @@ router.put("/:id/complete", async (req, res) => {
     const certificateUrl = await generateCertificate(training, training.teacher);
     console.log('✅ Certificado gerado:', certificateUrl);
 
-    // Atualizar sessão
-    const updatedTraining = await prisma.trainingSession.update({
-      where: { id: trainingId },
-      data: {
-        completed: true,
-        adminRating: parseInt(adminRating),
-        feedback: feedback,
-        certificateUrl: certificateUrl,
-        certificateGeneratedAt: new Date()
-      },
-      include: {
-        teacher: {
-          include: {
-            school: true
+    // ⭐⭐ ATUALIZAÇÃO CRÍTICA: Marcar professor como formado ⭐⭐
+    console.log('👨‍🏫 Atualizando estado do professor...');
+    
+    // Usar transaction para garantir que ambas as operações são bem sucedidas
+    const [updatedTraining] = await prisma.$transaction([
+      // 1. Atualizar a sessão de formação
+      prisma.trainingSession.update({
+        where: { id: trainingId },
+        data: {
+          completed: true,
+          adminRating: parseInt(adminRating),
+          feedback: feedback,
+          certificateUrl: certificateUrl,
+          certificateGeneratedAt: new Date()
+        },
+        include: {
+          teacher: {
+            include: {
+              school: true
+            }
           }
         }
-      }
-    });
+      }),
+      
+      // 2. Atualizar o professor - MARCA COMO FORMADO!
+      prisma.teacher.update({
+        where: { id: training.teacherId },
+        data: {
+          hasCompletedTraining: true,
+          certificateUrl: certificateUrl // Também atualiza no professor
+        }
+      })
+    ]);
 
-    console.log('🎉 Sessão concluída com sucesso!');
+    console.log('🎉 Sessão concluída e professor marcado como formado!');
     res.json(updatedTraining);
 
   } catch (err) {

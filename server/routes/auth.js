@@ -387,6 +387,47 @@ router.put("/teachers/:id/certificate", async (req, res) => {
 });
 
 
+/* ============================================
+   🔹 VERIFICAR ESTADO DE FORMAÇÃO DO PROFESSOR
+   ============================================ */
+router.get("/teachers/:id/training-status", async (req, res) => {
+  try {
+    const { id } = req.params;
 
+    const teacher = await prisma.teacher.findUnique({
+      where: { id: parseInt(id) },
+      select: {
+        id: true,
+        name: true,
+        hasCompletedTraining: true,
+        certificateUrl: true,
+        trainings: {
+          where: { completed: true },
+          select: {
+            id: true,
+            title: true,
+            completed: true,
+            certificateUrl: true,
+            certificateGeneratedAt: true
+          }
+        }
+      }
+    });
+
+    if (!teacher) {
+      return res.status(404).json({ error: "Professor não encontrado" });
+    }
+
+    res.json({
+      hasCompletedTraining: teacher.hasCompletedTraining,
+      certificateUrl: teacher.certificateUrl,
+      completedTrainings: teacher.trainings,
+      canTeach: teacher.hasCompletedTraining && teacher.certificateUrl
+    });
+  } catch (error) {
+    console.error('❌ Erro ao verificar estado de formação:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
 
 export default router;
