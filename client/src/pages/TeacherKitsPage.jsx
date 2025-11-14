@@ -26,7 +26,7 @@ export default function TeacherKitsPage() {
   
   const previousRequestsRef = useRef([]);
 
-  // ✅ CORREÇÃO: Buscar kits com a rota CORRETA
+  // ✅ CORREÇÃO MELHORADA: Buscar dados com diagnóstico
   const fetchData = async () => {
     try {
       const teacherDataStr = localStorage.getItem("teacherData");
@@ -37,6 +37,7 @@ export default function TeacherKitsPage() {
         return;
       }
 
+      // ✅ CORREÇÃO: Usar dados do localStorage
       const currentTeacher = JSON.parse(teacherDataStr);
       console.log('✅ Carregando professor do localStorage:', currentTeacher);
       setTeacher(currentTeacher);
@@ -44,9 +45,9 @@ export default function TeacherKitsPage() {
       console.log('🔄 Buscando dados...');
       
       let allClasses = [];
-      let teacherKits = [];
+      let allKits = [];
 
-      // ✅ CORREÇÃO: Buscar turmas
+      // ✅ CORREÇÃO: Buscar turmas com tratamento de erro individual
       try {
         const classesRes = await fetch(`${API_URL}/api/classes`);
         console.log('📡 Status das turmas:', classesRes.status);
@@ -63,21 +64,21 @@ export default function TeacherKitsPage() {
         throw new Error("Falha ao carregar turmas: " + classesError.message);
       }
 
-      // ✅✅✅ CORREÇÃO CRÍTICA: Buscar kits do professor específico
+      // ✅ CORREÇÃO: Buscar kits com tratamento de erro individual
       try {
-        const kitsRes = await fetch(`${API_URL}/api/kits/teacher/${currentTeacher.id}`);
+        const kitsRes = await fetch(`${API_URL}/api/kits`);
         console.log('📡 Status dos kits:', kitsRes.status);
         
         if (kitsRes.ok) {
-          teacherKits = await kitsRes.json();
-          console.log('✅ Kits do professor carregados:', teacherKits.length);
+          allKits = await kitsRes.json();
+          console.log('✅ Kits carregados:', allKits.length);
         } else {
           console.error('❌ Erro ao carregar kits:', kitsRes.status);
           
           // Se a rota não existir (404), usar array vazio
           if (kitsRes.status === 404) {
-            console.warn('⚠️ Rota /api/kits/teacher/:id não encontrada, usando array vazio');
-            teacherKits = [];
+            console.warn('⚠️ Rota /api/kits não encontrada, usando array vazio');
+            allKits = [];
           } else {
             throw new Error(`Erro ${kitsRes.status} ao carregar pedidos`);
           }
@@ -88,19 +89,20 @@ export default function TeacherKitsPage() {
         // Se for erro de rede, usar array vazio
         if (kitsError.message.includes('Failed to fetch')) {
           console.warn('⚠️ Erro de rede nos kits, usando array vazio');
-          teacherKits = [];
+          allKits = [];
         } else {
           throw new Error("Falha ao carregar pedidos: " + kitsError.message);
         }
       }
 
-      console.log('📊 Dados carregados:', { 
+      console.log('📊 Dados brutos:', { 
         turmas: allClasses.length, 
-        kits: teacherKits.length 
+        kits: allKits.length 
       });
 
-      // ✅ CORREÇÃO: Filtrar apenas as turmas do professor
+      // ✅ CORREÇÃO: Filtrar turmas e kits do professor atual
       const teacherClasses = allClasses.filter(cls => cls.teacherId === currentTeacher.id);
+      const teacherKits = allKits.filter(kit => kit.teacherId === currentTeacher.id);
 
       console.log('✅ Dados filtrados:', { 
         teacherClasses: teacherClasses.length, 
@@ -168,28 +170,19 @@ export default function TeacherKitsPage() {
     }
   };
 
-  // ✅ CORREÇÃO: Função de marcar como entregue com a rota CORRETA
+  // ✅ CORREÇÃO: Função de marcar como entregue
   const handleMarkAsDelivered = async (requestId) => {
     try {
       console.log('🔄 Marcando como entregue...', requestId);
 
-      // ✅ CORREÇÃO: Usar a rota CORRETA /api/kits/:id/deliver
       const res = await fetch(`${API_URL}/api/kits/${requestId}/deliver`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" }
       });
 
-      // ✅ VERIFICAR se a resposta é JSON
-      const contentType = res.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        const textResponse = await res.text();
-        console.error('❌ Resposta não é JSON:', textResponse.substring(0, 200));
-        throw new Error("Servidor retornou resposta inválida");
-      }
-
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.error || "Erro ao marcar como entregue");
+        throw new Error(errorData.message || "Erro ao marcar como entregue");
       }
 
       const updatedRequest = await res.json();
