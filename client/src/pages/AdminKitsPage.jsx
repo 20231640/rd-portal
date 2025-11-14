@@ -532,7 +532,7 @@ export default function AdminKitsPage() {
                           </div>
                           <div className="flex items-center gap-1">
                             <Users className="w-4 h-4" />
-                            <span>{classInfo?.studentCount || "N/A"} alunos</span>
+                            <span>{classInfo?.students || "N/A"} alunos</span> {/* ✅ CORREÇÃO: students em vez de studentCount */}
                           </div>
                         </div>
                         
