@@ -34,6 +34,7 @@ router.get("/schools", async (req, res) => {
   }
 });
 
+
 /* ============================================
    🔹 CRIAR ESCOLA
    ============================================ */
@@ -358,6 +359,30 @@ router.delete("/teachers/:id", async (req, res) => {
     }
     
     res.status(500).json({ error: err.message });
+  }
+});
+
+/* ============================================
+   🔹 ATUALIZAR CERTIFICADO DO PROFESSOR
+   ============================================ */
+router.put("/teachers/:id/certificate", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { certificateUrl, hasCompletedTraining } = req.body;
+    
+    const teacher = await prisma.teacher.update({
+      where: { id: parseInt(id) },
+      data: {
+        certificateUrl,
+        hasCompletedTraining: hasCompletedTraining !== undefined ? hasCompletedTraining : true
+      },
+      include: { school: true }
+    });
+    
+    res.json(teacher);
+  } catch (error) {
+    console.error('❌ Erro ao atualizar certificado:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
 
