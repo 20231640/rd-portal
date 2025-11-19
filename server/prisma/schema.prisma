@@ -1,14 +1,12 @@
-// schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"  // Mude de sqlite para postgresql
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-// Os seus models permanecem exactamente iguais
 model School {
   id        Int       @id @default(autoincrement())
   name      String    @unique
@@ -33,12 +31,13 @@ model TrainingSession {
   adminRating            Int?
   certificateGeneratedAt DateTime?
   feedback               String?
+  groupId                String?
+  cycle                  String?
   teacher                Teacher   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 }
 
 model Teacher {
   id                   Int               @id @default(autoincrement())
-  supabaseUserId       String?           @unique // 🔥 NOVO
   name                 String
   email                String            @unique
   password             String
@@ -48,16 +47,17 @@ model Teacher {
   schoolId             Int
   resetPasswordExpires DateTime?
   resetPasswordToken   String?
+  certificateUrl       String?
+  hasCompletedTraining Boolean           @default(false)
+  emailVerified        Boolean           @default(false)
+  verificationExpires  DateTime?
+  verificationToken    String?
+  supabaseUserId       String?           @unique
   classes              Class[]
   kitRequests          KitRequest[]
   reportFolders        ReportFolder[]
   school               School            @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   trainings            TrainingSession[]
-  certificateUrl       String?
-  hasCompletedTraining Boolean           @default(false)
-  emailVerified      Boolean   @default(false)
-  verificationToken  String?
-  verificationExpires DateTime?
 }
 
 model Class {

@@ -102,10 +102,10 @@ export function SchoolsStats({ schools, teachers, classes, kitRequests }) {
               <div key={school.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold ${
-                    index === 0 ? 'bg-yellow-100 text-yellow-600' :
+                    index === 0 ? 'bg-yellow-100 text-[hsl(26,90%,57%)]' :
                     index === 1 ? 'bg-gray-100 text-gray-600' :
-                    index === 2 ? 'bg-orange-100 text-orange-600' :
-                    'bg-blue-100 text-blue-600'
+                    index === 2 ? 'bg-orange-100 text-[hsl(189,68%,64%)]' :
+                    'bg-blue-100 text-[hsl(283,45%,33%)]'
                   }`}>
                     {index + 1}
                   </div>

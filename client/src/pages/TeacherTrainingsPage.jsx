@@ -125,7 +125,7 @@ export default function TeacherTrainingsPage() {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold">Minhas Formações</h1>
+            <h1 className="text-3xl font-bold">AS Minhas Formações</h1>
             <p className="text-muted-foreground mt-2">
               Sessões de formação agendadas e certificados
             </p>

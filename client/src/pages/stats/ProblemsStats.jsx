@@ -211,7 +211,7 @@ export function ProblemsStats({ kitRequests, schools, classes, teachers }) {
           </div>
           <div className="flex items-center justify-center h-48">
             <div className="text-center">
-              <div className="text-4xl font-bold text-green-600 mb-2">
+              <div className="text-4xl font-bold text-[hsl(76,49%,52%)] mb-2">
                 {problemStats.resolutionRate.toFixed(1)}%
               </div>
               <div className="text-lg text-muted-foreground">Taxa de Resolução</div>
@@ -222,11 +222,11 @@ export function ProblemsStats({ kitRequests, schools, classes, teachers }) {
           </div>
           <div className="grid grid-cols-2 gap-4 mt-4">
             <div className="text-center p-3 bg-green-50 rounded-lg">
-              <div className="text-lg font-bold text-green-600">{problemStats.resolved}</div>
+              <div className="text-lg font-bold text-[hsl(76,49%,52%)]">{problemStats.resolved}</div>
               <div className="text-sm text-green-700">Resolvidos</div>
             </div>
             <div className="text-center p-3 bg-red-50 rounded-lg">
-              <div className="text-lg font-bold text-red-600">{problemStats.pending}</div>
+              <div className="text-lg font-bold text-[hsl(327,83%,50%)]">{problemStats.pending}</div>
               <div className="text-sm text-red-700">Pendentes</div>
             </div>
           </div>
@@ -277,13 +277,13 @@ export function ProblemsStats({ kitRequests, schools, classes, teachers }) {
             {schoolsWithProblems.map((school, index) => (
               <div key={school.name} className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="flex items-center gap-3">
-                  <div className="w-6 h-6 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-sm font-bold">
+                  <div className="w-6 h-6 bg-red-100 text-[hsl(327,83%,50%)] rounded-full flex items-center justify-center text-sm font-bold">
                     {index + 1}
                   </div>
                   <div className="font-medium truncate max-w-[200px]">{school.name}</div>
                 </div>
                 <div className="text-right">
-                  <div className="font-bold text-red-600">{school.value}</div>
+                  <div className="font-bold text-[hsl(327,83%,50%)]">{school.value}</div>
                   <div className="text-xs text-muted-foreground">problemas</div>
                 </div>
               </div>
@@ -306,14 +306,14 @@ export function ProblemsStats({ kitRequests, schools, classes, teachers }) {
             
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center p-3 bg-blue-50 rounded-lg">
-                <div className="text-lg font-bold text-blue-600">
+                <div className="text-lg font-bold text-[hsl(283,45%,33%)]">
                   {kitRequests?.length > 0 ? ((problemStats.kitsWithProblems / kitRequests.length) * 100).toFixed(1) : 0}%
                 </div>
                 <div className="text-sm text-blue-700">Kits com Problemas</div>
               </div>
               
               <div className="text-center p-3 bg-green-50 rounded-lg">
-                <div className="text-lg font-bold text-green-600">
+                <div className="text-lg font-bold text-[hsl(76,49%,52%)]">
                   {problemStats.resolutionRate.toFixed(1)}%
                 </div>
                 <div className="text-sm text-green-700">Eficiência</div>

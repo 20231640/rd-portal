@@ -198,7 +198,7 @@ export default function AdminExport() {
       alert('✅ Exportação completa realizada com sucesso!');
     } catch (error) {
       console.error('Erro na exportação:', error);
-      alert('❌ Erro ao exportar dados. Tente novamente.');
+      alert('❌ Erro ao exportar dados. Tente-se novamente.');
     } finally {
       setExporting(false);
     }
@@ -268,7 +268,7 @@ export default function AdminExport() {
       alert('✅ Dados de utilizadores exportados com sucesso!');
     } catch (error) {
       console.error('Erro ao exportar:', error);
-      alert('❌ Erro ao exportar dados. Tente novamente.');
+      alert('❌ Erro ao exportar dados. Tente-se novamente.');
     } finally {
       setExporting(false);
     }
@@ -333,7 +333,7 @@ export default function AdminExport() {
       alert('✅ Relatório de kits exportado com sucesso!');
     } catch (error) {
       console.error('Erro ao exportar:', error);
-      alert('❌ Erro ao exportar dados. Tente novamente.');
+      alert('❌ Erro ao exportar dados. Tente-se novamente.');
     } finally {
       setExporting(false);
     }
@@ -390,7 +390,7 @@ export default function AdminExport() {
       alert('✅ Resumo de entregas exportado com sucesso!');
     } catch (error) {
       console.error('Erro ao exportar:', error);
-      alert('❌ Erro ao exportar dados. Tente novamente.');
+      alert('❌ Erro ao exportar dados. Tente-se novamente.');
     } finally {
       setExporting(false);
     }
@@ -408,7 +408,7 @@ export default function AdminExport() {
               Exportar Dados
             </h1>
             <p className="text-muted-foreground mt-2">
-              Exporte dados completos do sistema para análise em Excel
+              Permite exportar dados completos do sistema para análise em Excel
             </p>
           </div>
         </div>
@@ -420,7 +420,7 @@ export default function AdminExport() {
             <h2 className="text-2xl font-semibold">Exportação Completa do Sistema</h2>
           </div>
           <p className="text-muted-foreground mb-6">
-            Exporte todos os dados do sistema num único ficheiro Excel com múltiplas sheets organizadas
+            Permite exportar todos os dados do sistema num único ficheiro Excel com múltiplas sheets organizadas
           </p>
           
           <div className="bg-blue-50 p-4 rounded-lg mb-6">

@@ -1,129 +1,40 @@
-// components/kits/kit-journey.jsx
-import { ProgressCharacter } from "./progress-character";
-import { CheckCircle, Clock, Package, Truck, Home } from "lucide-react";
+// components/ui/kits/kit-journey.jsx - VERSÃO CORRIGIDA
+import { CheckCircle, Clock, Package, Truck, Home, AlertCircle } from "lucide-react";
 
-export function KitJourney({ request, showDetails = false }) {
-  const phases = [
-    {
-      key: "pending",
-      label: "Pedido Recebido",
-      icon: Clock,
-      description: "O seu pedido foi registado no nosso sistema",
-      dateField: "requestedAt"
-    },
-    {
-      key: "approved", 
-      label: "Aprovado",
-      icon: Package,
-      description: "Pedido aprovado e kit em preparação",
-      dateField: "approvedAt"
-    },
-    {
-      key: "shipped",
-      label: "A Caminho",
-      icon: Truck, 
-      description: "Kit enviado para a sua escola",
-      dateField: "shippedAt"
-    },
-    {
-      key: "delivered",
-      label: "Entregue",
-      icon: CheckCircle,
-      description: "Kit recebido e confirmado",
-      dateField: "deliveredAt"
-    }
+export function KitJourney({ request, showDetails = true }) {
+  const steps = [
+    { key: 'requested', label: 'Pedido Recebido', icon: Package, date: request.requestedAt, completed: true },
+    { key: 'approved', label: 'Aprovado', icon: CheckCircle, date: request.approvedAt, completed: ['approved', 'shipped', 'delivered'].includes(request.status) },
+    { key: 'shipped', label: 'A Caminho', icon: Truck, date: request.shippedAt, completed: ['shipped', 'delivered'].includes(request.status) },
+    { key: 'delivered', label: 'Entregue', icon: Home, date: request.deliveredAt, completed: request.status === 'delivered' },
   ];
 
-  const currentPhaseIndex = phases.findIndex(phase => phase.key === request.status);
-  const progressPercentage = (currentPhaseIndex / (phases.length - 1)) * 100;
-
   return (
-    <div className="w-full">
-      {/* Barra de Progresso */}
-      <div className="relative mb-8">
-        {/* Linha de fundo */}
-        <div className="absolute top-1/2 left-0 right-0 h-2 bg-gray-200 rounded-full transform -translate-y-1/2"></div>
-        
-        {/* Linha de progresso */}
-        <div 
-          className="absolute top-1/2 left-0 h-2 bg-green-500 rounded-full transform -translate-y-1/2 transition-all duration-1000 ease-out"
-          style={{ width: `${progressPercentage}%` }}
-        ></div>
-
-        {/* Pontos da timeline */}
-        <div className="relative flex justify-between">
-          {phases.map((phase, index) => {
-            const isCompleted = index <= currentPhaseIndex;
-            const isCurrent = index === currentPhaseIndex;
-            const PhaseIcon = phase.icon;
-            const phaseDate = request[phase.dateField];
-
-            return (
-              <div key={phase.key} className="flex flex-col items-center">
-                {/* Ponto da timeline */}
-                <div className={`
-                  relative z-10 w-8 h-8 rounded-full border-4 border-white flex items-center justify-center
-                  ${isCompleted ? 'bg-green-500' : 'bg-gray-300'}
-                  ${isCurrent ? 'ring-2 ring-green-400 ring-offset-2' : ''}
-                  transition-all duration-300
-                `}>
-                  {isCompleted ? (
-                    <CheckCircle className="w-4 h-4 text-white" />
-                  ) : (
-                    <PhaseIcon className="w-4 h-4 text-gray-600" />
-                  )}
-                </div>
-
-                {/* Label */}
-                <div className="mt-2 text-center">
-                  <p className={`text-sm font-medium ${
-                    isCompleted ? 'text-green-700' : 'text-gray-500'
-                  }`}>
-                    {phase.label}
-                  </p>
-                  
-                  {/* Data */}
-                  {phaseDate && (
-                    <p className="text-xs text-gray-400 mt-1">
-                      {new Date(phaseDate).toLocaleDateString('pt-PT')}
-                    </p>
-                  )}
-                </div>
-
-                {/* Descrição (apenas para fase atual) */}
-                {showDetails && isCurrent && (
-                  <div className="mt-2 p-2 bg-blue-50 rounded-lg text-center">
-                    <p className="text-xs text-blue-700">{phase.description}</p>
-                  </div>
-                )}
+    <div className="relative px-2"> {/* Add padding for line overflow safety */}
+      {/* LINE: continuous, underneath all steps */}
+      <div className="absolute top-4 left-0 right-0 h-0.5 bg-gray-300 z-0" style={{top: '1.5rem'}} />
+      <div className="flex justify-between items-center relative z-10" style={{minHeight: '3.5rem'}}>
+        {steps.map((step, idx) => {
+          const Icon = step.icon;
+          // active = last completed
+          const isActive = step.completed && (idx === steps.findIndex(s => !s.completed) - 1 || (steps.every(s => s.completed) && idx === steps.length-1));
+          // Colors
+          const baseColor = step.completed ? 'bg-[hsl(76,49%,52%)] border-[hsl(76,49%,52%)]' : 'bg-gray-200 border-gray-400';
+          const iconColor = step.completed ? 'text-white' : 'text-gray-500';
+          return (
+            <div key={step.key} className="flex flex-col items-center flex-1 group">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-colors duration-300 ${baseColor}`}
+                style={{marginBottom:'0.5rem', zIndex:2}}>
+                <Icon className={`w-4 h-4 ${iconColor}`} />
               </div>
-            );
-          })}
-        </div>
-
-        {/* Personagem animado */}
-        <div 
-          className="absolute top-1/2 transform -translate-y-1/2 transition-all duration-1000 ease-out"
-          style={{ left: `${progressPercentage}%` }}
-        >
-          <ProgressCharacter status={request.status} currentPhase={currentPhaseIndex} />
-        </div>
+              <div className="mt-1 text-center flex flex-col gap-1">
+                <span className={`text-xs font-semibold leading-none ${step.completed ? 'text-[hsl(76,49%,52%)]' : 'text-gray-500'}`}>{step.label}</span>
+                {showDetails && step.date && <span className="text-[11px] text-gray-400">{new Date(step.date).toLocaleDateString('pt-PT')}</span>}
+              </div>
+            </div>
+          )
+        })}
       </div>
-
-      {/* Detalhes do Status Atual */}
-      {showDetails && (
-        <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border">
-          <h4 className="font-semibold text-lg mb-2">Status Atual</h4>
-          <p className="text-gray-700">
-            {phases[currentPhaseIndex]?.description}
-            {request.status === 'shipped' && request.shippedAt && (
-              <span className="block mt-1 text-sm text-blue-600">
-                📦 Enviado em: {new Date(request.shippedAt).toLocaleDateString('pt-PT')}
-              </span>
-            )}
-          </p>
-        </div>
-      )}
     </div>
   );
 }

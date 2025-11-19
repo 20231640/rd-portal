@@ -10,7 +10,7 @@ const prisma = new PrismaClient();
    🔹 CRIAR SESSÃO INDIVIDUAL para um professor
    ============================================ */
 router.post("/", async (req, res) => {
-  const { title, description, date, zoomLink, teacherId } = req.body;
+  const { title, description, date, zoomLink, teacherId, groupId, cycle } = req.body;
 
   if (!title || !date || !zoomLink || !teacherId) {
     return res.status(400).json({ 
@@ -26,7 +26,9 @@ router.post("/", async (req, res) => {
         date: new Date(date),
         zoomLink,
         teacherId: parseInt(teacherId),
-        completed: false
+        completed: false,
+        groupId: groupId || null,
+        cycle: cycle || null
       },
       include: {
         teacher: {
@@ -137,7 +139,7 @@ router.put("/:id/complete", async (req, res) => {
       return res.status(400).json({ message: "Sessão já está concluída" });
     }
 
-    // Gerar certificado
+    // Generate certificate
     console.log('📄 A gerar certificado...');
     const certificateUrl = await generateCertificate(training, training.teacher);
     console.log('✅ Certificado gerado:', certificateUrl);
@@ -147,7 +149,7 @@ router.put("/:id/complete", async (req, res) => {
     
     // Usar transaction para garantir que ambas as operações são bem sucedidas
     const [updatedTraining] = await prisma.$transaction([
-      // 1. Atualizar a sessão de formação
+      // 1. Update training session
       prisma.trainingSession.update({
         where: { id: trainingId },
         data: {
@@ -166,7 +168,7 @@ router.put("/:id/complete", async (req, res) => {
         }
       }),
       
-      // 2. Atualizar o professor - MARCA COMO FORMADO!
+      // 2. Update teacher - MARCA COMO FORMADO!
       prisma.teacher.update({
         where: { id: training.teacherId },
         data: {

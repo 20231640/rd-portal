@@ -421,24 +421,24 @@ export default function AdminKitsPage() {
 
         {/* Estatísticas - ADICIONANDO CONTADOR DE PROBLEMAS */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-          <Card className="p-4 text-center border-l-4 border-l-yellow-500 hover:shadow-md transition-shadow">
-            <div className="text-2xl font-bold text-yellow-600">{getStatusCount("pending")}</div>
+          <Card className="p-4 text-center border-l-4 border-l-[hsl(26,90%,57%)] hover:shadow-md transition-shadow">
+            <div className="text-2xl font-bold text-[hsl(26,90%,57%)]">{getStatusCount("pending")}</div>
             <div className="text-sm text-muted-foreground">Pendentes</div>
           </Card>
-          <Card className="p-4 text-center border-l-4 border-l-blue-500 hover:shadow-md transition-shadow">
-            <div className="text-2xl font-bold text-blue-600">{getStatusCount("approved")}</div>
+          <Card className="p-4 text-center border-l-4 border-l-[hsl(283,45%,33%)] hover:shadow-md transition-shadow">
+            <div className="text-2xl font-bold text-[hsl(283,45%,33%)]">{getStatusCount("approved")}</div>
             <div className="text-sm text-muted-foreground">Aprovados</div>
           </Card>
-          <Card className="p-4 text-center border-l-4 border-l-orange-500 hover:shadow-md transition-shadow">
-            <div className="text-2xl font-bold text-orange-600">{getStatusCount("shipped")}</div>
+          <Card className="p-4 text-center border-l-4 border-l-[hsl(189,68%,64%)] hover:shadow-md transition-shadow">
+            <div className="text-2xl font-bold text-[hsl(189,68%,64%)]">{getStatusCount("shipped")}</div>
             <div className="text-sm text-muted-foreground">Enviados</div>
           </Card>
-          <Card className="p-4 text-center border-l-4 border-l-green-500 hover:shadow-md transition-shadow">
-            <div className="text-2xl font-bold text-green-600">{getStatusCount("delivered")}</div>
+          <Card className="p-4 text-center border-l-4 border-l-[hsl(76,49%,52%)] hover:shadow-md transition-shadow">
+            <div className="text-2xl font-bold text-[hsl(76,49%,52%)]">{getStatusCount("delivered")}</div>
             <div className="text-sm text-muted-foreground">Entregues</div>
           </Card>
-          <Card className="p-4 text-center border-l-4 border-l-red-500 hover:shadow-md transition-shadow">
-            <div className="text-2xl font-bold text-red-600">{getUnresolvedReportsCount()}</div>
+          <Card className="p-4 text-center border-l-4 border-l-[hsl(327,83%,50%)] hover:shadow-md transition-shadow">
+            <div className="text-2xl font-bold text-[hsl(327,83%,50%)]">{getUnresolvedReportsCount()}</div>
             <div className="text-sm text-muted-foreground">Problemas</div>
           </Card>
         </div>
