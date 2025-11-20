@@ -105,8 +105,10 @@ export default function AdminFeedbackReports() {
   if (loading) {
     return (
       <div className="flex min-h-screen bg-background">
-        <AdminSidebar />
-        <div className="flex-1 flex items-center justify-center">
+        <div className="hidden sm:block">
+          <AdminSidebar />
+        </div>
+        <div className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full flex items-center justify-center">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-muted-foreground">A carregar dados...</p>
@@ -118,23 +120,26 @@ export default function AdminFeedbackReports() {
 
   return (
     <div className="flex min-h-screen bg-background">
-      <AdminSidebar />
-      
-      <div className="flex-1 p-8">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold">Gestão de Relatórios</h1>
-            <p className="text-muted-foreground">Criar e gerir pastas no Google Drive para professores</p>
-          </div>
-          <Button onClick={() => setShowCreateForm(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Nova Pasta
-          </Button>
-        </div>
-
-        {/* Barra de Pesquisa */}
-        <div className="mb-6">
-          <div className="relative w-80">
+      <div className="hidden sm:block">
+        <AdminSidebar />
+      </div>
+      <div className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full">
+        <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
+           <div>
+             <h1 className="text-3xl font-bold">Gestão de Relatórios</h1>
+             <p className="text-muted-foreground">Criar e gerir pastas no Google Drive para professores</p>
+           </div>
+           <div className="w-full sm:w-auto">
+            <Button onClick={() => setShowCreateForm(true)} className="w-full sm:w-auto">
+              <Plus className="w-4 h-4 mr-2" />
+              Nova Pasta
+            </Button>
+           </div>
+         </div>
+ 
+         {/* Barra de Pesquisa */}
+         <div className="mb-6">
+           <div className="relative w-full sm:w-80">
             <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
@@ -143,15 +148,15 @@ export default function AdminFeedbackReports() {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 w-full h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
-          </div>
-        </div>
+           </div>
+           </div>
 
         {/* Formulário Criar Pasta */}
         {showCreateForm && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <Card className="p-6 w-full max-w-md">
-              <h2 className="text-xl font-semibold mb-4">Criar Nova Pasta</h2>
-              <form onSubmit={createFolder} className="space-y-4">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <Card className="p-4 sm:p-6 w-full max-w-full sm:max-w-md">
+                <h2 className="text-xl font-semibold mb-4">Criar Nova Pasta</h2>
+                <form onSubmit={createFolder} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Título *</label>
                   <input
@@ -174,22 +179,22 @@ export default function AdminFeedbackReports() {
                   />
                 </div>
                 
-                <div>
-                  <label className="block text-sm font-medium mb-1">Professor *</label>
-                  <select
-                    value={newFolder.teacherId}
-                    onChange={(e) => setNewFolder(prev => ({ ...prev, teacherId: e.target.value }))}
-                    className="w-full rounded border border-input px-3 py-2"
-                    required
-                  >
-                    <option value="">Selecionar Professor</option>
-                    {teachers.map(teacher => (
-                      <option key={teacher.id} value={teacher.id}>
-                        {teacher.name} - {teacher.school.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <div className="w-full">
+                   <label className="block text-sm font-medium mb-1">Professor *</label>
+                   <select
+                     value={newFolder.teacherId}
+                     onChange={(e) => setNewFolder(prev => ({ ...prev, teacherId: e.target.value }))}
+                     className="w-full rounded border border-input px-3 py-2"
+                     required
+                   >
+                     <option value="">Selecionar Professor</option>
+                     {teachers.map(teacher => (
+                       <option key={teacher.id} value={teacher.id}>
+                         {teacher.name} - {teacher.school.name}
+                       </option>
+                     ))}
+                   </select>
+                 </div>
 
                 <div>
                   <label className="block text-sm font-medium mb-1">Turma (Opcional)</label>
@@ -210,26 +215,26 @@ export default function AdminFeedbackReports() {
                   </select>
                 </div>
 
-                <div className="flex gap-2 justify-end pt-4">
-                  <Button type="button" variant="outline" onClick={() => setShowCreateForm(false)}>
+                <div className="flex flex-col sm:flex-row gap-2 justify-end pt-4">
+                  <Button type="button" variant="outline" onClick={() => setShowCreateForm(false)} className="w-full sm:w-auto">
                     Cancelar
                   </Button>
-                  <Button type="submit">
+                  <Button type="submit" className="w-full sm:w-auto">
                     <Folder className="w-4 h-4 mr-2" />
                     Criar Pasta
                   </Button>
                 </div>
-              </form>
-            </Card>
-          </div>
-        )}
+               </form>
+             </Card>
+           </div>
+         )}
 
         {/* Lista de Pastas */}
         <div className="space-y-4">
           {filteredFolders.map(folder => (
             <Card key={folder.id} className="p-6 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-4">
+               <div className="flex items-center justify-between mb-4">
+                 <div className="flex items-center gap-4">
                   <Folder className="w-10 h-10 text-blue-500" />
                   <div>
                     <h3 className="font-semibold text-lg">{folder.title}</h3>
@@ -251,7 +256,7 @@ export default function AdminFeedbackReports() {
                 </div>
                 
                 <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" asChild>
+                  <Button variant="ghost" size="sm" asChild className="w-10">
                     <a href={folder.driveLink} target="_blank" rel="noopener noreferrer">
                       <ExternalLink className="w-4 h-4" />
                     </a>
@@ -260,11 +265,12 @@ export default function AdminFeedbackReports() {
                     variant="destructive" 
                     size="sm"
                     onClick={() => deleteFolder(folder.id)}
+                    className="w-10"
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
-              </div>
+               </div>
               
               <div className="flex justify-between items-center text-sm text-muted-foreground">
                 <a 

@@ -96,46 +96,48 @@ export function GeographyStats({ schools, teachers, classes, kitRequests, distri
       </Card>
 
       {/* Gráfico de Barras */}
-      <Card className="p-6">
+      <Card className="p-4 sm:p-6">
         <div className="flex items-center gap-2 mb-4">
           <MapPin className="w-5 h-5 text-blue-500" />
           <h3 className="text-lg font-semibold">Distribuição por Distrito - {dataType}</h3>
         </div>
-        <ResponsiveContainer width="100%" height={400}>
-          <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis 
-              dataKey="region" 
-              angle={-45} 
-              textAnchor="end" 
-              height={80}
-              interval={0}
-            />
-            <YAxis allowDecimals={false} />
-            <Tooltip 
-              formatter={(value, name) => {
-                const labels = {
-                  schools: "Escolas",
-                  teachers: "Professores", 
-                  kits: "Kits",
-                  students: "Alunos"
-                };
-                return [value, labels[name] || name];
-              }}
-            />
-            <Legend />
-            <Bar 
-              dataKey={dataType} 
-              name={dataType}
-              fill={colors[dataType]}
-            >
+        <div className="w-full overflow-x-auto">
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+             <CartesianGrid strokeDasharray="3 3" />
+             <XAxis 
+               dataKey="region" 
+               angle={-45} 
+               textAnchor="end" 
+               height={80}
+               interval={0}
+             />
+             <YAxis allowDecimals={false} />
+             <Tooltip 
+               formatter={(value, name) => {
+                 const labels = {
+                   schools: "Escolas",
+                   teachers: "Professores", 
+                   kits: "Kits",
+                   students: "Alunos"
+                 };
+                 return [value, labels[name] || name];
+               }}
+             />
+             <Legend />
+             <Bar 
+               dataKey={dataType} 
+               name={dataType}
+               fill={colors[dataType]}
+             >
               {chartData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={colors[dataType]} />
               ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </Card>
+             </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+       </Card>
 
       {/* Resumo por Região */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

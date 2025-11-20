@@ -77,7 +77,7 @@ export default function ResetPassword() {
       </header>
 
       <div className="flex items-center justify-center min-h-[calc(100vh-80px)] px-4 py-12">
-        <div className="bg-card text-card-foreground rounded-2xl p-8 shadow-xl w-full max-w-md border border-border">
+        <div className="bg-card text-card-foreground rounded-2xl p-6 sm:p-8 shadow-xl w-full max-w-md border border-border">
           <div className="flex flex-col items-center mb-8">
             <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
               <Key className="w-8 h-8 text-primary" />

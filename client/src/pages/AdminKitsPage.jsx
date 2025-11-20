@@ -1,17 +1,15 @@
-// AdminKitsPage.jsx - ATUALIZADO COM TODAS AS FUNCIONALIDADES
+// AdminKitsPage.jsx - ATUALIZADO COM MESMO DESIGN DO TEACHER
 import { useState, useEffect, useRef } from "react";
 import { AdminSidebar } from "../components/ui/admin-sidebar";
 import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Skeleton } from "../components/ui/skeleton";
-import { ProgressCharacter } from "../components/ui/kits/progress-character";
 import { KitJourney } from "../components/ui/kits/kit-journey";
 import { API_URL } from "../config/api";
 
-
 import { 
-  Package, Search, CheckCircle, Truck, X, Mail, RefreshCw, 
-  Users, School, AlertCircle, BookOpen, MessageCircle 
+  Package, Search, CheckCircle, Truck, X, RefreshCw, 
+  Users, School, AlertCircle, BookOpen, Calendar
 } from "lucide-react";
 
 export default function AdminKitsPage() {
@@ -22,6 +20,9 @@ export default function AdminKitsPage() {
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  // Novos estados para filtro por ciclo e ano
+  const [selectedCycle, setSelectedCycle] = useState("all");
+  const [selectedYear, setSelectedYear] = useState("all");
   const [lastUpdate, setLastUpdate] = useState(null);
   const [newUpdates, setNewUpdates] = useState(0);
   
@@ -106,21 +107,6 @@ export default function AdminKitsPage() {
     const totalChanges = changes.new.length + changes.updated.length + changes.reports.length;
     if (totalChanges > 0) {
       setNewUpdates(prev => prev + totalChanges);
-      
-      // Mostrar notificações no console
-      if (changes.new.length > 0) {
-        console.log(`🎉 ${changes.new.length} novo(s) pedido(s) criado(s)`);
-      }
-      if (changes.updated.length > 0) {
-        changes.updated.forEach(change => {
-          console.log(`📦 Pedido atualizado: ${change.from} → ${change.to}`);
-        });
-      }
-      if (changes.reports.length > 0) {
-        changes.reports.forEach(report => {
-          console.log(`🚨 ${report.newReports.length} novo(s) problema(s) reportado(s) no pedido #${report.request.id}`);
-        });
-      }
     }
 
     previousRequestsRef.current = newRequests;
@@ -177,7 +163,7 @@ export default function AdminKitsPage() {
 
   // Empty State
   const EmptyState = () => (
-    <Card className="p-8 text-center">
+    <Card className="p-8 text-center border-dashed">
       <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
       <h3 className="text-lg font-semibold mb-2">Nenhum pedido de kit</h3>
       <p className="text-muted-foreground mb-4">
@@ -206,7 +192,6 @@ export default function AdminKitsPage() {
           )
         );
         
-        // Forçar atualização
         setTimeout(() => fetchData(), 1000);
       } else {
         throw new Error("Erro ao aprovar pedido");
@@ -231,7 +216,6 @@ export default function AdminKitsPage() {
           )
         );
         
-        // Forçar atualização
         setTimeout(() => fetchData(), 1000);
       } else {
         throw new Error("Erro ao marcar como enviado");
@@ -253,7 +237,6 @@ export default function AdminKitsPage() {
       if (res.ok) {
         setKitRequests(prev => prev.filter(req => req.id !== requestId));
         
-        // Forçar atualização
         setTimeout(() => fetchData(), 1000);
       } else {
         throw new Error("Erro ao rejeitar pedido");
@@ -290,7 +273,7 @@ export default function AdminKitsPage() {
     }
   };
 
-  // Filtros
+  // Filtros (alterado para considerar ciclo e ano)
   const filteredRequests = kitRequests.filter(request => {
     const teacher = teachers.find(t => t.id === request.teacherId);
     const classInfo = classes.find(c => c.id === request.classId);
@@ -301,19 +284,193 @@ export default function AdminKitsPage() {
                          classInfo?.cycle?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === "all" || request.status === statusFilter;
+
+    const matchesCycle = selectedCycle === "all" || classInfo?.cycle === selectedCycle;
+    const matchesYear = selectedYear === "all" || String(classInfo?.year) === String(selectedYear);
     
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatus && matchesCycle && matchesYear;
   });
 
   const getStatusCount = (status) => {
     return kitRequests.filter(req => req.status === status).length;
   };
 
+  // Componente RequestCard atualizado
+  const RequestCard = ({ request }) => {
+    const teacher = teachers.find(t => t.id === request.teacherId);
+    const school = teacher?.school;
+    const classInfo = classes.find(c => c.id === request.classId);
+
+    return (
+      <Card key={request.id} className="p-6 hover:shadow-lg transition-all duration-300 border-l-4 border-l-blue-500">
+        {/* Header do Pedido */}
+        <div className="flex justify-between items-start mb-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              <Package className="w-6 h-6 text-primary" />
+              <h4 className="text-xl font-bold">
+                {teacher?.name || "Professor não encontrado"}
+                <span className="text-lg font-normal text-muted-foreground ml-2">
+                  - Kit {request.kitType}
+                </span>
+              </h4>
+            </div>
+            
+            {/* INFORMAÇÕES DA TURMA EM CAIXA CINZA */}
+            <Card className="p-3 bg-gray-50 border border-gray-200 mb-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-gray-700">
+                <div className="flex items-center gap-1">
+                  <School className="w-4 h-4" />
+                  <span>{school?.name || "Escola não especificada"}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <BookOpen className="w-4 h-4" />
+                  <span>Turma: {classInfo?.name || "N/A"} | {classInfo?.cycle || "N/A"}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Users className="w-4 h-4" />
+                  <span>{classInfo?.students || "N/A"} alunos</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 text-sm text-gray-600 mt-2">
+                <Calendar className="w-4 h-4" />
+                <span>Pedido em {new Date(request.requestedAt).toLocaleDateString('pt-PT')}</span>
+              </div>
+            </Card>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+              request.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+              request.status === 'approved' ? 'bg-blue-100 text-blue-800' :
+              request.status === 'shipped' ? 'bg-orange-100 text-orange-800' :
+              'bg-green-100 text-green-800'
+            }`}>
+              {request.status === 'pending' ? 'Pendente' :
+               request.status === 'approved' ? 'Aprovado' :
+               request.status === 'shipped' ? 'Enviado' : 'Entregue'}
+            </span>
+          </div>
+        </div>
+
+        {/* Timeline Visual */}
+        <KitJourney request={request} />
+
+        {/* Notas do Admin */}
+        {request.adminNotes && (
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <p className="text-sm text-blue-700">
+              <strong>📝 Nota do Admin:</strong> {request.adminNotes}
+            </p>
+          </div>
+        )}
+
+        {/* PROBLEMAS REPORTADOS */}
+        {request.reports && request.reports.filter(r => !r.resolved).length > 0 && (
+          <div className="mt-4 p-3 bg-red-50 rounded-lg border border-red-200">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertCircle className="w-4 h-4 text-red-600" />
+                  <p className="text-sm text-red-700 font-medium">
+                    Problema Reportado pelo Professor
+                  </p>
+                </div>
+                <p className="text-sm text-red-600">
+                  {request.reports.filter(r => !r.resolved)[0].message}
+                </p>
+                <p className="text-xs text-red-500 mt-1">
+                  Reportado em: {new Date(request.reports.filter(r => !r.resolved)[0].createdAt).toLocaleDateString('pt-PT')}
+                  {request.reports.filter(r => !r.resolved)[0].teacherName && (
+                    <span className="ml-2">por {request.reports.filter(r => !r.resolved)[0].teacherName}</span>
+                  )}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleResolveReport(request.id, request.reports.filter(r => !r.resolved)[0].id)}
+                className="border-[hsl(327,83%,50%)] text-[hsl(327,83%,50%)] hover:bg-[hsl(327,83%,50%)] hover:text-white transition-all duration-300"
+              >
+                <CheckCircle className="w-4 h-4 mr-1" />
+                Resolver
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Problemas já resolvidos */}
+        {request.reports && request.reports.filter(r => r.resolved).length > 0 && (
+          <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              <p className="text-sm text-green-700">
+                <strong>Problema Resolvido:</strong> {request.reports.filter(r => r.resolved)[0].message}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Actions - SEM ID E COM BOTÕES ROSA */}
+        <div className="flex justify-end items-center pt-4 mt-4 border-t">
+          <div className="flex gap-2">
+            {request.status === "pending" && (
+              <>
+                <Button
+                  size="sm"
+                  onClick={() => handleApprove(request.id)}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <CheckCircle className="w-4 h-4 mr-1" />
+                  Aprovar
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleReject(request.id)}
+                  className="border-[hsl(327,83%,50%)] text-[hsl(327,83%,50%)] hover:bg-[hsl(327,83%,50%)] hover:text-white transition-all duration-300"
+                >
+                  <X className="w-4 h-4 mr-1" />
+                  Rejeitar
+                </Button>
+              </>
+            )}
+
+            {request.status === "approved" && (
+              <Button
+                size="sm"
+                onClick={() => handleShip(request.id)}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Truck className="w-4 h-4 mr-1" />
+                Marcar como Enviado
+              </Button>
+            )}
+
+            {request.status === "shipped" && (
+              <span className="text-sm text-orange-600 font-medium">
+                À espera de confirmação do professor
+              </span>
+            )}
+
+            {request.status === "delivered" && (
+              <span className="text-sm text-green-600 font-medium">
+                ✅ Entrega confirmada
+              </span>
+            )}
+          </div>
+        </div>
+      </Card>
+    );
+  };
+
   if (loading && kitRequests.length === 0) {
     return (
       <div className="flex min-h-screen bg-background" onClick={clearNotifications}>
-        <AdminSidebar />
-        <div className="flex-1 p-8">
+        <div className="hidden sm:block">
+          <AdminSidebar />
+        </div>
+        <div className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full">
           <div className="flex justify-between items-center mb-8">
             <div>
               <Skeleton className="h-8 w-64 mb-2" />
@@ -354,8 +511,10 @@ export default function AdminKitsPage() {
   if (error) {
     return (
       <div className="flex min-h-screen bg-background">
-        <AdminSidebar />
-        <div className="flex-1 flex items-center justify-center">
+        <div className="hidden sm:block">
+          <AdminSidebar />
+        </div>
+        <div className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full flex items-center justify-center">
           <Card className="p-6 text-center">
             <Package className="w-12 h-12 text-destructive mx-auto mb-4" />
             <h2 className="text-xl font-bold text-destructive mb-2">Erro</h2>
@@ -372,42 +531,43 @@ export default function AdminKitsPage() {
 
   return (
     <div className="flex min-h-screen bg-background" onClick={clearNotifications}>
-      <AdminSidebar />
-      <div className="flex-1 p-8">
+      <div className="hidden sm:block">
+        <AdminSidebar />
+      </div>
+      <div className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full">
         {/* Header com controles de atualização */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold">Gestão de Kits</h1>
-              {newUpdates > 0 && (
-                <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">
-                  {newUpdates} nova(s)
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-4 mt-2">
-              <p className="text-muted-foreground">Aprovar e acompanhar pedidos de kits</p>
-              {lastUpdate && (
-                <span className="text-xs text-muted-foreground">
-                  Última atualização: {lastUpdate.toLocaleTimeString('pt-PT')}
-                </span>
-              )}
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            {/* APENAS Botão Manual Refresh - SEM AUTO REFRESH */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={fetchData}
-              disabled={loading}
-            >
-              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              Atualizar
-            </Button>
-          </div>
-        </div>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+           <div>
+             <div className="flex items-center gap-3">
+               <h1 className="text-3xl font-bold">Gestão de Kits</h1>
+               {newUpdates > 0 && (
+                 <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">
+                   {newUpdates} nova(s)
+                 </span>
+               )}
+             </div>
+             <div className="flex items-center gap-4 mt-2">
+               <p className="text-muted-foreground">Aprovar e acompanhar pedidos de kits</p>
+               {lastUpdate && (
+                 <span className="text-xs text-muted-foreground">
+                   Última atualização: {lastUpdate.toLocaleTimeString('pt-PT')}
+                 </span>
+               )}
+             </div>
+           </div>
+           
+           <div className="flex items-center gap-2">
+             <Button
+               variant="outline"
+               size="sm"
+               onClick={fetchData}
+               disabled={loading}
+             >
+               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+               Atualizar
+             </Button>
+           </div>
+         </div>
 
         {/* Indicador de Estado */}
         <div className="flex items-center gap-4 mb-6">
@@ -419,7 +579,7 @@ export default function AdminKitsPage() {
           )}
         </div>
 
-        {/* Estatísticas - ADICIONANDO CONTADOR DE PROBLEMAS */}
+        {/* Estatísticas */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
           <Card className="p-4 text-center border-l-4 border-l-[hsl(26,90%,57%)] hover:shadow-md transition-shadow">
             <div className="text-2xl font-bold text-[hsl(26,90%,57%)]">{getStatusCount("pending")}</div>
@@ -445,33 +605,57 @@ export default function AdminKitsPage() {
 
         {/* Filtros */}
         <Card className="p-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Pesquisar por professor, turma, ciclo ou tipo de kit..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-full h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option value="all">Todos os Estados</option>
-              <option value="pending">Pendentes</option>
-              <option value="approved">Aprovados</option>
-              <option value="shipped">Enviados</option>
-              <option value="delivered">Entregues</option>
-            </select>
-          </div>
-        </Card>
+          <div className="flex flex-col sm:flex-row gap-4">
+             <div className="flex-1 relative">
+               <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+               <input
+                 type="text"
+                 placeholder="Pesquisar por professor, turma, ciclo ou tipo de kit..."
+                 value={searchTerm}
+                 onChange={(e) => setSearchTerm(e.target.value)}
+                 className="pl-10 w-full h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+               />
+             </div>
+             
+             <select
+               value={statusFilter}
+               onChange={(e) => setStatusFilter(e.target.value)}
+               className="h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+             >
+               <option value="all">Todos os Estados</option>
+               <option value="pending">Pendentes</option>
+               <option value="approved">Aprovados</option>
+               <option value="shipped">Enviados</option>
+               <option value="delivered">Entregues</option>
+             </select>
 
-        {/* Lista de Pedidos COM JOURNEY VISUAL */}
+             {/* Filtro por Ciclo */}
+             <select
+               value={selectedCycle}
+               onChange={(e) => setSelectedCycle(e.target.value)}
+               className="h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+             >
+               <option value="all">Todos os Ciclos</option>
+               {Array.from(new Set(classes.map(c => c.cycle).filter(Boolean))).map(cycle => (
+                 <option key={cycle} value={cycle}>{cycle}</option>
+               ))}
+             </select>
+             
+             {/* Filtro por Ano */}
+             <select
+               value={selectedYear}
+               onChange={(e) => setSelectedYear(e.target.value)}
+               className="h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+             >
+               <option value="all">Todos os Anos</option>
+               {Array.from(new Set(classes.map(c => String(c.year)).filter(Boolean))).sort().map(year => (
+                 <option key={year} value={year}>{year}</option>
+               ))}
+             </select>
+           </div>
+         </Card>
+
+        {/* Lista de Pedidos */}
         <Card className="p-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold">Pedidos de Kits</h3>
@@ -500,174 +684,9 @@ export default function AdminKitsPage() {
             )
           ) : (
             <div className="space-y-6">
-              {filteredRequests.map(request => {
-                const teacher = teachers.find(t => t.id === request.teacherId);
-                const school = teacher?.school;
-                const classInfo = classes.find(c => c.id === request.classId);
-
-                return (
-                  <Card key={request.id} className="p-6 hover:shadow-lg transition-all duration-300 border-l-4 border-l-blue-500">
-                    {/* Header do Pedido */}
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <Package className="w-6 h-6 text-primary" />
-                          <h4 className="text-xl font-bold">
-                            {teacher?.name || "Professor não encontrado"}
-                            <span className="text-lg font-normal text-muted-foreground ml-2">
-                              - Kit {request.kitType}
-                            </span>
-                          </h4>
-                        </div>
-                        
-                        {/* INFORMAÇÕES DA TURMA */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-muted-foreground mb-2">
-                          <div className="flex items-center gap-1">
-                            <School className="w-4 h-4" />
-                            <span>{school?.name || "Escola não especificada"}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <BookOpen className="w-4 h-4" />
-                            <span>Turma: {classInfo?.name || "N/A"} | {classInfo?.cycle || "N/A"}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Users className="w-4 h-4" />
-                            <span>{classInfo?.students || "N/A"} alunos</span> {/* ✅ CORREÇÃO: students em vez de studentCount */}
-                          </div>
-                        </div>
-                        
-                        <p className="text-sm text-muted-foreground">
-                          Pedido em {new Date(request.requestedAt).toLocaleDateString('pt-PT')}
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          request.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          request.status === 'approved' ? 'bg-blue-100 text-blue-800' :
-                          request.status === 'shipped' ? 'bg-orange-100 text-orange-800' :
-                          'bg-green-100 text-green-800'
-                        }`}>
-                          {request.status === 'pending' ? 'Pendente' :
-                           request.status === 'approved' ? 'Aprovado' :
-                           request.status === 'shipped' ? 'Enviado' : 'Entregue'}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Timeline Visual */}
-                    <KitJourney request={request} />
-
-                    {/* Notas do Admin */}
-                    {request.adminNotes && (
-                      <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                        <p className="text-sm text-blue-700">
-                          <strong>📝 Nota do Admin:</strong> {request.adminNotes}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* PROBLEMAS REPORTADOS */}
-                    {request.reports && request.reports.filter(r => !r.resolved).length > 0 && (
-                      <div className="mt-4 p-3 bg-red-50 rounded-lg border border-red-200">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <AlertCircle className="w-4 h-4 text-red-600" />
-                              <p className="text-sm text-red-700 font-medium">
-                                Problema Reportado pelo Professor
-                              </p>
-                            </div>
-                            <p className="text-sm text-red-600">
-                              {request.reports.filter(r => !r.resolved)[0].message}
-                            </p>
-                            <p className="text-xs text-red-500 mt-1">
-                              Reportado em: {new Date(request.reports.filter(r => !r.resolved)[0].createdAt).toLocaleDateString('pt-PT')}
-                              {request.reports.filter(r => !r.resolved)[0].teacherName && (
-                                <span className="ml-2">por {request.reports.filter(r => !r.resolved)[0].teacherName}</span>
-                              )}
-                            </p>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleResolveReport(request.id, request.reports.filter(r => !r.resolved)[0].id)}
-                          >
-                            <CheckCircle className="w-4 h-4 mr-1" />
-                            Resolver
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Problemas já resolvidos */}
-                    {request.reports && request.reports.filter(r => r.resolved).length > 0 && (
-                      <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle className="w-4 h-4 text-green-600" />
-                          <p className="text-sm text-green-700">
-                            <strong>Problema Resolvido:</strong> {request.reports.filter(r => r.resolved)[0].message}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Actions */}
-                    <div className="flex justify-between items-center pt-4 mt-4 border-t">
-                      <div className="text-sm text-muted-foreground">
-                        ID: #{request.id}
-                        {request.approvedAt && ` • Aprovado: ${new Date(request.approvedAt).toLocaleDateString('pt-PT')}`}
-                        {request.shippedAt && ` • Enviado: ${new Date(request.shippedAt).toLocaleDateString('pt-PT')}`}
-                        {request.deliveredAt && ` • Entregue: ${new Date(request.deliveredAt).toLocaleDateString('pt-PT')}`}
-                      </div>
-                      
-                      <div className="flex gap-2">
-                        {request.status === "pending" && (
-                          <>
-                            <Button
-                              size="sm"
-                              onClick={() => handleApprove(request.id)}
-                            >
-                              <CheckCircle className="w-4 h-4 mr-1" />
-                              Aprovar
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleReject(request.id)}
-                            >
-                              <X className="w-4 h-4 mr-1" />
-                              Rejeitar
-                            </Button>
-                          </>
-                        )}
-
-                        {request.status === "approved" && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleShip(request.id)}
-                          >
-                            <Truck className="w-4 h-4 mr-1" />
-                            Marcar como Enviado
-                          </Button>
-                        )}
-
-                        {request.status === "shipped" && (
-                          <span className="text-sm text-orange-600 font-medium">
-                            À espera de confirmação do professor
-                          </span>
-                        )}
-
-                        {request.status === "delivered" && (
-                          <span className="text-sm text-green-600 font-medium">
-                            ✅ Entrega confirmada
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </Card>
-                );
-              })}
+              {filteredRequests.map(request => (
+                <RequestCard key={request.id} request={request} />
+              ))}
             </div>
           )}
         </Card>

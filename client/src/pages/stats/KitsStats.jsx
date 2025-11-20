@@ -7,6 +7,7 @@ import {
   Package, Truck, CheckCircle, Clock, AlertCircle, TrendingUp,
   Calendar, Zap, BarChart3
 } from "lucide-react";
+import { useState } from "react";
 
 export function KitsStats({ kitRequests, classes, metrics }) {
   
@@ -20,11 +21,12 @@ export function KitsStats({ kitRequests, classes, metrics }) {
     withProblems: kitRequests.filter(k => k.reports && k.reports.length > 0).length
   };
 
-  // Kits por tipo
-  const kitTypeData = Object.entries(
+  // Kits por ciclo (agrupa pelo cycle da turma relacionada)
+  const kitCycleData = Object.entries(
     kitRequests.reduce((acc, kit) => {
-      const type = kit.kitType?.charAt(0).toUpperCase() + kit.kitType?.slice(1) || 'Não especificado';
-      acc[type] = (acc[type] || 0) + 1;
+      const cls = classes.find(c => c.id === kit.classId);
+      const cycle = cls?.cycle || 'Sem Turma';
+      acc[cycle] = (acc[cycle] || 0) + 1;
       return acc;
     }, {})
   ).map(([name, value]) => ({ name, value }));
@@ -37,45 +39,125 @@ export function KitsStats({ kitRequests, classes, metrics }) {
     { status: 'Pendentes', value: kitStats.pending, color: '#ef4444' }
   ];
 
-  // Evolução temporal (últimos 6 meses)
-  const last6Months = kitRequests.reduce((acc, kit) => {
-    const date = new Date(kit.requestedAt);
-    const monthKey = date.toLocaleString('pt-PT', { month: 'short', year: '2-digit' });
-    
-    if (!acc[monthKey]) {
-      acc[monthKey] = { 
-        month: monthKey, 
-        requested: 0, 
-        delivered: 0,
-        timestamp: date
-      };
-    }
-    
-    acc[monthKey].requested += 1;
-    if (kit.status === 'delivered') {
-      acc[monthKey].delivered += 1;
-    }
-    
-    return acc;
-  }, {});
-
-  const timelineData = Object.values(last6Months)
-    .sort((a, b) => a.timestamp - b.timestamp)
-    .slice(-6); // Últimos 6 meses
-
-  // Tempos médios
-  const calculateAverageTime = (status) => {
-    const kits = kitRequests.filter(k => k.status === status && k.deliveredAt && k.requestedAt);
-    if (kits.length === 0) return 0;
-    
-    const totalTime = kits.reduce((sum, kit) => {
-      const requested = new Date(kit.requestedAt);
-      const delivered = new Date(kit.deliveredAt);
-      return sum + (delivered - requested);
-    }, 0);
-    
-    return Math.round(totalTime / kits.length / (1000 * 60 * 60 * 24)); // Dias
+  // Evolução temporal: agrupar por mês usando requestedAt (fallback createdAt) e permitir drilldown por dias
+  // parse date helper (fallback to createdAt)
+  const parseDateSafe = (d) => {
+    if (!d) return null;
+    const dt = new Date(d);
+    return isNaN(dt.getTime()) ? null : dt;
   };
+
+  const getRequested = (kit) => parseDateSafe(kit.requestedAt) || parseDateSafe(kit.createdAt) || null;
+  const getApproved = (kit) => parseDateSafe(kit.approvedAt);
+  const getShipped = (kit) => parseDateSafe(kit.shippedAt);
+  const getDelivered = (kit) => parseDateSafe(kit.deliveredAt);
+ 
+  // --- construir lista de meses (DE JAN/2025 até ao mês mais recente) ---
+  const monthsMap = {};
+  // determinar mês final: o maior entre a data atual e a última data de pedido presente
+  const parseDateSafeForRange = (d) => {
+    if (!d) return null;
+    const dt = new Date(d);
+    return isNaN(dt.getTime()) ? null : dt;
+  };
+  const allRequestDates = kitRequests.map(k => parseDateSafeForRange(k.requestedAt) || parseDateSafeForRange(k.createdAt)).filter(Boolean);
+  const latestDataDate = allRequestDates.length ? new Date(Math.max(...allRequestDates.map(d => d.getTime()))) : new Date();
+  const endDate = new Date(Math.max(latestDataDate.getTime(), new Date().getTime()));
+
+  // start from Jan 2025
+  const startYear = 2025;
+  const startMonth = 1;
+  const start = new Date(startYear, startMonth - 1, 1);
+  // build months from start..endDate
+  for (let dt = new Date(start); dt <= new Date(endDate.getFullYear(), endDate.getMonth(), 1); dt.setMonth(dt.getMonth() + 1)) {
+    const y = dt.getFullYear();
+    const m = dt.getMonth() + 1;
+    const key = `${y}-${String(m).padStart(2, '0')}`;
+    monthsMap[key] = { key, label: `${String(m).padStart(2,'0')}/${y}`, ts: new Date(y, m - 1, 1) };
+  }
+  const monthsList = Object.values(monthsMap).sort((a, b) => a.ts - b.ts);
+
+  // estado para mês selecionado ('all' mostra série mensal completa); adicionar filtro de ano
+  const [selectedMonth, setSelectedMonth] = useState('all');
+  const [selectedYearFilter, setSelectedYearFilter] = useState('all');
+ 
+  // função que gera dados do gráfico: se selectedMonth === 'all' -> série mensal (todos os meses desde Jan/2025)
+  // se selectedYearFilter != 'all' filtra os meses mostrados na dropdown; se selectedMonth != 'all' -> daily buckets desse mês
+  const buildTimeline = () => {
+    if (selectedMonth === 'all') {
+      // gerar mês a mês usando o intervalo já construído (monthsList)
+      const monthly = {};
+      kitRequests.forEach(kit => {
+        const dReq = getRequested(kit);
+        const dApp = getApproved(kit);
+        const dShip = getShipped(kit);
+        const dDel = getDelivered(kit);
+        if (dReq) {
+          const k = `${dReq.getFullYear()}-${String(dReq.getMonth()+1).padStart(2,'0')}`;
+          if (!monthly[k]) monthly[k] = { month: `${String(dReq.getMonth()+1).padStart(2,'0')}/${dReq.getFullYear()}`, requested:0, approved:0, shipped:0, delivered:0, ts: new Date(dReq.getFullYear(), dReq.getMonth(), 1) };
+          monthly[k].requested += 1;
+        }
+        if (dApp) {
+          const k = `${dApp.getFullYear()}-${String(dApp.getMonth()+1).padStart(2,'0')}`;
+          if (!monthly[k]) monthly[k] = { month: `${String(dApp.getMonth()+1).padStart(2,'0')}/${dApp.getFullYear()}`, requested:0, approved:0, shipped:0, delivered:0, ts: new Date(dApp.getFullYear(), dApp.getMonth(), 1) };
+          monthly[k].approved += 1;
+        }
+        if (dShip) {
+          const k = `${dShip.getFullYear()}-${String(dShip.getMonth()+1).padStart(2,'0')}`;
+          if (!monthly[k]) monthly[k] = { month: `${String(dShip.getMonth()+1).padStart(2,'0')}/${dShip.getFullYear()}`, requested:0, approved:0, shipped:0, delivered:0, ts: new Date(dShip.getFullYear(), dShip.getMonth(), 1) };
+          monthly[k].shipped += 1;
+        }
+        if (dDel) {
+          const k = `${dDel.getFullYear()}-${String(dDel.getMonth()+1).padStart(2,'0')}`;
+          if (!monthly[k]) monthly[k] = { month: `${String(dDel.getMonth()+1).padStart(2,'0')}/${dDel.getFullYear()}`, requested:0, approved:0, shipped:0, delivered:0, ts: new Date(dDel.getFullYear(), dDel.getMonth(), 1) };
+          monthly[k].delivered += 1;
+        }
+      });
+      // garantir todos os meses (mesesList) presentes mesmo a zero
+      monthsList.forEach(m => {
+        if (!monthly[m.key]) monthly[m.key] = { month: m.label, requested: 0, approved: 0, shipped: 0, delivered: 0, ts: m.ts };
+      });
+      const months = Object.values(monthly).sort((a,b) => a.ts - b.ts);
+      return months;
+    } else {
+      // daily view for selected month: contar cada evento no seu dia respectivo
+      const [y, m] = selectedMonth.split('-').map(Number);
+      if (!y || !m) return [];
+      const daysInMonth = new Date(y, m, 0).getDate();
+      const days = Array.from({ length: daysInMonth }, (_, i) => {
+        const day = i + 1;
+        const dt = new Date(y, m - 1, day);
+        return { day, label: `${String(day).padStart(2,'0')}/${String(m).padStart(2,'0')}`, requested: 0, approved: 0, shipped: 0, delivered: 0, ts: dt };
+      });
+      kitRequests.forEach(kit => {
+        const dReq = getRequested(kit);
+        const dApp = getApproved(kit);
+        const dShip = getShipped(kit);
+        const dDel = getDelivered(kit);
+        if (dReq && dReq.getFullYear() === y && (dReq.getMonth()+1) === m) days[dReq.getDate()-1].requested += 1;
+        if (dApp && dApp.getFullYear() === y && (dApp.getMonth()+1) === m) days[dApp.getDate()-1].approved += 1;
+        if (dShip && dShip.getFullYear() === y && (dShip.getMonth()+1) === m) days[dShip.getDate()-1].shipped += 1;
+        if (dDel && dDel.getFullYear() === y && (dDel.getMonth()+1) === m) days[dDel.getDate()-1].delivered += 1;
+      });
+      return days;
+    }
+   };
+ 
+   const timelineData = buildTimeline();
+ 
+   // Tempos médios
+   const calculateAverageTime = (status) => {
+     const kits = kitRequests.filter(k => k.status === status && k.deliveredAt && k.requestedAt);
+     if (kits.length === 0) return 0;
+     
+     const totalTime = kits.reduce((sum, kit) => {
+       const requested = new Date(kit.requestedAt);
+       const delivered = new Date(kit.deliveredAt);
+       return sum + (delivered - requested);
+     }, 0);
+     
+     return Math.round(totalTime / kits.length / (1000 * 60 * 60 * 24)); // Dias
+   };
 
   const avgDeliveryTime = calculateAverageTime('delivered');
 
@@ -113,16 +195,16 @@ export function KitsStats({ kitRequests, classes, metrics }) {
         <Card className="p-6">
           <div className="flex items-center gap-2 mb-4">
             <BarChart3 className="w-5 h-5 text-purple-500" />
-            <h3 className="text-lg font-semibold">Kits por Tipo</h3>
+            <h3 className="text-lg font-semibold">Kits por Ciclo</h3>
           </div>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={kitTypeData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+            <BarChart data={kitCycleData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
               <YAxis />
               <Tooltip formatter={(value) => [`${value} kits`, 'Quantidade']} />
               <Bar dataKey="value" name="Kits" fill="#8b5cf6">
-                {kitTypeData.map((entry, index) => (
+                {kitCycleData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={`hsl(${index * 60}, 70%, 60%)`} />
                 ))}
               </Bar>
@@ -163,32 +245,63 @@ export function KitsStats({ kitRequests, classes, metrics }) {
         <div className="flex items-center gap-2 mb-4">
           <TrendingUp className="w-5 h-5 text-blue-500" />
           <h3 className="text-lg font-semibold">Evolução de Pedidos</h3>
+          {/* Filtros: Ano + Mês (desde Jan/2025 até ao mês atual) */}
+          <div className="ml-auto flex flex-col sm:flex-row gap-2">
+             <select
+               value={selectedMonth}
+               onChange={(e) => setSelectedMonth(e.target.value)}
+               className="h-8 rounded border border-input bg-background px-2 py-1 text-sm"
+             >
+               <option value="all">Últimos 6 meses</option>
+               {monthsList.map(m => (
+                 <option key={m.key} value={m.key}>{m.label}</option>
+               ))}
+             </select>
+          </div>
         </div>
-        <ResponsiveContainer width="100%" height={300}>
-          <AreaChart data={timelineData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Area 
-              type="monotone" 
-              dataKey="requested" 
-              name="Kits Pedidos" 
-              stroke="#3b82f6" 
-              fill="#3b82f6" 
-              fillOpacity={0.3}
-            />
-            <Area 
-              type="monotone" 
-              dataKey="delivered" 
-              name="Kits Entregues" 
-              stroke="#10b981" 
-              fill="#10b981" 
-              fillOpacity={0.3}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+        <div className="w-full overflow-x-auto">
+          <ResponsiveContainer width="100%" height={300}>
+             <AreaChart data={timelineData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey={selectedMonth === 'all' ? "month" : "label"} />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Area 
+                type="monotone" 
+                dataKey="requested" 
+                name="Pedido Recebido" 
+                stroke="#3b82f6" 
+                fill="#3b82f6" 
+                fillOpacity={0.20}
+              />
+              <Area 
+                type="monotone" 
+                dataKey="approved" 
+                name="Aprovado" 
+                stroke="#f59e0b" 
+                fill="#f59e0b" 
+                fillOpacity={0.18}
+              />
+              <Area 
+                type="monotone" 
+                dataKey="shipped" 
+                name="A Caminho" 
+                stroke="#fb923c" 
+                fill="#fb923c" 
+                fillOpacity={0.16}
+              />
+              <Area 
+                type="monotone" 
+                dataKey="delivered" 
+                name="Entregue" 
+                stroke="#10b981" 
+                fill="#10b981" 
+                fillOpacity={0.22}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
       </Card>
 
       {/* Métricas de Performance */}

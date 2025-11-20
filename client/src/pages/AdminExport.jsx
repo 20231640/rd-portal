@@ -398,10 +398,12 @@ export default function AdminExport() {
 
   return (
     <div className="flex min-h-screen bg-background">
-      <AdminSidebar />
-      <div className="flex-1 p-8 space-y-6">
+      <div className="hidden sm:block">
+        <AdminSidebar />
+      </div>
+      <div className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-3">
               <FileSpreadsheet className="w-8 h-8 text-blue-600" />
@@ -440,6 +442,7 @@ export default function AdminExport() {
             disabled={exporting}
             className="w-full md:w-auto"
             size="lg"
+            aria-busy={exporting}
           >
             {exporting ? (
               <>
@@ -511,7 +514,7 @@ export default function AdminExport() {
 
         {/* Histórico de Exportações */}
         {recentExports.length > 0 && (
-          <Card className="p-6">
+          <Card className="p-6 overflow-x-auto">
             <div className="flex items-center gap-2 mb-4">
               <Calendar className="w-5 h-5 text-blue-600" />
               <h3 className="text-lg font-semibold">📋 Exportações Recentes</h3>

@@ -37,32 +37,32 @@ export default function ForgotPassword() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="rd-header-bg text-white backdrop-blur-md shadow-lg">
-        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shadow-md">
-              <Mail className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold text-white tracking-tight">
-              Recuperar Password
-            </span>
-          </div>
-          <div className="flex items-center gap-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => window.history.back()}
-              className="text-white border-white/30 hover:bg-white/20"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar
-            </Button>
-            <ThemeToggle />
-          </div>
-        </div>
-      </header>
-
-      <div className="flex items-center justify-center min-h-[calc(100vh-80px)] px-4 py-12">
-        <div className="bg-card text-card-foreground rounded-2xl p-8 shadow-xl w-full max-w-md border border-border">
+        <div className="container mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+           <div className="flex items-center gap-3">
+             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shadow-md">
+               <Mail className="w-6 h-6 text-white" />
+             </div>
+             <span className="text-2xl font-bold text-white tracking-tight">
+               Recuperar Password
+             </span>
+           </div>
+           <div className="flex items-center gap-4">
+             <Button
+               variant="outline"
+               size="sm"
+               onClick={() => window.history.back()}
+               className="text-white border-white/30 hover:bg-white/20"
+             >
+               <ArrowLeft className="w-4 h-4 mr-2" />
+               Voltar
+             </Button>
+             <ThemeToggle />
+           </div>
+         </div>
+       </header>
+ 
+      <div className="flex items-center justify-center min-h-[calc(100vh-80px)] px-4 py-8">
+        <div className="bg-card text-card-foreground rounded-2xl p-4 sm:p-8 shadow-xl w-full max-w-md border border-border">
           <div className="flex flex-col items-center mb-8">
             <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
               <Mail className="w-8 h-8 text-primary" />
@@ -82,7 +82,7 @@ export default function ForgotPassword() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full rounded-xl border border-input bg-background px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                className="block w-full rounded-xl border border-input bg-background px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
               />
             </div>
 
@@ -101,6 +101,7 @@ export default function ForgotPassword() {
               size="lg" 
               className="w-full rounded-xl"
               disabled={isLoading}
+              aria-busy={isLoading}
             >
               {isLoading ? "A enviar..." : "Enviar Link de Recuperação"}
             </Button>

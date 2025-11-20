@@ -1,16 +1,17 @@
-// TeacherKitsPage.jsx - VERSÃO FINAL COMPLETA
+// TeacherKitsPage.jsx - VERSÃO ATUALIZADA COM ESTÉTICA DO ADMIN
 import { useState, useEffect, useRef } from "react";
 import { Sidebar } from "../components/ui/sidebar";
 import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Skeleton } from "../components/ui/skeleton";
 import { KitJourney } from "../components/ui/kits/kit-journey";
+import { API_URL } from "../config/api";
 import { 
   Package, Plus, CheckCircle, AlertCircle, 
   RefreshCw, Users, BookOpen, Calendar,
-  MapPin, School, Clock, Truck, Home
+  MapPin, School, Clock, Truck, Home,
+  Search
 } from "lucide-react";
-import { API_URL } from "../config/api";
 
 export default function TeacherKitsPage() {
   const [teacher, setTeacher] = useState(null);
@@ -24,6 +25,13 @@ export default function TeacherKitsPage() {
   const [showReportForm, setShowReportForm] = useState(false);
   const [selectedRequestForReport, setSelectedRequestForReport] = useState(null);
   const [reportMessage, setReportMessage] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [newUpdates, setNewUpdates] = useState(0);
+
+  // Novos estados para filtros por ciclo e ano
+  const [selectedCycle, setSelectedCycle] = useState("all");
+  const [selectedYear, setSelectedYear] = useState("all");
   
   const previousRequestsRef = useRef([]);
 
@@ -74,10 +82,12 @@ export default function TeacherKitsPage() {
         }
       }
 
-      // Filtrar turmas do professor
-      const teacherClasses = allClasses.filter(cls => cls.teacherId === currentTeacher.id);
+      // Detectar mudanças
       detectChanges(teacherKits);
 
+      // Filtrar turmas do professor
+      const teacherClasses = allClasses.filter(cls => cls.teacherId === currentTeacher.id);
+      
       setClasses(teacherClasses);
       setKitRequests(teacherKits);
       setLastUpdate(new Date());
@@ -88,6 +98,45 @@ export default function TeacherKitsPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Detectar mudanças nos pedidos
+  const detectChanges = (newRequests) => {
+    if (previousRequestsRef.current.length === 0) {
+      previousRequestsRef.current = newRequests;
+      return;
+    }
+
+    const changes = {
+      new: [],
+      updated: []
+    };
+
+    newRequests.forEach(request => {
+      const existing = previousRequestsRef.current.find(r => r.id === request.id);
+      
+      if (!existing) {
+        changes.new.push(request);
+      } else {
+        // Verificar mudanças de status
+        if (existing.status !== request.status) {
+          changes.updated.push({ from: existing.status, to: request.status, request });
+        }
+      }
+    });
+
+    // Atualizar contador de novas atualizações
+    const totalChanges = changes.new.length + changes.updated.length;
+    if (totalChanges > 0) {
+      setNewUpdates(prev => prev + totalChanges);
+    }
+
+    previousRequestsRef.current = newRequests;
+  };
+
+  // Limpar notificações
+  const clearNotifications = () => {
+    setNewUpdates(0);
   };
 
   // Função de pedir kit
@@ -205,15 +254,6 @@ export default function TeacherKitsPage() {
     }
   };
 
-  // Detectar mudanças nos pedidos
-  const detectChanges = (newRequests) => {
-    if (previousRequestsRef.current.length === 0) {
-      previousRequestsRef.current = newRequests;
-      return;
-    }
-    previousRequestsRef.current = newRequests;
-  };
-
   // Verificar se uma turma já tem pedido
   const classHasRequest = (classId) => {
     return kitRequests.some(request => 
@@ -223,154 +263,148 @@ export default function TeacherKitsPage() {
     );
   };
 
+  // Estatísticas
+  const getStatusCount = (status) => {
+    return kitRequests.filter(req => req.status === status).length;
+  };
+
+  // Filtros
+  const filteredRequests = kitRequests.filter(request => {
+    const classInfo = classes.find(c => c.id === request.classId);
+
+    // Se a turma não existir, permite pesquisa por texto normalmente
+    const matchesSearch = classInfo?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         classInfo?.cycle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         request.kitType?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === "all" || request.status === statusFilter;
+
+    const matchesCycle = selectedCycle === "all" || classInfo?.cycle === selectedCycle;
+    const matchesYear = selectedYear === "all" || String(classInfo?.year) === String(selectedYear);
+
+    return matchesSearch && matchesStatus && matchesCycle && matchesYear;
+  });
+
   // Efeito para carregamento inicial
   useEffect(() => {
     fetchData();
   }, []);
 
-  // Componente RequestCard separado para melhor organização
+  // Componente RequestCard atualizado - APENAS a parte que muda
   const RequestCard = ({ request }) => {
     const classInfo = classes.find(c => c.id === request.classId);
     
     return (
-      <Card className="p-8 hover:shadow-2xl transition-all duration-500 border-l-8 border-l-[hsl(76,49%,52%)] rounded-3xl bg-gradient-to-r from-white to-blue-50/30 border shadow-lg">
+      <Card key={request.id} className="p-6 hover:shadow-lg transition-all duration-300 border-l-4 border-l-blue-500">
         {/* Header do Pedido */}
-        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-6 mb-8">
+        <div className="flex justify-between items-start mb-4">
           <div className="flex-1">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-14 h-14 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                <Package className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h4 className="text-2xl font-bold text-gray-800 mb-2">
-                  {classInfo ? classInfo.name : "Turma não encontrada"}
-                  <span className="text-lg font-normal text-gray-600 ml-2">
-                    - {classInfo?.cycle} {classInfo?.year} | Kit Padrão
-                  </span>
-                </h4>
-                <div className="flex flex-wrap items-center gap-4 text-gray-600">
-                  <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border shadow-sm">
-                    <Users className="w-4 h-4 text-[hsl(283,45%,33%)]" />
-                    <span className="font-medium">{classInfo?.students} alunos</span>
-                  </div>
-                  <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border shadow-sm">
-                    <BookOpen className="w-4 h-4 text-[hsl(26,90%,57%)]" />
-                    <span className="font-medium">{classInfo?.cycle}</span>
-                  </div>
-                  <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border shadow-sm">
-                    <Calendar className="w-4 h-4 text-[hsl(189,68%,64%)]" />
-                    <span className="font-medium">
-                      Pedido: {new Date(request.requestedAt).toLocaleDateString('pt-PT')}
-                    </span>
-                  </div>
+            <div className="flex items-center gap-3 mb-2">
+              <Package className="w-6 h-6 text-primary" />
+              <h4 className="text-xl font-bold">
+                {classInfo ? classInfo.name : "Turma não encontrada"}
+                <span className="text-lg font-normal text-muted-foreground ml-2">
+                  - {classInfo?.cycle} {classInfo?.year} | Kit Padrão
+                </span>
+              </h4>
+            </div>
+            
+            {/* Informações da Turma EM CAIXA CINZA */}
+            <Card className="p-3 bg-gray-50 border border-gray-200 mb-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-gray-700">
+                <div className="flex items-center gap-1">
+                  <Users className="w-4 h-4" />
+                  <span>{classInfo?.students || "N/A"} alunos</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <BookOpen className="w-4 h-4" />
+                  <span>{classInfo?.cycle || "N/A"}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Calendar className="w-4 h-4" />
+                  <span>Pedido: {new Date(request.requestedAt).toLocaleDateString('pt-PT')}</span>
                 </div>
               </div>
-            </div>
+            </Card>
           </div>
 
-          <div className="flex items-center gap-4">
-            <span className={`px-4 py-3 rounded-2xl text-sm font-bold shadow-lg transition-all duration-300 ${
-              request.status === 'pending' ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white' :
-              request.status === 'approved' ? 'bg-gradient-to-r from-blue-400 to-blue-600 text-white' :
-              request.status === 'shipped' ? 'bg-gradient-to-r from-orange-400 to-red-500 text-white' :
-              'bg-gradient-to-r from-green-400 to-emerald-600 text-white'
+          <div className="flex items-center gap-3">
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+              request.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+              request.status === 'approved' ? 'bg-blue-100 text-blue-800' :
+              request.status === 'shipped' ? 'bg-orange-100 text-orange-800' :
+              'bg-green-100 text-green-800'
             }`}>
-              {getStatusText(request.status)}
+              {request.status === 'pending' ? 'Pendente' :
+              request.status === 'approved' ? 'Aprovado' :
+              request.status === 'shipped' ? 'Enviado' : 'Entregue'}
             </span>
           </div>
         </div>
 
         {/* Timeline Visual */}
-        <KitJourney request={request} showDetails={true} />
+        <KitJourney request={request} />
 
-        {/* Informações Adicionais */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6">
-          {/* Notas do Admin */}
-          {request.adminNotes && (
-            <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-[hsl(283,45%,33%)]">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 bg-[hsl(283,45%,33%)] rounded-full animate-pulse"></div>
-                <p className="font-semibold text-[hsl(283,45%,33%)] text-sm">📝 NOTA DO ADMINISTRADOR</p>
-              </div>
-              <p className="text-[hsl(283,45%,33%)] text-sm leading-relaxed">
-                {request.adminNotes}
-              </p>
-            </div>
-          )}
-
-          {/* Problemas Reportados */}
-          {request.reports && request.reports.length > 0 && (
-            <div className="p-4 bg-gradient-to-r from-red-50 to-orange-50 rounded-2xl border border-[hsl(327,83%,50%)]">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 bg-[hsl(327,83%,50%)]"></div>
-                <p className="font-semibold text-[hsl(327,83%,50%)] text-sm">⚠️ PROBLEMA REPORTADO</p>
-              </div>
-              <p className="text-[hsl(327,83%,50%)] text-sm leading-relaxed mb-2">
-                {request.reports[request.reports.length - 1].message}
-              </p>
-              <div className="flex justify-between items-center text-xs text-[hsl(327,83%,50%)]">
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  {new Date(request.reports[request.reports.length - 1].createdAt).toLocaleDateString('pt-PT')}
-                </span>
-                {request.reports[request.reports.length - 1].resolved && (
-                  <span className="bg-[hsl(76,49%,52%)] text-[hsl(76,49%,52%)] px-2 py-1 rounded-full font-medium flex items-center gap-1">
-                    <CheckCircle className="w-3 h-3" />
-                    Resolvido
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Actions e Footer */}
-        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 pt-6 mt-6 border-t border-gray-200">
-          <div className="flex items-center gap-4 text-sm text-gray-500 flex-wrap">
-            <div className="bg-gray-100 px-3 py-2 rounded-lg border shadow-sm">
-              <span className="font-mono font-bold text-gray-700">ID: #{request.id}</span>
-            </div>
-            {request.approvedAt && (
-              <div className="flex items-center gap-2 bg-[hsl(76,49%,52%)] px-3 py-2 rounded-lg border border-[hsl(76,49%,52%)]">
-                <CheckCircle className="w-4 h-4 text-[hsl(76,49%,52%)]" />
-                <span className="text-[hsl(76,49%,52%)]">Aprovado: {new Date(request.approvedAt).toLocaleDateString('pt-PT')}</span>
-              </div>
-            )}
-            {request.shippedAt && (
-              <div className="flex items-center gap-2 bg-[hsl(189,68%,64%)] px-3 py-2 rounded-lg border border-[hsl(189,68%,64%)]">
-                <Truck className="w-4 h-4 text-[hsl(189,68%,64%)]" />
-                <span className="text-[hsl(189,68%,64%)]">Enviado: {new Date(request.shippedAt).toLocaleDateString('pt-PT')}</span>
-              </div>
-            )}
-            {request.deliveredAt && (
-              <div className="flex items-center gap-2 bg-[hsl(26,90%,57%)] px-3 py-2 rounded-lg border border-[hsl(26,90%,57%)]">
-                <Home className="w-4 h-4 text-[hsl(26,90%,57%)]" />
-                <span className="text-[hsl(26,90%,57%)]">Entregue: {new Date(request.deliveredAt).toLocaleDateString('pt-PT')}</span>
-              </div>
-            )}
+        {/* Notas do Admin */}
+        {request.adminNotes && (
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <p className="text-sm text-blue-700">
+              <strong>📝 Nota do Admin:</strong> {request.adminNotes}
+            </p>
           </div>
-          
-          <div className="flex gap-3">
+        )}
+
+        {/* Problemas Reportados */}
+        {request.reports && request.reports.length > 0 && (
+          <div className="mt-4 p-3 bg-red-50 rounded-lg border border-red-200">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertCircle className="w-4 h-4 text-red-600" />
+              <p className="text-sm text-red-700 font-medium">
+                Problema Reportado
+              </p>
+            </div>
+            <p className="text-sm text-red-600 mb-2">
+              {request.reports[request.reports.length - 1].message}
+            </p>
+            <div className="flex justify-between items-center text-xs text-red-500">
+              <span>
+                Reportado em: {new Date(request.reports[request.reports.length - 1].createdAt).toLocaleDateString('pt-PT')}
+              </span>
+              {request.reports[request.reports.length - 1].resolved && (
+                <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                  <CheckCircle className="w-3 h-3 inline mr-1" />
+                  Resolvido
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Actions - BOTÃO ROSA ATUALIZADO E SEM ID */}
+        <div className="flex justify-end items-center pt-4 mt-4 border-t">
+          <div className="flex gap-2">
             {request.status === "shipped" && (
               <Button
+                size="sm"
                 onClick={() => handleMarkAsDelivered(request.id)}
-                className="bg-gradient-to-r from-[hsl(76,49%,52%)] to-[hsl(76,49%,52%)] hover:from-[hsl(76,49%,52%)] hover:to-[hsl(76,49%,52%)] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                className="bg-green-600 hover:bg-green-700"
               >
-                <CheckCircle className="w-5 h-5 mr-2" />
+                <CheckCircle className="w-4 h-4 mr-1" />
                 Confirmar Receção
               </Button>
             )}
             
             {request.status === "delivered" && (
               <Button
+                size="sm"
                 variant="outline"
                 onClick={() => {
                   setSelectedRequestForReport(request);
                   setShowReportForm(true);
                 }}
-                className="border-2 border-[hsl(327,83%,50%)] text-[hsl(327,83%,50%)] hover:bg-[hsl(327,83%,50%)] hover:border-[hsl(327,83%,50%)] px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105"
+                className="border-[hsl(327,83%,50%)] text-[hsl(327,83%,50%)] hover:bg-[hsl(327,83%,50%)] hover:text-white transition-all duration-300"
               >
-                <AlertCircle className="w-5 h-5 mr-2" />
+                <AlertCircle className="w-4 h-4 mr-1" />
                 Reportar Problema
               </Button>
             )}
@@ -382,29 +416,31 @@ export default function TeacherKitsPage() {
 
   // Loading Skeleton
   const RequestSkeleton = () => (
-    <div className="border border-border rounded-2xl p-6 animate-pulse bg-gradient-to-r from-gray-50 to-gray-100">
+    <div className="border border-border rounded-lg p-6 animate-pulse">
       <div className="flex items-center justify-between">
         <div className="flex items-start gap-4 flex-1">
-          <div className="w-12 h-12 bg-gray-300 rounded-full mt-1"></div>
-          <div className="flex-1 space-y-4">
+          <div className="w-10 h-10 bg-gray-300 rounded-full mt-1"></div>
+          <div className="flex-1 space-y-3">
             <div className="flex items-center gap-3">
-              <Skeleton className="h-7 w-56 rounded-lg" />
-              <Skeleton className="h-8 w-28 rounded-full" />
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-7 w-24 rounded-full" />
             </div>
-            <Skeleton className="h-4 w-72 rounded" />
-            <div className="space-y-3 mt-6">
-              <Skeleton className="h-3 w-full rounded-full" />
+            <Skeleton className="h-4 w-64" />
+            {/* Skeleton da timeline */}
+            <div className="space-y-2 mt-4">
+              <Skeleton className="h-2 w-full" />
               <div className="flex justify-between">
-                <Skeleton className="h-4 w-20 rounded" />
-                <Skeleton className="h-4 w-20 rounded" />
-                <Skeleton className="h-4 w-20 rounded" />
-                <Skeleton className="h-4 w-20 rounded" />
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-4 w-16" />
               </div>
             </div>
           </div>
         </div>
         <div className="flex gap-2">
-          <Skeleton className="h-10 w-28 rounded-lg" />
+          <Skeleton className="h-9 w-24" />
+          <Skeleton className="h-9 w-24" />
         </div>
       </div>
     </div>
@@ -415,12 +451,10 @@ export default function TeacherKitsPage() {
     const availableClasses = classes.filter(cls => !classHasRequest(cls.id));
     
     return (
-      <Card className="p-12 text-center bg-gradient-to-br from-blue-50 to-indigo-50 border-0 shadow-lg rounded-3xl">
-        <div className="w-24 h-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-          <Package className="w-10 h-10 text-white" />
-        </div>
-        <h3 className="text-2xl font-bold text-gray-800 mb-3">Nenhum pedido de kit</h3>
-        <p className="text-gray-600 mb-8 text-lg max-w-md mx-auto leading-relaxed">
+      <Card className="p-8 text-center border-dashed">
+        <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+        <h3 className="text-lg font-semibold mb-2">Nenhum pedido de kit</h3>
+        <p className="text-muted-foreground mb-4">
           {availableClasses.length === 0 && classes.length > 0 
             ? "🎉 Excelente! Já fez pedidos para todas as suas turmas disponíveis."
             : "📚 Comece por pedir o seu primeiro kit educativo para as suas turmas."
@@ -429,44 +463,34 @@ export default function TeacherKitsPage() {
         <Button 
           onClick={() => setShowRequestForm(true)} 
           disabled={availableClasses.length === 0}
-          className="bg-gradient-to-r from-[hsl(283,45%,33%)] to-[hsl(283,45%,33%)] hover:from-[hsl(283,45%,33%)] hover:to-[hsl(283,45%,33%)] text-white px-8 py-3 rounded-xl text-lg font-semibold shadow-lg transition-all duration-300 transform hover:scale-105"
+          className="bg-primary hover:bg-primary/90"
         >
-          <Plus className="w-5 h-5 mr-3" />
+          <Plus className="w-4 h-4 mr-2" />
           {availableClasses.length === 0 ? "Todas as Turmas com Pedido" : "Fazer Primeiro Pedido"}
         </Button>
       </Card>
     );
   };
 
-  // Função auxiliar para status
-  const getStatusText = (status) => {
-    switch (status) {
-      case "pending": return "Pendente";
-      case "approved": return "Aprovado";
-      case "shipped": return "Enviado";
-      case "delivered": return "Entregue";
-      default: return status;
-    }
-  };
-
-  // Turmas disponíveis para pedido
-  const availableClasses = classes.filter(cls => !classHasRequest(cls.id));
+  // Turmas disponíveis para pedido — agora respeita os filtros de ciclo/ano
+  const visibleClasses = classes.filter(cls =>
+    (selectedCycle === "all" || cls.cycle === selectedCycle) &&
+    (selectedYear === "all" || String(cls.year) === String(selectedYear))
+  );
+  const availableClasses = visibleClasses.filter(cls => !classHasRequest(cls.id));
 
   if (error) {
     return (
-      <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-        <Sidebar />
-        <div className="flex-1 p-8">
-          <Card className="p-8 text-center max-w-md mx-auto mt-20 bg-white rounded-3xl shadow-xl border-0">
-            <div className="w-20 h-20 bg-[hsl(327,83%,50%)] rounded-full flex items-center justify-center mx-auto mb-6">
-              <AlertCircle className="w-10 h-10 text-[hsl(327,83%,50%)]" />
-            </div>
-            <h2 className="text-2xl font-bold text-[hsl(327,83%,50%)] mb-3">Erro ao Carregar</h2>
-            <p className="text-gray-600 mb-6">{error}</p>
-            <Button 
-              onClick={() => window.location.reload()}
-              className="bg-gradient-to-r from-[hsl(327,83%,50%)] to-[hsl(327,83%,50%)] hover:from-[hsl(327,83%,50%)] hover:to-[hsl(327,83%,50%)] text-white px-6 py-3 rounded-xl"
-            >
+      <div className="flex min-h-screen bg-background">
+        <div className="hidden sm:block">
+          <Sidebar />
+        </div>
+        <div className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full flex items-center justify-center">
+          <Card className="p-6 text-center">
+            <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-destructive mb-2">Erro ao Carregar</h2>
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()}>
               <RefreshCw className="w-4 h-4 mr-2" />
               Recarregar Página
             </Button>
@@ -477,41 +501,40 @@ export default function TeacherKitsPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      <Sidebar />
-      <div className="flex-1 p-8">
-        {/* Header */}
-        <div className="flex justify-between items-start mb-10">
+    <div className="flex min-h-screen bg-background" onClick={clearNotifications}>
+      <div className="hidden sm:block">
+        <Sidebar />
+      </div>
+      <div className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full">
+        {/* Header com controles de atualização */}
+        <div className="flex justify-between items-center mb-8">
           <div>
-            <div className="flex items-center gap-4 mb-3">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <Package className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Gestão de Kits
-                </h1>
-                <p className="text-gray-600 text-lg mt-1">Pedir e acompanhar kits para as suas turmas</p>
-              </div>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold">Gestão de Kits</h1>
+              {newUpdates > 0 && (
+                <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">
+                  {newUpdates} nova(s)
+                </span>
+              )}
             </div>
-            
-            {lastUpdate && (
-              <div className="flex items-center gap-2 text-sm text-gray-500 bg-white px-3 py-2 rounded-lg border shadow-sm">
-                <Clock className="w-4 h-4" />
-                <span>Última atualização: {lastUpdate.toLocaleTimeString('pt-PT')}</span>
-              </div>
-            )}
+            <div className="flex items-center gap-4 mt-2">
+              <p className="text-muted-foreground">Pedir e acompanhar kits para as suas turmas</p>
+              {lastUpdate && (
+                <span className="text-xs text-muted-foreground">
+                  Última atualização: {lastUpdate.toLocaleTimeString('pt-PT')}
+                </span>
+              )}
+            </div>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 flex-wrap">
             <Button
               variant="outline"
-              size="lg"
+              size="sm"
               onClick={fetchData}
               disabled={loading}
-              className="rounded-xl border-2 shadow-sm hover:shadow-md transition-all"
             >
-              <RefreshCw className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               Atualizar
             </Button>
 
@@ -519,12 +542,12 @@ export default function TeacherKitsPage() {
               <Button 
                 onClick={() => setShowRequestForm(true)} 
                 disabled={availableClasses.length === 0}
-                className="bg-gradient-to-r from-[hsl(283,45%,33%)] to-[hsl(283,45%,33%)] hover:from-[hsl(283,45%,33%)] hover:to-[hsl(283,45%,33%)] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                className="bg-primary hover:bg-primary/90 w-full sm:w-auto"
               >
-                <Plus className="w-5 h-5 mr-2" />
+                <Plus className="w-4 h-4 mr-2" />
                 Pedir Kit
                 {availableClasses.length > 0 && (
-                  <span className="ml-2 bg-white text-[hsl(283,45%,33%)] px-2 py-1 rounded-full text-sm font-bold min-w-6">
+                  <span className="ml-2 bg-white text-primary px-2 py-1 rounded-full text-sm font-bold min-w-6">
                     {availableClasses.length}
                   </span>
                 )}
@@ -533,16 +556,96 @@ export default function TeacherKitsPage() {
           </div>
         </div>
 
+        {/* Indicador de Estado */}
+        <div className="flex items-center gap-4 mb-6">
+          {loading && (
+            <div className="flex items-center gap-2 text-sm text-blue-600">
+              <RefreshCw className="w-3 h-3 animate-spin" />
+              <span>A carregar dados...</span>
+            </div>
+          )}
+        </div>
+
+        {/* Estatísticas */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <Card className="p-4 text-center border-l-4 border-l-[hsl(26,90%,57%)] hover:shadow-md transition-shadow">
+            <div className="text-2xl font-bold text-[hsl(26,90%,57%)]">{getStatusCount("pending")}</div>
+            <div className="text-sm text-muted-foreground">Pendentes</div>
+          </Card>
+          <Card className="p-4 text-center border-l-4 border-l-[hsl(283,45%,33%)] hover:shadow-md transition-shadow">
+            <div className="text-2xl font-bold text-[hsl(283,45%,33%)]">{getStatusCount("approved")}</div>
+            <div className="text-sm text-muted-foreground">Aprovados</div>
+          </Card>
+          <Card className="p-4 text-center border-l-4 border-l-[hsl(189,68%,64%)] hover:shadow-md transition-shadow">
+            <div className="text-2xl font-bold text-[hsl(189,68%,64%)]">{getStatusCount("shipped")}</div>
+            <div className="text-sm text-muted-foreground">Enviados</div>
+          </Card>
+          <Card className="p-4 text-center border-l-4 border-l-[hsl(76,49%,52%)] hover:shadow-md transition-shadow">
+            <div className="text-2xl font-bold text-[hsl(76,49%,52%)]">{getStatusCount("delivered")}</div>
+            <div className="text-sm text-muted-foreground">Entregues</div>
+          </Card>
+        </div>
+
+        {/* Filtros */}
+        <Card className="p-4 mb-6">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Pesquisar por turma, ciclo ou tipo de kit..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 w-full h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="all">Todos os Estados</option>
+              <option value="pending">Pendentes</option>
+              <option value="approved">Aprovados</option>
+              <option value="shipped">Enviados</option>
+              <option value="delivered">Entregues</option>
+            </select>
+
+            {/* Novo: filtro por Ciclo */}
+            <select
+              value={selectedCycle}
+              onChange={(e) => setSelectedCycle(e.target.value)}
+              className="h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="all">Todos os Ciclos</option>
+              {Array.from(new Set(classes.map(c => c.cycle))).map(cycle => (
+                <option key={cycle} value={cycle}>{cycle}</option>
+              ))}
+            </select>
+
+            {/* Novo: filtro por Ano */}
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value)}
+              className="h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="all">Todos os Anos</option>
+              {Array.from(new Set(classes.map(c => String(c.year)))).sort().map(year => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+          </div>
+        </Card>
+
         {/* Avisos */}
         {!loading && availableClasses.length === 0 && classes.length > 0 && (
-          <Card className="p-6 mb-8 bg-gradient-to-r from-green-50 to-emerald-50 border border-[hsl(76,49%,52%)] rounded-2xl shadow-sm">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-[hsl(76,49%,52%)] rounded-xl flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 text-[hsl(76,49%,52%)]" />
-              </div>
+          <Card className="p-4 mb-6 bg-green-50 border border-green-200">
+            <div className="flex items-center gap-3">
+              <CheckCircle className="w-5 h-5 text-green-600" />
               <div>
-                <h3 className="font-bold text-[hsl(76,49%,52%)] text-lg">Todos os pedidos realizados</h3>
-                <p className="text-[hsl(76,49%,52%)]">
+                <h3 className="font-semibold text-green-800">Todos os pedidos realizados</h3>
+                <p className="text-green-700 text-sm">
                   Já fez pedidos para todas as suas turmas disponíveis.
                 </p>
               </div>
@@ -551,14 +654,12 @@ export default function TeacherKitsPage() {
         )}
 
         {!loading && classes.length === 0 && (
-          <Card className="p-6 mb-8 bg-gradient-to-r from-yellow-50 to-orange-50 border border-[hsl(189,68%,64%)] rounded-2xl shadow-sm">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-[hsl(189,68%,64%)] rounded-xl flex items-center justify-center">
-                <AlertCircle className="w-6 h-6 text-[hsl(189,68%,64%)]" />
-              </div>
+          <Card className="p-4 mb-6 bg-yellow-50 border border-yellow-200">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-yellow-600" />
               <div>
-                <h3 className="font-bold text-[hsl(189,68%,64%)] text-lg">Sem turmas disponíveis</h3>
-                <p className="text-[hsl(189,68%,64%)]">
+                <h3 className="font-semibold text-yellow-800">Sem turmas disponíveis</h3>
+                <p className="text-yellow-700 text-sm">
                   Precisa de criar turmas antes de poder pedir kits.
                 </p>
               </div>
@@ -568,21 +669,19 @@ export default function TeacherKitsPage() {
 
         {/* Formulário de Pedido */}
         {showRequestForm && (
-          <Card className="p-8 mb-8 rounded-3xl shadow-xl border-0 bg-gradient-to-br from-white to-blue-50">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-[hsl(283,45%,33%)] rounded-lg flex items-center justify-center">
-                <Plus className="w-5 h-5 text-[hsl(283,45%,33%)]" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-800">Novo Pedido de Kit</h3>
+          <Card className="p-6 mb-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Plus className="w-6 h-6 text-primary" />
+              <h3 className="text-xl font-bold">Novo Pedido de Kit</h3>
             </div>
             
-            <form onSubmit={handleRequestKit} className="space-y-6">
+            <form onSubmit={handleRequestKit} className="space-y-4">
               <div>
-                <label className="block text-lg font-semibold text-gray-700 mb-3">Selecionar Turma</label>
+                <label className="block text-sm font-medium mb-2">Selecionar Turma</label>
                 <select
                   value={selectedClass}
                   onChange={(e) => setSelectedClass(e.target.value)}
-                  className="w-full rounded-2xl border-2 border-gray-200 bg-white px-4 py-4 text-lg focus:outline-none focus:ring-4 focus:ring-[hsl(283,45%,33%)] focus:border-[hsl(283,45%,33%)] transition-all duration-300 shadow-sm"
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   required
                   disabled={availableClasses.length === 0}
                 >
@@ -595,11 +694,11 @@ export default function TeacherKitsPage() {
                 </select>
                 
                 {availableClasses.length === 0 ? (
-                  <p className="text-gray-500 mt-3 text-lg text-center py-4 bg-gray-50 rounded-xl border">
+                  <p className="text-muted-foreground mt-2 text-sm text-center py-2 bg-muted rounded-lg">
                     Não tem turmas disponíveis para pedido
                   </p>
                 ) : (
-                  <p className="text-[hsl(283,45%,33%)] mt-3 font-semibold text-center">
+                  <p className="text-primary mt-2 font-medium text-sm text-center">
                     🎯 {availableClasses.length} turma(s) disponível(is)
                   </p>
                 )}
@@ -607,12 +706,12 @@ export default function TeacherKitsPage() {
 
               {selectedClass && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Card className="p-5 bg-gradient-to-r from-green-50 to-emerald-50 border border-[hsl(76,49%,52%)] rounded-2xl">
+                  <Card className="p-4 bg-green-50 border border-green-200">
                     <div className="flex items-center gap-3">
-                      <Users className="w-6 h-6 text-[hsl(76,49%,52%)]" />
+                      <Users className="w-5 h-5 text-green-600" />
                       <div>
-                        <h4 className="font-bold text-[hsl(76,49%,52%)]">Informações da Turma</h4>
-                        <div className="space-y-2 text-sm text-[hsl(76,49%,52%)] mt-2">
+                        <h4 className="font-semibold text-green-800">Informações da Turma</h4>
+                        <div className="space-y-1 text-sm text-green-700 mt-2">
                           <div className="flex items-center gap-2">
                             <School className="w-4 h-4" />
                             <span>{classes.find(c => c.id === parseInt(selectedClass))?.name}</span>
@@ -630,12 +729,12 @@ export default function TeacherKitsPage() {
                     </div>
                   </Card>
 
-                  <Card className="p-5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-[hsl(283,45%,33%)] rounded-2xl">
+                  <Card className="p-4 bg-blue-50 border border-blue-200">
                     <div className="flex items-center gap-3">
-                      <Package className="w-6 h-6 text-[hsl(283,45%,33%)]" />
+                      <Package className="w-5 h-5 text-blue-600" />
                       <div>
-                        <h4 className="font-bold text-[hsl(283,45%,33%)]">Kit Padrão Inclui</h4>
-                        <div className="text-sm text-[hsl(283,45%,33%)] mt-2 space-y-1">
+                        <h4 className="font-semibold text-blue-800">Kit Padrão Inclui</h4>
+                        <div className="text-sm text-blue-700 mt-2 space-y-1">
                           <div>• Material educativo completo</div>
                           <div>• Recursos para {classes.find(c => c.id === parseInt(selectedClass))?.students} alunos</div>
                           <div>• Guias do professor</div>
@@ -646,19 +745,18 @@ export default function TeacherKitsPage() {
                 </div>
               )}
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-3 pt-2">
                 <Button 
                   type="submit" 
                   disabled={!selectedClass}
-                  className="bg-gradient-to-r from-[hsl(76,49%,52%)] to-[hsl(76,49%,52%)] hover:from-[hsl(76,49%,52%)] hover:to-[hsl(76,49%,52%)] text-white px-8 py-4 rounded-2xl text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex-1"
+                  className="bg-primary hover:bg-primary/90"
                 >
-                  <Package className="w-5 h-5 mr-3" />
+                  <Package className="w-4 h-4 mr-2" />
                   Confirmar Pedido de Kit
                 </Button>
                 <Button 
                   variant="outline" 
                   onClick={() => setShowRequestForm(false)}
-                  className="px-8 py-4 rounded-2xl text-lg border-2 hover:bg-gray-50 transition-all duration-300"
                 >
                   Cancelar
                 </Button>
@@ -667,32 +765,25 @@ export default function TeacherKitsPage() {
           </Card>
         )}
 
-        {/* Modal de Reportar Problema */}
+        {/* Modal de Reportar Problema - ATUALIZADO */}
         {showReportForm && (
           <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-            <Card className="p-8 w-full max-w-2xl rounded-3xl shadow-2xl border-0 bg-gradient-to-br from-white to-[hsl(327,83%,50%)] animate-in fade-in duration-300">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 bg-[hsl(327,83%,50%)] rounded-xl flex items-center justify-center">
-                  <AlertCircle className="w-6 h-6 text-[hsl(327,83%,50%)]" />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold text-gray-800">Reportar Problema</h3>
-                  <p className="text-gray-600 mt-1">
-                    Descreva o problema encontrado com o kit recebido.
-                  </p>
-                </div>
+            <Card className="p-6 w-full max-w-2xl">
+              <div className="flex items-center gap-3 mb-4">
+                <AlertCircle className="w-6 h-6 text-[hsl(327,83%,50%)]" />
+                <h3 className="text-xl font-bold">Reportar Problema</h3>
               </div>
               
-              <form onSubmit={handleReportProblem} className="space-y-6">
+              <form onSubmit={handleReportProblem} className="space-y-4">
                 <div>
-                  <label className="block text-lg font-semibold text-gray-700 mb-3">
+                  <label className="block text-sm font-medium mb-2">
                     Descrição do Problema
                   </label>
                   <textarea
                     value={reportMessage}
                     onChange={(e) => setReportMessage(e.target.value)}
-                    className="w-full rounded-2xl border-2 border-gray-200 bg-white px-4 py-4 focus:outline-none focus:ring-4 focus:ring-[hsl(327,83%,50%)] focus:border-[hsl(327,83%,50%)] transition-all duration-300 shadow-sm resize-none"
-                    rows="5"
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(327,83%,50%)] focus:border-[hsl(327,83%,50%)] resize-none"
+                    rows="4"
                     placeholder="Ex: Material em falta, material danificado, quantidade incorreta, problemas com a qualidade..."
                     required
                   />
@@ -701,9 +792,9 @@ export default function TeacherKitsPage() {
                 <div className="flex gap-3">
                   <Button 
                     type="submit"
-                    className="bg-gradient-to-r from-[hsl(327,83%,50%)] to-[hsl(327,83%,50%)] hover:from-[hsl(327,83%,50%)] hover:to-[hsl(327,83%,50%)] text-white px-8 py-4 rounded-2xl text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex-1"
+                    className="bg-[hsl(327,83%,50%)] hover:bg-[hsl(327,83%,50%)] text-white"
                   >
-                    <AlertCircle className="w-5 h-5 mr-2" />
+                    <AlertCircle className="w-4 h-4 mr-2" />
                     Reportar Problema
                   </Button>
                   <Button 
@@ -713,7 +804,6 @@ export default function TeacherKitsPage() {
                       setSelectedRequestForReport(null);
                       setReportMessage("");
                     }}
-                    className="px-8 py-4 rounded-2xl text-lg border-2 hover:bg-gray-50 transition-all duration-300"
                   >
                     Cancelar
                   </Button>
@@ -722,31 +812,37 @@ export default function TeacherKitsPage() {
             </Card>
           </div>
         )}
-
         {/* Lista de Pedidos */}
-        <Card className="p-8 rounded-3xl shadow-lg border-0 bg-white">
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h3 className="text-2xl font-bold text-gray-800">Meus Pedidos de Kits</h3>
-              <p className="text-gray-600 mt-2">Acompanhe o estado dos seus pedidos em tempo real</p>
-            </div>
-            <div className="flex items-center gap-3 px-4 py-2 bg-[hsl(283,45%,33%)] rounded-2xl border border-[hsl(283,45%,33%)]">
-              <Package className="w-5 h-5 text-[hsl(283,45%,33%)]" />
-              <span className="font-semibold text-[hsl(283,45%,33%)]">{kitRequests.length} pedido(s)</span>
+        <Card className="p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Meus Pedidos de Kits</h3>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Package className="w-4 h-4" />
+              <span>{filteredRequests.length} pedido(s)</span>
             </div>
           </div>
           
           {loading ? (
-            <div className="space-y-6">
+            <div className="space-y-4">
               {[...Array(2)].map((_, i) => (
                 <RequestSkeleton key={i} />
               ))}
             </div>
-          ) : kitRequests.length === 0 ? (
-            <EmptyState />
+          ) : filteredRequests.length === 0 ? (
+            searchTerm || statusFilter !== "all" ? (
+              <Card className="p-8 text-center border-dashed">
+                <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                <h3 className="text-lg font-semibold mb-2">Nenhum resultado encontrado</h3>
+                <p className="text-muted-foreground">
+                  Tente ajustar os termos de pesquisa ou filtros.
+                </p>
+              </Card>
+            ) : (
+              <EmptyState />
+            )
           ) : (
-            <div className="space-y-8">
-              {kitRequests.map(request => (
+            <div className="space-y-6">
+              {filteredRequests.map(request => (
                 <RequestCard key={request.id} request={request} />
               ))}
             </div>

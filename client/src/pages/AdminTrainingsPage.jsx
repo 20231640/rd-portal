@@ -296,8 +296,10 @@ export default function AdminTrainingsPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen bg-background">
-        <AdminSidebar />
-        <div className="flex-1 p-8 flex items-center justify-center">
+        <div className="hidden sm:block">
+          <AdminSidebar />
+        </div>
+        <div className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full flex items-center justify-center">
           <div className="text-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
             <p>A carregar sessões...</p>
@@ -309,21 +311,24 @@ export default function AdminTrainingsPage() {
 
   return (
     <div className="flex min-h-screen bg-background">
-      <AdminSidebar />
-      
-      <div className="flex-1 p-8">
+      <div className="hidden sm:block">
+        <AdminSidebar />
+      </div>
+      <div className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full">
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
           <div>
             <h1 className="text-3xl font-bold">Sessões de Formação em Grupo</h1>
             <p className="text-muted-foreground mt-2">
               Gerir sessões de formação em grupo por ciclo e escola
             </p>
           </div>
-          <Button onClick={() => setShowForm(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            Nova Sessão de Grupo
-          </Button>
+          <div className="w-full sm:w-auto">
+            <Button onClick={() => setShowForm(true)} className="w-full sm:w-auto">
+              <Plus className="w-4 h-4 mr-2" />
+              Nova Sessão de Grupo
+            </Button>
+          </div>
         </div>
 
         {/* Formulário para Criar Sessão de Grupo */}
@@ -525,7 +530,7 @@ export default function AdminTrainingsPage() {
                 </div>
               </div>
 
-              <div className="flex gap-2 justify-end">
+              <div className="flex flex-col sm:flex-row gap-2 justify-end">
                 <Button 
                   type="button" 
                   variant="outline" 
@@ -533,20 +538,22 @@ export default function AdminTrainingsPage() {
                     setShowForm(false);
                     resetSelections();
                   }}
+                  className="w-full sm:w-auto"
                 >
                   Cancelar
                 </Button>
                 <Button 
                   type="submit"
                   disabled={selectedTeacherIds.length === 0}
+                  className="w-full sm:w-auto"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Agendar Sessão de Grupo ({selectedTeacherIds.length} professor{selectedTeacherIds.length !== 1 ? 'es' : ''})
                 </Button>
               </div>
-            </form>
-          </Card>
-        )}
+             </form>
+           </Card>
+         )}
 
         {/* Lista de Sessões Agrupadas */}
         <Card className="p-6">
@@ -659,7 +666,7 @@ export default function AdminTrainingsPage() {
                   <div className="flex flex-col gap-2 mt-4">
                     <Button
                       variant="outline"
-                      className="flex-1"
+                      className="w-full sm:flex-1"
                       onClick={() => window.open(group.zoomLink, "_blank")}
                     >
                       <Video className="w-4 h-4 mr-2" />
@@ -672,7 +679,7 @@ export default function AdminTrainingsPage() {
                         variant="default"
                         size="sm"
                         onClick={() => setTrainingToComplete(group.trainings[0])}
-                        className="bg-green-600 hover:bg-green-700"
+                        className="w-full sm:w-auto bg-green-600 hover:bg-green-700"
                       >
                         <CheckCircle className="w-4 h-4 mr-2" />
                         Concluir Sessão
@@ -685,6 +692,7 @@ export default function AdminTrainingsPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => window.open(`${API_URL}${group.certificateUrl}`, '_blank')}
+                        className="w-full sm:w-auto"
                       >
                         📄 Ver Certificado
                       </Button>

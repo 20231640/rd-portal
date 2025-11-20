@@ -105,8 +105,10 @@ export default function AdminStatistics() {
 
   if (loading) return (
     <div className="flex min-h-screen bg-background">
-      <AdminSidebar />
-      <div className="flex-1 flex items-center justify-center">
+      <div className="hidden sm:block">
+        <AdminSidebar />
+      </div>
+      <div className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">A carregar estatísticas...</p>
@@ -114,29 +116,33 @@ export default function AdminStatistics() {
       </div>
     </div>
   );
-
-  return (
+ 
+   return (
     <div className="flex min-h-screen bg-background">
-      <AdminSidebar />
-      <div className="flex-1 p-8 space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Estatísticas do Projeto</h1>
-          <div className="text-sm text-muted-foreground">
-            Dados atualizados em tempo real
-          </div>
+      <div className="hidden sm:block">
+        <AdminSidebar />
+      </div>
+      <div className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full space-y-6">
+         <div className="flex justify-between items-center">
+           <h1 className="text-3xl font-bold">Estatísticas do Projeto</h1>
+           <div className="text-sm text-muted-foreground">
+             Dados atualizados em tempo real
+           </div>
+         </div>
+ 
+        {/* Navegação por Tabs */} 
+        <div className="overflow-x-auto">
+          <StatisticsTabs activeTab={activeTab} onTabChange={setActiveTab} />
         </div>
-
-        {/* Navegação por Tabs */}
-        <StatisticsTabs activeTab={activeTab} onTabChange={setActiveTab} />
-
-        {/* Conteúdo da Tab Ativa */}
-        <div className="min-h-[600px]">
-          {activeTab === 'overview' && <OverviewStats {...statsData} />}
-          {activeTab === 'geography' && <GeographyStats {...statsData} />}
-          {activeTab === 'kits' && <KitsStats {...statsData} />}
-          {activeTab === 'schools' && <SchoolsStats {...statsData} />}
-          {activeTab === 'problems' && <ProblemsStats {...statsData} />}
-        </div>
+ 
+        {/* Conteúdo da Tab Ativa */} 
+         <div className="min-h-[600px]">
+           {activeTab === 'overview' && <OverviewStats {...statsData} />}
+           {activeTab === 'geography' && <GeographyStats {...statsData} />}
+           {activeTab === 'kits' && <KitsStats {...statsData} />}
+           {activeTab === 'schools' && <SchoolsStats {...statsData} />}
+           {activeTab === 'problems' && <ProblemsStats {...statsData} />}
+         </div>
 
       </div>
     </div>

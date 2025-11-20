@@ -1,13 +1,86 @@
 import { Card } from "../../components/ui/card";
 import { 
   BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, 
-  PieChart, Pie, Cell, LineChart, Line, Legend
+  PieChart, Pie, Cell, LineChart, Line, Legend, ComposedChart
 } from "recharts";
 import { 
   School, Users, Package, TrendingUp, AlertCircle, CheckCircle 
 } from "lucide-react";
 
-export function OverviewStats({ metrics, monthlyData, kitRequests, classes }) {
+export function OverviewStats({ metrics, monthlyData, kitRequests, classes, schools }) {
+  
+  // --- NOVO: cálculo de retenção / desistência de escolas por mês ---
+  const parseDateSafe = (d) => {
+    if (!d) return null;
+    const dt = new Date(d);
+    return isNaN(dt.getTime()) ? null : dt;
+  };
+
+  // montar months desde Jan/2025 até último createdAt de classes
+  const classDates = classes.map(c => parseDateSafe(c.createdAt)).filter(Boolean);
+  const lastDate = classDates.length ? new Date(Math.max(...classDates.map(d => d.getTime()))) : new Date();
+  const startDate = new Date(2025, 0, 1);
+  const months = [];
+  for (let dt = new Date(startDate); dt <= new Date(lastDate.getFullYear(), lastDate.getMonth(), 1); dt.setMonth(dt.getMonth() + 1)) {
+    const y = dt.getFullYear();
+    const m = dt.getMonth() + 1;
+    months.push({ key: `${y}-${String(m).padStart(2,'0')}`, label: `${String(m).padStart(2,'0')}/${y}`, ts: new Date(y, m - 1, 1) });
+  }
+  
+  // Filtrar apenas meses do ano letivo (setembro..junho)
+  const isAcademicMonth = (monthNumber) => {
+    // monthNumber 1..12
+    return monthNumber >= 9 || monthNumber <= 6;
+  };
+  const academicMonths = months.filter(m => {
+    const monthNum = Number(m.label.split('/')[0]);
+    return isAcademicMonth(monthNum);
+  });
+
+  // map schoolId -> set of monthKeys where it had at least one class created
+  const schoolMonths = {};
+  classes.forEach(c => {
+    const d = parseDateSafe(c.createdAt);
+    if (!d || !c.schoolId) return;
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    schoolMonths[c.schoolId] = schoolMonths[c.schoolId] || new Set();
+    schoolMonths[c.schoolId].add(key);
+  });
+
+  // construir série: for each month compute new, continuing, dropped, active
+  // usar academicMonths para cálculo (mês anterior = mês académico anterior)
+  const schoolRetentionTimeline = academicMonths.map((m, idx) => {
+    const prevKey = idx > 0 ? academicMonths[idx-1].key : null;
+    const curKey = m.key;
+    let newCount = 0;
+    let continuing = 0;
+    let dropped = 0;
+    let active = 0;
+
+    // for each school decide membership
+    Object.keys(schoolMonths).forEach(sid => {
+      const set = schoolMonths[sid];
+      const hasPrev = prevKey ? set.has(prevKey) : false;
+      const hasCur = set.has(curKey);
+      if (hasCur) active += 1;
+      if (hasCur && ![...set].some(k => k < curKey)) {
+        // first recorded month for this school is curKey => new
+        // Simpler: check if no month in set is strictly before curKey
+        const earlier = [...set].some(k => k < curKey);
+        if (!earlier) newCount += 1;
+      }
+      if (hasCur && hasPrev) continuing += 1;
+      if (!hasCur && hasPrev) dropped += 1;
+    });
+
+    return {
+      month: m.label,
+      newSchools: newCount,
+      continuing,
+      dropped,
+      active
+    };
+  });
   
   // Dados para gráfico de status dos kits
   const kitStatusData = [
@@ -55,68 +128,46 @@ export function OverviewStats({ metrics, monthlyData, kitRequests, classes }) {
         </Card>
       </div>
 
-      {/* Gráficos Principais */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Evolução Mensal */}
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="w-5 h-5 text-blue-500" />
-            <h3 className="text-lg font-semibold">Evolução Mensal</h3>
+      {/* Gráficos Principais removidos (Evolução Mensal e Status dos Kits) conforme solicitado */}
+      {/* Novo: Retenção de Escolas — Novas / Continuam / Desistiram por mês */}
+      <Card className="p-6">
+        <div className="flex items-start gap-2 mb-4">
+          <TrendingUp className="w-5 h-5 text-blue-500 mt-1" />
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold">Retenção de Escolas — Novas / Continuam / Desistiram</h3>
+            <p className="text-sm text-muted-foreground">
+              O gráfico mostra a atividade das escolas no contexto do ano letivo. Definição: <strong>Ano letivo = Setembro → Junho</strong>.
+            </p>
+            {/* Legenda funcional explicativa */}
+            <div className="flex gap-4 mt-3 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 bg-[#8884d8] rounded-sm inline-block" /> 
+                Novas: primeira turma registada neste mês académico.
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 bg-[#3b82f6] rounded-sm inline-block" /> 
+                Continuam: tinham turma no mês académico anterior e também neste mês.
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 bg-[#ef4444] rounded-sm inline-block" /> 
+                Desistiram: tinham turma no mês académico anterior e não têm neste mês.
+              </div>
+            </div>
           </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={monthlyData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line 
-                type="monotone" 
-                dataKey="kits" 
-                name="Kits Pedidos" 
-                stroke="#3b82f6" 
-                strokeWidth={2} 
-                dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="schools" 
-                name="Escolas" 
-                stroke="#10b981" 
-                strokeWidth={2}
-                dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </Card>
-
-        {/* Status dos Kits */}
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Package className="w-5 h-5 text-orange-500" />
-            <h3 className="text-lg font-semibold">Status dos Kits</h3>
-          </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={kitStatusData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                outerRadius={100}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {kitStatusData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip formatter={(value) => [`${value} kits`, 'Quantidade']} />
-            </PieChart>
-          </ResponsiveContainer>
-        </Card>
-      </div>
+        </div>
+        <ResponsiveContainer width="100%" height={320}>
+          <ComposedChart data={schoolRetentionTimeline} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="month" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="newSchools" name="Novas Escolas" barSize={20} fill="#8884d8" />
+            <Line type="monotone" dataKey="continuing" name="Continuam" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} />
+            <Line type="monotone" dataKey="dropped" name="Desistiram" stroke="#ef4444" strokeWidth={2} dot={{ r: 3 }} />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </Card>
 
       {/* Métricas Adicionais */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -155,6 +206,42 @@ export function OverviewStats({ metrics, monthlyData, kitRequests, classes }) {
           </div>
           <div className="text-sm text-muted-foreground">Turmas por escola</div>
         </Card>
+      </div>
+
+      {/* Tabela de Escolas Persistentes (novo componente adicionado) */}
+      <div className="grid grid-cols-1 gap-4">
+        <div className="overflow-hidden rounded-lg border">
+          <div className="bg-white p-4">
+            <h3 className="text-lg font-semibold mb-2">Escolas Persistentes</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Escolas que tiveram atividade contínua ao longo dos meses.
+            </p>
+            <Card className="p-4">
+              {persistentSchools.length === 0 ? (
+                <div className="text-muted-foreground">Nenhuma escola persistente encontrada para o período.</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm min-w-[480px]">
+                    <thead>
+                      <tr className="text-left border-b mb-2">
+                        <th className="pb-2">Escola</th>
+                        <th className="pb-2">Persistente</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {persistentSchools.map(s => (
+                        <tr key={s.id} className="border-b">
+                          <td className="py-2">{s.name}</td>
+                          <td className="py-2 text-green-600 font-medium">Sim</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -188,19 +188,21 @@ export function ProblemsStats({ kitRequests, schools, classes, teachers }) {
             <AlertTriangle className="w-5 h-5 text-orange-500" />
             <h3 className="text-lg font-semibold">Problemas por Tipo</h3>
           </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={problemsByType} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} />
-              <YAxis />
-              <Tooltip formatter={(value) => [`${value} problemas`, 'Quantidade']} />
-              <Bar dataKey="value" name="Problemas" fill="#f59e0b">
-                {problemsByType.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={`hsl(${index * 60}, 70%, 50%)`} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="w-full overflow-x-auto">
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={problemsByType} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} />
+                <YAxis />
+                <Tooltip formatter={(value) => [`${value} problemas`, 'Quantidade']} />
+                <Bar dataKey="value" name="Problemas" fill="#f59e0b">
+                  {problemsByType.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={`hsl(${index * 60}, 70%, 50%)`} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </Card>
 
         {/* Taxa de Resolução */}
