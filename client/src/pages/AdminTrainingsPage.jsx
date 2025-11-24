@@ -214,39 +214,39 @@ export default function AdminTrainingsPage() {
       });
       resetSelections();
       fetchData();
-      alert(`✅ Sessão de grupo criada com sucesso para ${selectedTeacherIds.length} professor(es)!`);
+      alert(`Sessão de grupo criada com sucesso para ${selectedTeacherIds.length} professor(es)!`);
     } catch (err) {
       console.error(err);
-      alert("❌ Erro ao criar sessão de grupo");
+      alert("Erro ao criar sessão de grupo");
     }
   };
 
   // Eliminar sessão
   const handleDeleteTraining = async (id) => {
-    if (!confirm("Tem a certeza que quer eliminar esta sessão?")) return;
+    if (!confirm("Tem a certeza que pretende eliminar esta sessão?")) return;
     
     try {
       await axios.delete(`${API_URL}/api/trainings/${id}`);
       fetchData();
-      alert("✅ Sessão eliminada com sucesso!");
+      alert("Sessão eliminada com sucesso!");
     } catch (err) {
       console.error(err);
-      alert("❌ Erro ao eliminar sessão");
+      alert("Erro ao eliminar sessão");
     }
   };
 
   // Eliminar grupo inteiro
   const handleDeleteGroup = async (groupId) => {
-    if (!confirm(`Tem a certeza que quer eliminar todas as sessões deste grupo?`)) return;
+    if (!confirm(`Tem a certeza que pretende eliminar todas as sessões deste grupo?`)) return;
     
     try {
       const groupTrainings = trainings.filter(t => t.groupId === groupId);
       await Promise.all(groupTrainings.map(t => axios.delete(`${API_URL}/api/trainings/${t.id}`)));
       fetchData();
-      alert("✅ Grupo eliminado com sucesso!");
+      alert("Grupo eliminado com sucesso!");
     } catch (err) {
       console.error(err);
-      alert("❌ Erro ao eliminar grupo");
+      alert("Erro ao eliminar grupo");
     }
   };
 
@@ -256,10 +256,10 @@ export default function AdminTrainingsPage() {
       await axios.put(`${API_URL}/api/trainings/${trainingId}/complete`, data);
       setTrainingToComplete(null);
       fetchData();
-      alert("✅ Sessão concluída e certificado gerado!");
+      alert("Sessão concluída e certificado gerado!");
     } catch (err) {
       console.error(err);
-      alert("❌ Erro ao concluir sessão");
+      alert("Erro ao concluir sessão");
     }
   };
 
@@ -489,7 +489,7 @@ export default function AdminTrainingsPage() {
                     value={formData.title}
                     onChange={(e) => setFormData({...formData, title: e.target.value})}
                     className="w-full rounded-lg border border-input bg-background px-3 py-2"
-                    placeholder="Ex: Formação em Grupo - 1º Ciclo"
+                    placeholder="Exemplo: Formação em Grupo - 1º Ciclo"
                   />
                 </div>
 
@@ -596,7 +596,7 @@ export default function AdminTrainingsPage() {
                         
                         {group.cycle && (
                           <div className="text-xs text-primary font-medium mb-1">
-                            📚 {group.cycle}
+                            {group.cycle}
                           </div>
                         )}
 
@@ -604,7 +604,7 @@ export default function AdminTrainingsPage() {
                         <div className="space-y-1 mb-2">
                           {group.trainings.slice(0, 3).map((training, idx) => (
                             <p key={idx} className="text-sm text-muted-foreground">
-                              👨‍🏫 {training.teacher?.name}
+                              {training.teacher?.name}
                               {training.teacher?.school && ` - ${training.teacher.school.name}`}
                             </p>
                           ))}
@@ -694,7 +694,7 @@ export default function AdminTrainingsPage() {
                         onClick={() => window.open(`${API_URL}${group.certificateUrl}`, '_blank')}
                         className="w-full sm:w-auto"
                       >
-                        📄 Ver Certificado
+                        Ver Certificado
                       </Button>
                     )}
                   </div>

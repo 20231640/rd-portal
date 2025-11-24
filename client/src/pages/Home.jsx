@@ -42,7 +42,7 @@ export default function Home() {
               <GraduationCap className="w-6 h-6 text-white" />
             </div>
             <span className="text-2xl font-bold text-white tracking-tight">
-              Informar Sem Dramatizar
+              Informar sem Dramatizar
             </span>
           </div>
           <ThemeToggle />
@@ -60,7 +60,6 @@ export default function Home() {
               onLoad={(e) => e.target.classList.add('opacity-100')}
               onError={(e) => {
                 e.target.style.display = 'none';
-                // Mostrar fallback se a imagem não carregar
               }}
             />
           </div>

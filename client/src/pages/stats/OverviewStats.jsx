@@ -81,6 +81,19 @@ export function OverviewStats({ metrics, monthlyData, kitRequests, classes, scho
       active
     };
   });
+
+  // usa schoolMonths (map construído anteriormente: schoolId -> Set(monthKey))
+  const monthsToCheck = Math.min(6, academicMonths.length);
+  const lastMonths = academicMonths.slice(-monthsToCheck);
+
+  const persistentSchools = schools
+    .filter(s => {
+      const set = schoolMonths[s.id] || new Set();
+      // escola é persistente se tiver pelo menos uma turma em todos os últimos meses académicos
+      return lastMonths.every(m => set.has(m.key));
+    })
+    .map(s => ({ id: s.id, name: s.name }));
+
   
   // Dados para gráfico de status dos kits
   const kitStatusData = [
@@ -100,7 +113,7 @@ export function OverviewStats({ metrics, monthlyData, kitRequests, classes, scho
   ).map(([name, value]) => ({ name, value }));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-4 sm:px-0">
       {/* Cards de Métricas Gerais */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="p-6 text-center">
@@ -136,37 +149,39 @@ export function OverviewStats({ metrics, monthlyData, kitRequests, classes, scho
           <div className="flex-1">
             <h3 className="text-lg font-semibold">Retenção de Escolas — Novas / Continuam / Desistiram</h3>
             <p className="text-sm text-muted-foreground">
-              O gráfico mostra a atividade das escolas no contexto do ano letivo. Definição: <strong>Ano letivo = Setembro → Junho</strong>.
+              Vê a atividade das escolas no contexto do ano letivo. Definição: <strong>Ano letivo = Setembro → Junho</strong>.
             </p>
             {/* Legenda funcional explicativa */}
-            <div className="flex gap-4 mt-3 text-sm">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-3 mt-3 text-sm">
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 bg-[#8884d8] rounded-sm inline-block" /> 
-                Novas: primeira turma registada neste mês académico.
+                Novas: escolas que registaram a sua primeira turma neste mês académico.
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 bg-[#3b82f6] rounded-sm inline-block" /> 
-                Continuam: tinham turma no mês académico anterior e também neste mês.
+                Continuam: escolas que tiveram turma no mês académico anterior e também neste mês.
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 bg-[#ef4444] rounded-sm inline-block" /> 
-                Desistiram: tinham turma no mês académico anterior e não têm neste mês.
+                Desistiram: escolas que tinham turma no mês académico anterior e não têm neste mês.
               </div>
             </div>
           </div>
         </div>
-        <ResponsiveContainer width="100%" height={320}>
-          <ComposedChart data={schoolRetentionTimeline} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Bar dataKey="newSchools" name="Novas Escolas" barSize={20} fill="#8884d8" />
-            <Line type="monotone" dataKey="continuing" name="Continuam" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} />
-            <Line type="monotone" dataKey="dropped" name="Desistiram" stroke="#ef4444" strokeWidth={2} dot={{ r: 3 }} />
-          </ComposedChart>
-        </ResponsiveContainer>
+        <div className="w-full overflow-x-auto">
+          <ResponsiveContainer width="100%" height={320}>
+            <ComposedChart data={schoolRetentionTimeline} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+             <CartesianGrid strokeDasharray="3 3" />
+             <XAxis dataKey="month" />
+             <YAxis />
+             <Tooltip />
+             <Legend />
+             <Bar dataKey="newSchools" name="Novas Escolas" barSize={20} fill="#8884d8" />
+             <Line type="monotone" dataKey="continuing" name="Continuam" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} />
+             <Line type="monotone" dataKey="dropped" name="Desistiram" stroke="#ef4444" strokeWidth={2} dot={{ r: 3 }} />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
       </Card>
 
       {/* Métricas Adicionais */}
@@ -221,7 +236,7 @@ export function OverviewStats({ metrics, monthlyData, kitRequests, classes, scho
                 <div className="text-muted-foreground">Nenhuma escola persistente encontrada para o período.</div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm min-w-[480px]">
+                  <table className="w-full text-sm min-w-0">
                     <thead>
                       <tr className="text-left border-b mb-2">
                         <th className="pb-2">Escola</th>

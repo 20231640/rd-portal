@@ -199,7 +199,7 @@ export function SchoolsStats({ schools, teachers, classes, kitRequests }) {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 px-4 sm:px-0">
         {/* Top 10 Escolas */}
         <Card className="p-6">
           <div className="flex items-center gap-2 mb-4">
@@ -284,7 +284,7 @@ export function SchoolsStats({ schools, teachers, classes, kitRequests }) {
              <select
                value={selectedMonth}
                onChange={(e) => setSelectedMonth(e.target.value)}
-               className="h-8 rounded border border-input bg-background px-2 py-1 text-sm"
+               className="w-full sm:w-auto h-8 rounded border border-input bg-background px-2 py-1 text-sm"
              >
                <option value="all">{selectedYearFilter === 'all' ? 'Todos os Meses' : `Meses de ${selectedYearFilter}`}</option>
                {monthsList
@@ -298,7 +298,7 @@ export function SchoolsStats({ schools, teachers, classes, kitRequests }) {
         </div>
 
         <div className="text-sm text-muted-foreground mb-4">
-          Mostra quantas escolas foram criadas por região ao longo do tempo. Selecione um mês para ver contagens diárias.
+          Vê quantas escolas foram criadas por região ao longo do tempo. Seleciona um mês para ver contagens diárias.
         </div>
 
         <div className="w-full overflow-x-auto">

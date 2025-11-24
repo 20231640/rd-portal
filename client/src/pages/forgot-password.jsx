@@ -25,9 +25,9 @@ export default function ForgotPassword() {
         return;
       }
 
-      setMessage("✅ Email de recuperação enviado! Verifica a tua caixa de correio.");
+      setMessage("Email de recuperação enviado! Verifique a sua caixa de correio.");
     } catch (err) {
-      setMessage("❌ Erro ao enviar email. Tenta novamente.");
+      setMessage("Erro ao enviar email. Tente novamente.");
     } finally {
       setIsLoading(false);
     }
@@ -43,7 +43,7 @@ export default function ForgotPassword() {
                <Mail className="w-6 h-6 text-white" />
              </div>
              <span className="text-2xl font-bold text-white tracking-tight">
-               Recuperar Password
+               Recuperar Palavra-passe
              </span>
            </div>
            <div className="flex items-center gap-4">
@@ -67,9 +67,9 @@ export default function ForgotPassword() {
             <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
               <Mail className="w-8 h-8 text-primary" />
             </div>
-            <h2 className="text-3xl font-bold text-center mb-2">Recuperar Password</h2>
+            <h2 className="text-3xl font-bold text-center mb-2">Recuperar Palavra-passe</h2>
             <p className="text-muted-foreground text-center text-sm">
-              Introduz o teu email e enviaremos um link para redefinir a tua password
+              Introduza o seu e-mail e será enviado um link para redefinir a palavra-passe.
             </p>
           </div>
 
@@ -78,7 +78,7 @@ export default function ForgotPassword() {
               <label className="block text-sm font-medium">Email</label>
               <input
                 type="email"
-                placeholder="seu@email.com"
+                placeholder="o_seu@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -109,15 +109,15 @@ export default function ForgotPassword() {
 
           <div className="text-center space-y-4 mt-8">
             <p className="text-muted-foreground text-sm">
-              Lembraste-te da password?{" "}
+              Já tem a palavra-passe?{" "}
               <Link to="/login" className="text-primary hover:underline font-semibold">
-                Faz login
+                Iniciar sessão
               </Link>
             </p>
             <p className="text-muted-foreground text-sm">
-              Não tens conta?{" "}
+              Ainda não tem conta?{" "}
               <Link to="/register" className="text-primary hover:underline font-semibold">
-                Regista-te
+                Registar-se
               </Link>
             </p>
           </div>

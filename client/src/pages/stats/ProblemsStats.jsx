@@ -153,7 +153,7 @@ export function ProblemsStats({ kitRequests, schools, classes, teachers }) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-4 sm:px-0">
       {/* Cards de Resumo */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="p-4 text-center">
@@ -218,7 +218,7 @@ export function ProblemsStats({ kitRequests, schools, classes, teachers }) {
               </div>
               <div className="text-lg text-muted-foreground">Taxa de Resolução</div>
               <div className="text-sm text-muted-foreground mt-2">
-                {problemStats.resolved} de {problemStats.total} problemas
+                {problemStats.resolved} de {problemStats.total} problemas resolvidos
               </div>
             </div>
           </div>
@@ -241,31 +241,33 @@ export function ProblemsStats({ kitRequests, schools, classes, teachers }) {
           <Zap className="w-5 h-5 text-blue-500" />
           <h3 className="text-lg font-semibold">Evolução de Problemas</h3>
         </div>
-        <ResponsiveContainer width="100%" height={300}>
-          <AreaChart data={timelineData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Area 
-              type="monotone" 
-              dataKey="reported" 
-              name="Problemas Reportados" 
-              stroke="#ef4444" 
-              fill="#ef4444" 
-              fillOpacity={0.3}
-            />
-            <Area 
-              type="monotone" 
-              dataKey="resolved" 
-              name="Problemas Resolvidos" 
-              stroke="#10b981" 
-              fill="#10b981" 
-              fillOpacity={0.3}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+        <div className="w-full overflow-x-auto">
+          <ResponsiveContainer width="100%" height={300}>
+            <AreaChart data={timelineData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Area 
+                type="monotone" 
+                dataKey="reported" 
+                name="Problemas Reportados" 
+                stroke="#ef4444" 
+                fill="#ef4444" 
+                fillOpacity={0.3}
+              />
+              <Area 
+                type="monotone" 
+                dataKey="resolved" 
+                name="Problemas Resolvidos" 
+                stroke="#10b981" 
+                fill="#10b981" 
+                fillOpacity={0.3}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
       </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -282,7 +284,7 @@ export function ProblemsStats({ kitRequests, schools, classes, teachers }) {
                   <div className="w-6 h-6 bg-red-100 text-[hsl(327,83%,50%)] rounded-full flex items-center justify-center text-sm font-bold">
                     {index + 1}
                   </div>
-                  <div className="font-medium truncate max-w-[200px]">{school.name}</div>
+                  <div className="font-medium truncate max-w-full">{school.name}</div>
                 </div>
                 <div className="text-right">
                   <div className="font-bold text-[hsl(327,83%,50%)]">{school.value}</div>

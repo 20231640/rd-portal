@@ -58,12 +58,12 @@ export function GeographyStats({ schools, teachers, classes, kitRequests, distri
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-4 sm:px-0">
       {/* Filtros */}
       <Card className="p-4">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
-            <label className="block text-sm font-medium mb-2">Filtrar por Distrito:</label>
+            <label className="block text-sm font-medium mb-2">Filtrar por distrito:</label>
             <select
               value={selectedDistrict}
               onChange={(e) => {
@@ -99,7 +99,7 @@ export function GeographyStats({ schools, teachers, classes, kitRequests, distri
       <Card className="p-4 sm:p-6">
         <div className="flex items-center gap-2 mb-4">
           <MapPin className="w-5 h-5 text-blue-500" />
-          <h3 className="text-lg font-semibold">Distribuição por Distrito - {dataType}</h3>
+          <h3 className="text-lg font-semibold">Distribuição por distrito - {dataType}</h3>
         </div>
         <div className="w-full overflow-x-auto">
           <ResponsiveContainer width="100%" height={400}>
@@ -137,7 +137,7 @@ export function GeographyStats({ schools, teachers, classes, kitRequests, distri
             </BarChart>
           </ResponsiveContainer>
         </div>
-       </Card>
+        </Card>
 
       {/* Resumo por Região */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

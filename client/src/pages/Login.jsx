@@ -20,10 +20,10 @@ export default function Login() {
     setSuccess("");
     setIsLoading(true);
 
-    console.log('🔍 INICIANDO LOGIN...');
+    console.log('🔍 A iniciar o LOGIN...');
 
     try {
-      // ✅ VERIFICAÇÃO ESPECIAL PARA ADMIN (SEM Supabase)
+      // Verificação especial para admin
       if (email === "admin@rd.pt") {
         console.log('👨‍💼 Tentando login como admin...');
         
@@ -34,12 +34,12 @@ export default function Login() {
           navigate("/admin");
           return;
         } else {
-          setError("❌ Credenciais de admin inválidas");
+          setError("Credenciais de administrador inválidas");
           return;
         }
       }
 
-      // ✅ LOGIN NORMAL PARA PROFESSORES (Supabase Auth)
+      // Login normal para professores
       console.log('🔄 Step 1: Fazendo login com Supabase...');
       
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -61,7 +61,7 @@ export default function Login() {
 
       console.log('✅ Step 1: Login Supabase bem-sucedido:', data.user.id);
       
-      // ✅ Login bem-sucedido
+      // Login bem-sucedido
       const user = data.user;
       
       console.log('👨‍🏫 Step 2: Buscando dados do professor...');
@@ -74,6 +74,16 @@ export default function Login() {
         if (teacherResponse.ok) {
           const teacherData = await teacherResponse.json();
           console.log('✅ Dados do professor:', teacherData);
+          
+          // ✅ VERIFICAÇÃO DE PROFESSOR ARQUIVADO
+          if (teacherData.archived) {
+            console.log('🚫 Professor arquivado, bloqueando login...');
+            setError("Esta conta foi arquivada. Contacte o administrador.");
+            
+            // Fazer logout do Supabase para limpar sessão
+            await supabase.auth.signOut();
+            return;
+          }
           
           localStorage.setItem("teacherData", JSON.stringify(teacherData));
           localStorage.setItem("loggedInTeacher", user.email);
@@ -106,7 +116,7 @@ export default function Login() {
 
       console.log('🔄 Step 3: Redirecionando para teacher-dashboard...');
       
-      // ✅ FORÇAR redirecionamento
+      // Forçar redirecionamento
       setTimeout(() => {
         console.log('🎯 Executando navigate...');
         navigate("/teacher-dashboard");
@@ -114,14 +124,14 @@ export default function Login() {
 
     } catch (err) {
       console.error('💥 Erro fatal no login:', err);
-      setError("Erro de rede. Verifica a ligação ao servidor.");
+      setError("Erro de rede. Verifique a ligação ao servidor.");
     } finally {
       console.log('🏁 Finalizando função handleSubmit');
       setIsLoading(false);
     }
   }
 
-  // ✅ NOVA FUNÇÃO: Reenviar verificação de email
+  // Nova função: Reenviar verificação de email
   async function handleResendVerification() {
     if (!email) {
       setError("Por favor, insira o seu email.");
@@ -143,7 +153,7 @@ export default function Login() {
         return;
       }
 
-      setSuccess("✅ Novo email de verificação enviado!");
+      setSuccess("Novo email de verificação enviado!");
       setError(""); // Limpa erros anteriores
     } catch (err) {
       console.error('💥 Erro:', err);
@@ -163,7 +173,7 @@ export default function Login() {
               <GraduationCap className="w-6 h-6 text-white" />
             </div>
             <span className="text-2xl font-bold text-white tracking-tight">
-              Information Without Drama
+              Informar sem Dramatizar
             </span>
           </div>
           <div className="flex items-center gap-4">
@@ -174,7 +184,7 @@ export default function Login() {
               className="text-white border-white/30 hover:bg-white/20"
             >
               <Home className="w-4 h-4 mr-2" />
-              Voltar à Home
+              Voltar à Página Inicial
             </Button>
             <ThemeToggle />
           </div>
@@ -199,7 +209,7 @@ export default function Login() {
               <input
                 type="email"
                 className="w-full rounded-xl border border-input bg-background px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
-                placeholder="Digite seu email"
+                placeholder="Escreva o seu email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -207,11 +217,11 @@ export default function Login() {
             </div>
 
             <div className="space-y-2">
-              <label className="block text-sm font-medium">Password</label>
+              <label className="block text-sm font-medium">Palavra-passe</label>
               <input
                 type="password"
                 className="w-full rounded-xl border border-input bg-background px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
-                placeholder="Digite sua senha"
+                placeholder="Escreva a sua palavra-passe"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -223,7 +233,7 @@ export default function Login() {
                 <p className="text-destructive text-sm font-medium py-2 bg-destructive/10 rounded-lg">
                   {error}
                 </p>
-                {/* ✅ Botão para reenviar verificação */}
+                {/* Botão para reenviar verificação */}
                 {error.includes("verifique o seu email") && (
                   <Button
                     type="button"
@@ -254,21 +264,21 @@ export default function Login() {
               {isLoading ? "A processar..." : "Entrar"}
             </Button>
 
-            {/* ✅ SIMPLIFICADO: Apenas um link para recuperação */}
+            {/* Link para recuperação */}
             <div className="text-center pt-4">
               <Link 
                 to="/forgot-password" 
                 className="text-sm text-primary hover:underline font-medium"
               >
-                Esqueceu-se da password?
+                Esqueceu-se da palavra-passe?
               </Link>
             </div>
           </form>
 
           <p className="text-muted-foreground text-sm text-center mt-8">
-            Não tens conta?{" "}
+            Não tem conta?{" "}
             <Link to="/register" className="text-primary hover:underline font-semibold">
-              Regista-te
+              Registe-se
             </Link>
           </p>
         </div>

@@ -103,48 +103,63 @@ export default function AdminStatistics() {
     onDistrictChange: setSelectedDistrict
   };
 
-  if (loading) return (
-    <div className="flex min-h-screen bg-background">
-      <div className="hidden sm:block">
-        <AdminSidebar />
-      </div>
-      <div className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">A carregar estatísticas...</p>
+  // Renderização segura das tabs: evita página em branco se um componente filho lançar
+  const renderActiveTab = () => {
+    try {
+      if (activeTab === 'overview') return <OverviewStats {...statsData} />;
+      if (activeTab === 'geography') return <GeographyStats {...statsData} />;
+      if (activeTab === 'kits') return <KitsStats {...statsData} />;
+      if (activeTab === 'schools') return <SchoolsStats {...statsData} />;
+      if (activeTab === 'problems') return <ProblemsStats {...statsData} />;
+      return <div>Tab não encontrada</div>;
+    } catch (err) {
+      console.error("Erro ao renderizar tab de estatísticas:", err);
+      return (
+        <div className="p-6 text-center text-destructive">
+          Ocorreu um erro ao carregar as estatísticas. Verifique a consola para detalhes.
         </div>
-      </div>
-    </div>
-  );
+      );
+    }
+  };
  
-   return (
-    <div className="flex min-h-screen bg-background">
-      <div className="hidden sm:block">
-        <AdminSidebar />
-      </div>
-      <div className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full space-y-6">
-         <div className="flex justify-between items-center">
-           <h1 className="text-3xl font-bold">Estatísticas do Projeto</h1>
-           <div className="text-sm text-muted-foreground">
-             Dados atualizados em tempo real
-           </div>
+   if (loading) return (
+     <div className="flex min-h-screen bg-background">
+       <div className="hidden sm:block">
+         <AdminSidebar />
+       </div>
+       <div className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full flex items-center justify-center">
+         <div className="text-center">
+           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+           <p className="text-muted-foreground">A carregar estatísticas...</p>
+         </div>
+       </div>
+     </div>
+   );
+  
+    return (
+     <div className="flex min-h-screen bg-background">
+       <div className="hidden sm:block">
+         <AdminSidebar />
+       </div>
+       <div className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full space-y-6">
+          <div className="flex justify-between items-center">
+            <h1 className="text-3xl font-bold">Estatísticas do Projeto</h1>
+            <div className="text-sm text-muted-foreground">
+              Dados atualizados em tempo real
+            </div>
+          </div>
+ 
+         {/* Navegação por Tabs */} 
+         <div className="overflow-x-auto">
+           <StatisticsTabs activeTab={activeTab} onTabChange={setActiveTab} />
          </div>
  
-        {/* Navegação por Tabs */} 
-        <div className="overflow-x-auto">
-          <StatisticsTabs activeTab={activeTab} onTabChange={setActiveTab} />
-        </div>
- 
-        {/* Conteúdo da Tab Ativa */} 
+         {/* Conteúdo da Tab Ativa */} 
          <div className="min-h-[600px]">
-           {activeTab === 'overview' && <OverviewStats {...statsData} />}
-           {activeTab === 'geography' && <GeographyStats {...statsData} />}
-           {activeTab === 'kits' && <KitsStats {...statsData} />}
-           {activeTab === 'schools' && <SchoolsStats {...statsData} />}
-           {activeTab === 'problems' && <ProblemsStats {...statsData} />}
+           {renderActiveTab()}
          </div>
-
-      </div>
-    </div>
-  );
+ 
+       </div>
+     </div>
+   );
 }

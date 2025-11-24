@@ -3,7 +3,7 @@ import { AdminSidebar } from "../components/ui/admin-sidebar";
 import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { 
-  Download, BarChart3, Package, School, Users, Database,
+  Download, BarChart3, Package, Users, Database,
   FileSpreadsheet, TrendingUp, Calendar, CheckCircle
 } from "lucide-react";
 import * as XLSX from 'xlsx';
@@ -73,7 +73,7 @@ export default function AdminExport() {
 
       // Preparar dados completos e organizados
       const exportData = {
-        '📊 Resumo': [{
+        'Resumo': [{
           'Total Escolas': schools.length,
           'Total Professores': teachers.length,
           'Total Turmas': classes.length,
@@ -86,7 +86,7 @@ export default function AdminExport() {
           'Data Exportação': new Date().toLocaleString('pt-PT')
         }],
         
-        '🏫 Escolas': schools.map(school => ({
+        'Escolas': schools.map(school => ({
           'ID': school.id,
           'Nome': school.name,
           'Distrito': school.district || 'N/A',
@@ -102,7 +102,7 @@ export default function AdminExport() {
             .reduce((sum, c) => sum + (c.students || 0), 0)
         })),
         
-        '👨‍🏫 Professores': teachers.map(teacher => ({
+        'Professores': teachers.map(teacher => ({
           'ID': teacher.id,
           'Nome': teacher.name,
           'Email': teacher.email,
@@ -120,7 +120,7 @@ export default function AdminExport() {
             .reduce((sum, c) => sum + (c.students || 0), 0)
         })),
         
-        '📚 Turmas': classes.map(cls => ({
+        'Turmas': classes.map(cls => ({
           'ID': cls.id,
           'Nome': cls.name,
           'Código': cls.code || 'N/A',
@@ -135,7 +135,7 @@ export default function AdminExport() {
           'Total Kits': kitRequests.filter(k => k.classId === cls.id).length
         })),
         
-        '📦 Kits - Todos': kitRequests.map(kit => ({
+        'Kits - Todos': kitRequests.map(kit => ({
           'ID': kit.id,
           'Tipo Kit': kit.kitType,
           'Status': kit.status,
@@ -154,7 +154,7 @@ export default function AdminExport() {
           'Problemas Reportados': kit.reports?.length || 0
         })),
         
-        '✅ Kits Entregues': kitRequests
+        'Kits Entregues': kitRequests
           .filter(kit => kit.status === 'delivered' || kit.deliveredAt)
           .map(kit => ({
             'ID': kit.id,
@@ -169,7 +169,7 @@ export default function AdminExport() {
               : 'N/A'
           })),
         
-        '⏳ Kits Pendentes': kitRequests
+        'Kits Pendentes': kitRequests
           .filter(kit => kit.status === 'pending')
           .map(kit => ({
             'ID': kit.id,
@@ -195,10 +195,10 @@ export default function AdminExport() {
       };
       
       setRecentExports(prev => [newExport, ...prev.slice(0, 4)]);
-      alert('✅ Exportação completa realizada com sucesso!');
+      alert('Exportação completa realizada com sucesso!');
     } catch (error) {
       console.error('Erro na exportação:', error);
-      alert('❌ Erro ao exportar dados. Tente-se novamente.');
+      alert('Erro ao exportar dados. Tente novamente.');
     } finally {
       setExporting(false);
     }
@@ -215,7 +215,7 @@ export default function AdminExport() {
       ]);
 
       const exportData = {
-        '🏫 Escolas': schools.map(school => ({
+        'Escolas': schools.map(school => ({
           'ID': school.id,
           'Nome': school.name,
           'Distrito': school.district || 'N/A',
@@ -228,7 +228,7 @@ export default function AdminExport() {
           'Total Turmas': classes.filter(c => c.schoolId === school.id).length
         })),
         
-        '👨‍🏫 Professores': teachers.map(teacher => ({
+        'Professores': teachers.map(teacher => ({
           'ID': teacher.id,
           'Nome': teacher.name,
           'Email': teacher.email,
@@ -240,7 +240,7 @@ export default function AdminExport() {
           'Total Turmas': classes.filter(c => c.teacherId === teacher.id).length
         })),
         
-        '📚 Turmas': classes.map(cls => ({
+        'Turmas': classes.map(cls => ({
           'ID': cls.id,
           'Nome': cls.name,
           'Código': cls.code || 'N/A',
@@ -265,10 +265,10 @@ export default function AdminExport() {
         size: '~1.5MB'
       };
       setRecentExports(prev => [newExport, ...prev.slice(0, 4)]);
-      alert('✅ Dados de utilizadores exportados com sucesso!');
+      alert('Dados de utilizadores exportados com sucesso!');
     } catch (error) {
       console.error('Erro ao exportar:', error);
-      alert('❌ Erro ao exportar dados. Tente-se novamente.');
+      alert('Erro ao exportar dados. Tente novamente.');
     } finally {
       setExporting(false);
     }
@@ -281,7 +281,7 @@ export default function AdminExport() {
       const kitRequests = await fetchData('kits/requests');
 
       const exportData = {
-        '📦 Todos os Kits': kitRequests.map(kit => ({
+        'Todos os Kits': kitRequests.map(kit => ({
           'ID': kit.id,
           'Tipo Kit': kit.kitType,
           'Status': kit.status,
@@ -298,7 +298,7 @@ export default function AdminExport() {
           'Problemas': kit.reports?.length || 0
         })),
         
-        '📊 Resumo por Status': [
+        'Resumo por Status': [
           {
             'Status': 'Pendentes',
             'Quantidade': kitRequests.filter(k => k.status === 'pending').length
@@ -330,10 +330,10 @@ export default function AdminExport() {
         size: '~1MB'
       };
       setRecentExports(prev => [newExport, ...prev.slice(0, 4)]);
-      alert('✅ Relatório de kits exportado com sucesso!');
+      alert('Relatório de kits exportado com sucesso!');
     } catch (error) {
       console.error('Erro ao exportar:', error);
-      alert('❌ Erro ao exportar dados. Tente-se novamente.');
+      alert('Erro ao exportar dados. Tente novamente.');
     } finally {
       setExporting(false);
     }
@@ -347,7 +347,7 @@ export default function AdminExport() {
       const deliveredKits = kitRequests.filter(kit => kit.status === 'delivered' || kit.deliveredAt);
 
       const exportData = {
-        '✅ Kits Entregues': deliveredKits.map(kit => ({
+        'Kits Entregues': deliveredKits.map(kit => ({
           'ID': kit.id,
           'Tipo Kit': kit.kitType,
           'Professor': kit.teacher?.name || 'N/A',
@@ -364,7 +364,7 @@ export default function AdminExport() {
             : 'N/A'
         })),
         
-        '📈 Estatísticas': [{
+        'Estatísticas': [{
           'Total Entregues': deliveredKits.length,
           'Média Dias Entrega': deliveredKits.length > 0
             ? Math.round(deliveredKits
@@ -387,10 +387,10 @@ export default function AdminExport() {
         size: '~500KB'
       };
       setRecentExports(prev => [newExport, ...prev.slice(0, 4)]);
-      alert('✅ Resumo de entregas exportado com sucesso!');
+      alert('Resumo de entregas exportado com sucesso!');
     } catch (error) {
       console.error('Erro ao exportar:', error);
-      alert('❌ Erro ao exportar dados. Tente-se novamente.');
+      alert('Erro ao exportar dados. Tente novamente.');
     } finally {
       setExporting(false);
     }
@@ -406,7 +406,7 @@ export default function AdminExport() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-3">
-              <FileSpreadsheet className="w-8 h-8 text-blue-600" />
+              <FileSpreadsheet className="w-8 h-8 text-primary" />
               Exportar Dados
             </h1>
             <p className="text-muted-foreground mt-2">
@@ -416,18 +416,18 @@ export default function AdminExport() {
         </div>
 
         {/* Exportação Principal */}
-        <Card className="p-6 border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white">
+        <Card className="p-6">
           <div className="flex items-center gap-3 mb-4">
-            <Database className="w-6 h-6 text-blue-600" />
+            <Database className="w-6 h-6 text-primary" />
             <h2 className="text-2xl font-semibold">Exportação Completa do Sistema</h2>
           </div>
           <p className="text-muted-foreground mb-6">
-            Permite exportar todos os dados do sistema num único ficheiro Excel com múltiplas sheets organizadas
+            Exportação dos dados do sistema num único ficheiro Excel com múltiplas folhas organizadas.
           </p>
           
-          <div className="bg-blue-50 p-4 rounded-lg mb-6">
-            <p className="text-sm font-medium text-blue-900 mb-2">📋 Inclui:</p>
-            <ul className="text-sm text-blue-800 space-y-1 grid grid-cols-2 gap-2">
+          <div className="bg-muted p-4 rounded-lg mb-6">
+            <p className="text-sm font-medium mb-2">Inclui:</p>
+            <ul className="text-sm space-y-1 grid grid-cols-2 gap-2">
               <li>• Resumo estatístico completo</li>
               <li>• Todas as escolas com detalhes</li>
               <li>• Todos os professores com informações</li>
@@ -442,17 +442,16 @@ export default function AdminExport() {
             disabled={exporting}
             className="w-full md:w-auto"
             size="lg"
-            aria-busy={exporting}
           >
             {exporting ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                A Exportar Dados...
+                A exportar dados...
               </>
             ) : (
               <>
                 <Download className="w-5 h-5 mr-2" />
-                Exportar Dados Completos
+                Exportar dados completos
               </>
             )}
           </Button>
@@ -462,11 +461,11 @@ export default function AdminExport() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-center gap-3 mb-4">
-              <Users className="w-6 h-6 text-purple-600" />
+              <Users className="w-6 h-6 text-primary" />
               <h3 className="text-xl font-semibold">Exportação de Utilizadores</h3>
             </div>
             <p className="text-muted-foreground mb-4">
-              Escolas, professores e turmas com todos os detalhes
+              Exportação de escolas, professores e turmas com todos os detalhes.
             </p>
             <div className="space-y-2">
               <Button 
@@ -475,19 +474,19 @@ export default function AdminExport() {
                 onClick={handleUsersExport}
                 disabled={exporting}
               >
-                <BarChart3 className="w-4 h-4 mr-2 text-green-600" />
-                Excel - Dados de Utilizadores
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Excel - Dados de utilizadores
               </Button>
             </div>
           </Card>
 
           <Card className="p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-center gap-3 mb-4">
-              <Package className="w-6 h-6 text-orange-600" />
+              <Package className="w-6 h-6 text-primary" />
               <h3 className="text-xl font-semibold">Exportação de Kits</h3>
             </div>
             <p className="text-muted-foreground mb-4">
-              Relatório completo de todos os kits e seus status
+              Relatório completo de todos os kits e seus estados.
             </p>
             <div className="space-y-2">
               <Button 
@@ -496,7 +495,7 @@ export default function AdminExport() {
                 onClick={handleKitsExport}
                 disabled={exporting}
               >
-                <BarChart3 className="w-4 h-4 mr-2 text-green-600" />
+                <BarChart3 className="w-4 h-4 mr-2" />
                 Excel - Relatório de Kits
               </Button>
               <Button 
@@ -505,7 +504,7 @@ export default function AdminExport() {
                 onClick={handleDeliveriesExport}
                 disabled={exporting}
               >
-                <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
+                <CheckCircle className="w-4 h-4 mr-2" />
                 Excel - Resumo de Entregas
               </Button>
             </div>
@@ -514,10 +513,10 @@ export default function AdminExport() {
 
         {/* Histórico de Exportações */}
         {recentExports.length > 0 && (
-          <Card className="p-6 overflow-x-auto">
+          <Card className="p-6">
             <div className="flex items-center gap-2 mb-4">
-              <Calendar className="w-5 h-5 text-blue-600" />
-              <h3 className="text-lg font-semibold">📋 Exportações Recentes</h3>
+              <Calendar className="w-5 h-5 text-primary" />
+              <h3 className="text-lg font-semibold">Exportações Recentes</h3>
             </div>
             <div className="space-y-2">
               {recentExports.map(exportItem => (
@@ -541,15 +540,15 @@ export default function AdminExport() {
         )}
 
         {/* Informações Técnicas */}
-        <Card className="p-6 bg-gradient-to-br from-gray-50 to-white border">
+        <Card className="p-6">
           <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="w-5 h-5 text-blue-600" />
-            <h3 className="text-lg font-semibold">🔧 Funcionalidades de Exportação</h3>
+            <TrendingUp className="w-5 h-5 text-primary" />
+            <h3 className="text-lg font-semibold">Funcionalidades de Exportação</h3>
           </div>
           <ul className="text-sm text-muted-foreground space-y-2">
             <li className="flex items-start gap-2">
               <span className="text-green-600 font-bold">✓</span>
-              <span><strong>Excel:</strong> Múltiplas sheets organizadas com dados completos e detalhados</span>
+              <span><strong>Excel:</strong> Múltiplas folhas organizadas com dados completos e detalhados</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-green-600 font-bold">✓</span>
@@ -565,7 +564,7 @@ export default function AdminExport() {
             </li>
             <li className="flex items-start gap-2">
               <span className="text-green-600 font-bold">✓</span>
-              <span><strong>Suporte PT:</strong> Caracteres portugueses (ç, ã, õ, etc.) totalmente suportados</span>
+              <span><strong>Suporte PT:</strong> Caracteres portugueses totalmente suportados</span>
             </li>
           </ul>
         </Card>

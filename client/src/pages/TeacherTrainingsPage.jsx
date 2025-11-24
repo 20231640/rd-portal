@@ -13,7 +13,7 @@ export default function TeacherTrainingsPage() {
   const [teacher, setTeacher] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // ✅ CORREÇÃO: Buscar dados do professor logado
+  // Buscar dados do professor logado
   useEffect(() => {
     const teacherDataStr = localStorage.getItem("teacherData");
     const loggedInTeacher = localStorage.getItem("loggedInTeacher");
@@ -25,21 +25,17 @@ export default function TeacherTrainingsPage() {
 
     async function loadTeacherAndTrainings() {
       try {
-        // ✅ CORREÇÃO: Usar dados do localStorage em vez de fazer fetch
         const teacherData = JSON.parse(teacherDataStr);
-        console.log('✅ Carregando professor do localStorage:', teacherData);
+        console.log('✅ A carregar professor do localStorage:', teacherData);
         
         setTeacher(teacherData);
 
-        // ✅ CORREÇÃO: Buscar formações usando a rota CORRETA
-        console.log('🔄 Buscando formações...');
+        console.log('🔄 A buscar formações...');
         
-        // Primeiro tentar buscar todas as formações e filtrar
         try {
           const trainingsRes = await axios.get(`${API_URL}/api/trainings`);
           console.log('📊 Todas as formações:', trainingsRes.data);
           
-          // Filtrar formações deste professor
           const teacherTrainings = trainingsRes.data.filter(
             training => training.teacherId === teacherData.id
           );
@@ -49,7 +45,6 @@ export default function TeacherTrainingsPage() {
           
         } catch (trainingsError) {
           console.error('❌ Erro ao buscar formações:', trainingsError);
-          // Se não conseguir buscar formações, definir array vazio
           setTrainings([]);
         }
 
@@ -67,7 +62,7 @@ export default function TeacherTrainingsPage() {
     loadTeacherAndTrainings();
   }, [navigate]);
 
-  // ✅ CORREÇÃO: Função para verificar se formação é futura
+  // Função para verificar se formação é futura
   const isTrainingFuture = (trainingDate) => {
     try {
       return new Date(trainingDate) > new Date();
@@ -77,18 +72,16 @@ export default function TeacherTrainingsPage() {
     }
   };
 
-  // ✅ CORREÇÃO: Função para abrir certificado
+  // Função para abrir certificado
   const handleOpenCertificate = (certificateUrl) => {
     if (!certificateUrl) {
       alert("Certificado não disponível");
       return;
     }
 
-    // Se a URL já é completa
     if (certificateUrl.startsWith('http')) {
       window.open(certificateUrl, '_blank');
     } else {
-      // Se é um caminho relativo
       window.open(`${API_URL}${certificateUrl}`, '_blank');
     }
   };
@@ -97,7 +90,7 @@ export default function TeacherTrainingsPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <p>Erro ao carregar dados do professor.</p>
+          <p>Erro ao carregar os dados do professor.</p>
           <Button onClick={() => navigate("/login")} className="mt-4">
             Fazer Login Novamente
           </Button>
@@ -125,7 +118,7 @@ export default function TeacherTrainingsPage() {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold">AS Minhas Formações</h1>
+            <h1 className="text-3xl font-bold">As Minhas Formações</h1>
             <p className="text-muted-foreground mt-2">
               Sessões de formação agendadas e certificados
             </p>
@@ -248,7 +241,7 @@ export default function TeacherTrainingsPage() {
                       {!training.completed && !isTrainingFuture(training.date) && (
                         <div className="text-center p-2 bg-orange-50 rounded border border-orange-200">
                           <p className="text-xs text-orange-700">
-                            ⏰ Aguardando conclusão pelo administrador
+                            ⏰ Aguarda a conclusão pelo administrador
                           </p>
                         </div>
                       )}

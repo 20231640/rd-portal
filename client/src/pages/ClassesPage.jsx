@@ -33,7 +33,7 @@ export default function ClassesPage() {
     COMPLETED: { label: "Concluída", color: "secondary", icon: BookOpen }
   };
 
-  // ✅ CORREÇÃO: Buscar dados do professor
+  // Buscar dados do professor
   useEffect(() => {
     const teacherDataStr = localStorage.getItem("teacherData");
     const loggedInTeacher = localStorage.getItem("loggedInTeacher");
@@ -45,23 +45,19 @@ export default function ClassesPage() {
 
     async function loadTeacherAndClasses() {
       try {
-        // ✅ CORREÇÃO: Usar dados do localStorage
         const teacherData = JSON.parse(teacherDataStr);
-        console.log('✅ Carregando professor do localStorage:', teacherData);
+        console.log('✅ A carregar o professor do localStorage:', teacherData);
         setTeacher(teacherData);
 
-        // ✅ NOVO: Atualizar dados do professor do servidor
         await refreshTeacherData();
 
-        // ✅ CORREÇÃO: Buscar todas as turmas e filtrar
-        console.log('🔄 Buscando turmas...');
+        console.log('🔄 A buscar turmas...');
         try {
           const classesRes = await fetch(`${API_URL}/api/classes`);
           if (classesRes.ok) {
             const allClasses = await classesRes.json();
             console.log('📊 Todas as turmas:', allClasses);
             
-            // Filtrar turmas deste professor
             const teacherClasses = allClasses.filter(cls => cls.teacherId === teacherData.id);
             console.log('✅ Turmas do professor:', teacherClasses);
             
@@ -94,32 +90,30 @@ export default function ClassesPage() {
     filterClasses();
   }, [classes, searchTerm, filterCycle]);
 
-  // ✅ NOVA FUNÇÃO: Atualizar dados do professor no localStorage
+  // Nova função: Atualizar dados do professor no localStorage
   const refreshTeacherData = async () => {
     try {
-      console.log('🔄 Atualizando dados do professor...');
+      console.log('🔄 A atualizar os dados do professor...');
       
       const teacherDataStr = localStorage.getItem("teacherData");
       if (!teacherDataStr) return;
 
       const currentTeacher = JSON.parse(teacherDataStr);
       
-      // Buscar dados atualizados do professor
       const response = await fetch(`${API_URL}/api/auth/teachers/${currentTeacher.id}`);
       if (response.ok) {
         const updatedTeacher = await response.json();
         console.log('✅ Professor atualizado:', updatedTeacher);
         
-        // Atualizar localStorage
         localStorage.setItem("teacherData", JSON.stringify(updatedTeacher));
         setTeacher(updatedTeacher);
       }
     } catch (error) {
-      console.error('❌ Erro ao atualizar dados do professor:', error);
+      console.error('❌ Erro ao atualizar os dados do professor:', error);
     }
   };
 
-  // VERIFICAR SE PODE CRIAR TURMA
+  // Verificar se pode criar turma
   const canCreateClass = () => {
     return teacher?.hasCompletedTraining || teacher?.certificateUrl;
   };
@@ -155,11 +149,10 @@ export default function ClassesPage() {
     setFilteredClasses(filtered);
   };
 
-  // ✅ CORREÇÃO: Função de adicionar turma com melhor tratamento
+  // Função de adicionar turma com melhor tratamento
   const handleAddClass = async (e) => {
     e.preventDefault();
     
-    // Verificar novamente se pode criar turma
     if (!canCreateClass()) {
       setShowTrainingAlert(true);
       return;
@@ -171,7 +164,7 @@ export default function ClassesPage() {
     }
 
     try {
-      console.log('🔄 Criando nova turma...', {
+      console.log('🔄 A criar nova turma...', {
         ...newClass,
         teacherId: teacher.id,
         schoolId: teacher.schoolId
@@ -214,11 +207,11 @@ export default function ClassesPage() {
     }
   };
 
-  // ✅ CORREÇÃO: Função de editar turma
+  // Função de editar turma
   const handleEditClass = async (e) => {
     e.preventDefault();
     try {
-      console.log('🔄 Editando turma...', editingClass);
+      console.log('🔄 A editar a turma...', editingClass);
       
       const res = await fetch(`${API_URL}/api/classes/${editingClass.id}`, {
         method: "PUT",
@@ -252,34 +245,34 @@ export default function ClassesPage() {
     }
   };
 
-  // ✅ CORREÇÃO: Função de deletar turma
+  // Função de deletar turma
   const handleDeleteClass = async (id) => {
-    if (!window.confirm("Tem a certeza que quer apagar esta turma?")) return;
+    if (!window.confirm("Tem a certeza que pretende eliminar esta turma?")) return;
     try {
-      console.log('🔄 Apagando turma...', id);
+      console.log('🔄 A eliminar turma...', id);
       
       const res = await fetch(`${API_URL}/api/classes/${id}`, { method: "DELETE" });
       
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.message || "Erro ao apagar turma");
+        throw new Error(errorData.message || "Erro ao eliminar turma");
       }
       
       const updated = classes.filter(c => c.id !== id);
       setClasses(updated);
       setFilteredClasses(updated);
       
-      alert("Turma apagada com sucesso!");
+      alert("Turma eliminada com sucesso!");
     } catch (err) {
-      console.error("❌ Erro ao apagar turma:", err);
-      alert(err.message || "Erro ao apagar turma no servidor.");
+      console.error("❌ Erro ao eliminar turma:", err);
+      alert(err.message || "Erro ao eliminar turma no servidor.");
     }
   };
 
-  // ✅ CORREÇÃO: Função de mudar estado
+  // Função de mudar estado
   const handleChangeState = async (id, newState) => {
     try {
-      console.log('🔄 Mudando estado da turma...', { id, newState });
+      console.log('🔄 A alterar estado da turma...', { id, newState });
       
       const res = await fetch(`${API_URL}/api/classes/${id}/state`, {
         method: "PUT",
@@ -330,7 +323,7 @@ export default function ClassesPage() {
     <div className="flex min-h-screen bg-background">
       <Sidebar />
       <div className="flex-1 p-8">
-        {/* ⬇️⬇️ ALERTA DE FORMAÇÃO NECESSÁRIA - MODAL ⬇️⬇️ */}
+        {/* Alerta de formação necessária - Modal */}
         {showTrainingAlert && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <Card className="p-6 w-full max-w-md">
@@ -339,7 +332,7 @@ export default function ClassesPage() {
                 <h3 className="text-xl font-bold">Formação Necessária</h3>
               </div>
               <p className="text-muted-foreground mb-6">
-                Para criar turmas, precisa primeiro de completar a sessão de formação e obter o certificado.
+                Para criar turmas, é necessário completar a sessão de formação e obter o certificado.
               </p>
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => setShowTrainingAlert(false)} className="flex-1">
@@ -356,7 +349,7 @@ export default function ClassesPage() {
             <p className="text-muted-foreground mt-2">Gerir e acompanhar as suas turmas</p>
           </div>
           <div className="flex items-center gap-3">
-            {/* ⬇️⬇️ BADGE DE CERTIFICADO ⬇️⬇️ */}
+            {/* Badge de certificado */}
             {teacher.certificateUrl && (
               <Badge variant="success" className="flex items-center gap-1">
                 <GraduationCap className="w-3 h-3" />
@@ -372,7 +365,7 @@ export default function ClassesPage() {
           </div>
         </div>
 
-        {/* ⬇️⬇️ MENSAGEM SIMPLIFICADA PARA PROFESSORES SEM CERTIFICADO ⬇️⬇️ */}
+        {/* Mensagem simplificada para professores sem certificado */}
         {!canCreateClass() && (
           <Card className="p-6 mb-6 bg-amber-50 border-amber-200">
             <div className="flex items-center gap-3">

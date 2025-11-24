@@ -349,7 +349,7 @@ export default function TeacherKitsPage() {
         {request.adminNotes && (
           <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
             <p className="text-sm text-blue-700">
-              <strong>📝 Nota do Admin:</strong> {request.adminNotes}
+              <strong>📝 Nota do Administrador:</strong> {request.adminNotes}
             </p>
           </div>
         )}
@@ -815,7 +815,7 @@ export default function TeacherKitsPage() {
         {/* Lista de Pedidos */}
         <Card className="p-6">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">Meus Pedidos de Kits</h3>
+            <h3 className="text-lg font-semibold">Os Meus Pedidos de Kits</h3>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Package className="w-4 h-4" />
               <span>{filteredRequests.length} pedido(s)</span>

@@ -6,7 +6,7 @@ import { Button } from "../components/ui/button";
 import { ThemeToggle } from "../components/ui/theme-toggle";
 import "react-phone-input-2/lib/style.css";
 import { API_URL } from "../config/api";
-import { supabase } from "../config/supabase"; // ✅ NOVO
+import { supabase } from "../config/supabase";
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -20,7 +20,7 @@ export default function Register() {
   });
   const [message, setMessage] = useState("");
   const [schools, setSchools] = useState([]);
-  const [isLoading, setIsLoading] = useState(false); // ✅ NOVO
+  const [isLoading, setIsLoading] = useState(false);
   const regions = [
     "Aveiro", "Beja", "Braga", "Bragança", "Castelo Branco", "Coimbra",
     "Évora", "Faro", "Guarda", "Leiria", "Lisboa", "Portalegre",
@@ -43,42 +43,42 @@ export default function Register() {
   async function handleSubmit(e) {
     e.preventDefault();
     setMessage("");
-    setIsLoading(true); // ✅ NOVO
+    setIsLoading(true);
 
-    // Validações (mantenha as mesmas)
+    // Validações
     if (form.password !== form.confirmPassword) {
-      setMessage("❌ Password e confirmação não coincidem.");
+      setMessage("Palavra-passe e confirmação não coincidem.");
       setIsLoading(false);
       return;
     }
 
     if (form.password.length < 6) {
-      setMessage("❌ Password deve ter pelo menos 6 caracteres.");
+      setMessage("Palavra-passe deve ter pelo menos 6 caracteres.");
       setIsLoading(false);
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(form.email)) {
-      setMessage("❌ Email inválido.");
+      setMessage("Email inválido.");
       setIsLoading(false);
       return;
     }
 
     if (!form.phone) {
-      setMessage("❌ Preenche o telefone.");
+      setMessage("Preencha o telefone.");
       setIsLoading(false);
       return;
     }
 
     if (!form.region) {
-      setMessage("❌ Seleciona uma região/distrito.");
+      setMessage("Selecione uma região/distrito.");
       setIsLoading(false);
       return;
     }
 
     try {
-      // ✅ NOVO: Registo com Supabase Auth
+      // Registo com Supabase Auth
       console.log('🔄 A registar com Supabase...');
       
       const { data, error } = await supabase.auth.signUp({
@@ -102,26 +102,26 @@ export default function Register() {
 
       console.log('✅ Registo Supabase bem-sucedido:', data);
       
-      // ✅ Criar professor na nossa base de dados
+      // Criar professor na nossa base de dados
       if (data.user) {
         await createTeacherInDatabase(data.user, form);
       }
 
-      setMessage("✅ Registo efetuado! Verifique o seu email para ativar a conta.");
+      setMessage("Registo efetuado! Verifique o seu email para ativar a conta.");
       setTimeout(() => navigate("/login"), 3000);
       
     } catch (err) {
       console.error('💥 Erro:', err);
-      setMessage("Erro de rede. Verifica a ligação ao servidor.");
+      setMessage("Erro de rede. Verifique a ligação ao servidor.");
     } finally {
       setIsLoading(false);
     }
   }
 
-  // ✅ FUNÇÃO CORRIGIDA: Criar professor na nossa BD
+  // Função corrigida: Criar professor na nossa BD
   async function createTeacherInDatabase(user, formData) {
     try {
-      console.log('🔄 DADOS para criar teacher:', {
+      console.log('🔄 DADOS para criar professor:', {
         supabaseUserId: user.id,
         name: formData.name,
         email: formData.email,
@@ -160,6 +160,7 @@ export default function Register() {
       throw err;
     }
   }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header consistente */}
@@ -170,7 +171,7 @@ export default function Register() {
               <GraduationCap className="w-6 h-6 text-white" />
             </div>
             <span className="text-2xl font-bold text-white tracking-tight">
-              Information Without Drama
+              Informar sem Dramatizar
             </span>
           </div>
           <div className="flex items-center gap-4">
@@ -181,7 +182,7 @@ export default function Register() {
               className="text-white border-white/30 hover:bg-white/20"
             >
               <Home className="w-4 h-4 mr-2" />
-              Voltar à Home
+              Voltar à Página Inicial
             </Button>
             <ThemeToggle />
           </div>
@@ -200,10 +201,10 @@ export default function Register() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {[
-              { label: "Nome", name: "name", type: "text", placeholder: "Seu nome completo" },
-              { label: "Email", name: "email", type: "email", placeholder: "seu@email.com" },
-              { label: "Password", name: "password", type: "password", placeholder: "Mínimo 6 caracteres" },
-              { label: "Confirmar Password", name: "confirmPassword", type: "password", placeholder: "Confirme a senha" },
+              { label: "Nome", name: "name", type: "text", placeholder: "O seu nome completo" },
+              { label: "Email", name: "email", type: "email", placeholder: "o_seu@email.com" },
+              { label: "Palavra-passe", name: "password", type: "password", placeholder: "Mínimo 6 caracteres" },
+              { label: "Confirmar Palavra-passe", name: "confirmPassword", type: "password", placeholder: "Confirme a palavra-passe" },
             ].map(({ label, name, type, placeholder }) => (
               <div key={name} className="space-y-2">
                 <label className="block text-sm font-medium">{label}</label>
@@ -266,7 +267,7 @@ export default function Register() {
                 required
                 className="w-full rounded-xl border border-input bg-background px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
               >
-                <option value="">Selecione a região</option>
+                <option value="">Selecione uma região</option>
                 {regions.map(r => (
                   <option key={r} value={r}>{r}</option>
                 ))}
@@ -294,9 +295,9 @@ export default function Register() {
           </form>
 
           <p className="text-muted-foreground text-sm text-center mt-8">
-            Já tens conta?{" "}
+            Já tem conta?{" "}
             <Link to="/login" className="text-primary hover:underline font-semibold">
-              Login
+              Iniciar sessão
             </Link>
           </p>
         </div>
@@ -304,5 +305,3 @@ export default function Register() {
     </div>
   );
 }
-
-

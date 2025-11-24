@@ -244,21 +244,41 @@ export function KitsStats({ kitRequests, classes, metrics }) {
       <Card className="p-6">
         <div className="flex items-center gap-2 mb-4">
           <TrendingUp className="w-5 h-5 text-blue-500" />
-          <h3 className="text-lg font-semibold">Evolução de Pedidos</h3>
+          <h3 className="text-lg font-semibold">Evolução de pedidos</h3>
           {/* Filtros: Ano + Mês (desde Jan/2025 até ao mês atual) */}
-          <div className="ml-auto flex flex-col sm:flex-row gap-2">
-             <select
-               value={selectedMonth}
-               onChange={(e) => setSelectedMonth(e.target.value)}
-               className="h-8 rounded border border-input bg-background px-2 py-1 text-sm"
-             >
-               <option value="all">Últimos 6 meses</option>
-               {monthsList.map(m => (
-                 <option key={m.key} value={m.key}>{m.label}</option>
+          <div className="ml-auto flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <select
+              value={selectedYearFilter}
+              onChange={(e) => {
+                setSelectedYearFilter(e.target.value);
+                setSelectedMonth('all');
+              }}
+              className="w-full sm:w-auto h-8 rounded border border-input bg-background px-2 py-1 text-sm"
+            >
+               <option value="all">Todos os Anos</option>
+               {Array.from(new Set(monthsList.map(m => m.label.split('/')[1]))).map(year => (
+                 <option key={year} value={year}>{year}</option>
                ))}
              </select>
-          </div>
-        </div>
+ 
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="w-full sm:w-auto h-8 rounded border border-input bg-background px-2 py-1 text-sm"
+            >
+               <option value="all">{selectedYearFilter === 'all' ? 'Todos os Meses' : `Todos os Meses de ${selectedYearFilter}`}</option>
+               {monthsList
+                 .filter(m => selectedYearFilter === 'all' ? true : m.label.endsWith(`/${selectedYearFilter}`))
+                 .map(m => (
+                   <option key={m.key} value={m.key}>{m.label}</option>
+                 ))
+               }
+             </select>
+           </div>
+         </div>
+         <p className="text-muted-foreground mb-4">
+            Veja a evolução de pedidos e filtre por mês/ano para detalhar os eventos.
+          </p>
         <div className="w-full overflow-x-auto">
           <ResponsiveContainer width="100%" height={300}>
              <AreaChart data={timelineData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
@@ -302,7 +322,7 @@ export function KitsStats({ kitRequests, classes, metrics }) {
             </AreaChart>
           </ResponsiveContainer>
         </div>
-      </Card>
+       </Card>
 
       {/* Métricas de Performance */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

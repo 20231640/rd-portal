@@ -11,7 +11,7 @@ export default function TeacherFeedback() {
   const [loading, setLoading] = useState(false);
   const [teacher, setTeacher] = useState(null);
 
-  // ✅ CORREÇÃO: Buscar pastas do professor
+  // Buscar pastas do professor
   useEffect(() => {
     const teacherDataStr = localStorage.getItem("teacherData");
     const loggedInTeacher = localStorage.getItem("loggedInTeacher");
@@ -30,13 +30,13 @@ export default function TeacherFeedback() {
     }
   }, []);
 
-  // ✅ CORREÇÃO: Função para buscar pastas
+  // Função para buscar pastas
   async function fetchFolders(teacherId) {
     try {
       setLoading(true);
       console.log('🔄 Buscando pastas para professor:', teacherId);
 
-      // ✅ CORREÇÃO: Buscar todas as pastas e filtrar
+      // Buscar todas as pastas e filtrar
       const res = await fetch(`${API_URL}/api/report-folders`);
       
       if (!res.ok) {
@@ -46,7 +46,7 @@ export default function TeacherFeedback() {
       const allFolders = await res.json();
       console.log('📊 Todas as pastas:', allFolders);
 
-      // ✅ CORREÇÃO: Filtrar pastas do professor atual
+      // Filtrar pastas do professor atual
       const teacherFolders = allFolders.filter(folder => folder.teacherId === teacherId);
       console.log('✅ Pastas do professor:', teacherFolders);
 
@@ -60,7 +60,7 @@ export default function TeacherFeedback() {
     }
   }
 
-  // ✅ CORREÇÃO: Loading state melhorado
+  // Loading state melhorado
   if (loading) {
     return (
       <div className="flex min-h-screen bg-background">
@@ -69,7 +69,7 @@ export default function TeacherFeedback() {
           <div className="mb-6">
             <h1 className="text-3xl font-bold">Feedback & Relatórios</h1>
             <p className="text-muted-foreground">
-              Acede às tuas pastas no Google Drive para submeter relatórios, imagens e vídeos das aulas
+              Aceda às suas pastas no Google Drive para submeter relatórios, imagens e vídeos das aulas
             </p>
           </div>
           
@@ -108,16 +108,9 @@ export default function TeacherFeedback() {
         <div className="mb-6">
           <h1 className="text-3xl font-bold">Feedback & Relatórios</h1>
           <p className="text-muted-foreground">
-            Acede às tuas pastas no Google Drive para submeter relatórios, imagens e vídeos das aulas
+            Aceda às suas pastas no Google Drive para submeter relatórios, imagens e vídeos das aulas
           </p>
         </div>
-
-        {/* ✅ CORREÇÃO: Informação de debug (opcional) */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200 text-xs">
-            <strong>Debug:</strong> {folders.length} pasta(s) encontrada(s) para o professor
-          </div>
-        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {folders.map(folder => (
@@ -178,7 +171,7 @@ export default function TeacherFeedback() {
               Contacte o administrador para criar pastas no Google Drive
             </p>
             
-            {/* ✅ CORREÇÃO: Botão para recarregar */}
+            {/* Botão para recarregar */}
             <Button 
               variant="outline" 
               onClick={() => teacher && fetchFolders(teacher.id)}

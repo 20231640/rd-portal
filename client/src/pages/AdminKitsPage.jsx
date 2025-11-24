@@ -167,7 +167,7 @@ export default function AdminKitsPage() {
       <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
       <h3 className="text-lg font-semibold mb-2">Nenhum pedido de kit</h3>
       <p className="text-muted-foreground mb-4">
-        Quando os professores pedirem kits, aparecerão aqui para aprovação.
+        Quando os professores pedirem kits, aparecem aqui para que os possa aprovar.
       </p>
       <div className="flex justify-center gap-3">
         <Button variant="outline" onClick={fetchData}>
@@ -227,7 +227,7 @@ export default function AdminKitsPage() {
   };
 
   const handleReject = async (requestId) => {
-    if (!window.confirm("Tem a certeza que quer rejeitar este pedido?")) return;
+    if (!window.confirm("Tem a certeza que pretende rejeitar este pedido?")) return;
     
     try {
       const res = await fetch(`${API_URL}/api/kits/${requestId}`, {
@@ -248,7 +248,7 @@ export default function AdminKitsPage() {
   };
 
   const handleResolveReport = async (requestId, reportId) => {
-    if (!window.confirm("Tem a certeza que quer marcar este problema como resolvido?")) return;
+    if (!window.confirm("Tem a certeza que pretende marcar este problema como resolvido?")) return;
     
     try {
       const res = await fetch(`${API_URL}/api/kits/${requestId}/reports/${reportId}/resolve`, {
@@ -360,7 +360,7 @@ export default function AdminKitsPage() {
         {request.adminNotes && (
           <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
             <p className="text-sm text-blue-700">
-              <strong>📝 Nota do Admin:</strong> {request.adminNotes}
+              <strong>Nota do Administrador:</strong> {request.adminNotes}
             </p>
           </div>
         )}
@@ -393,7 +393,7 @@ export default function AdminKitsPage() {
                 className="border-[hsl(327,83%,50%)] text-[hsl(327,83%,50%)] hover:bg-[hsl(327,83%,50%)] hover:text-white transition-all duration-300"
               >
                 <CheckCircle className="w-4 h-4 mr-1" />
-                Resolver
+                Marcar como Resolvido
               </Button>
             </div>
           </div>
@@ -547,7 +547,7 @@ export default function AdminKitsPage() {
                )}
              </div>
              <div className="flex items-center gap-4 mt-2">
-               <p className="text-muted-foreground">Aprovar e acompanhar pedidos de kits</p>
+               <p className="text-muted-foreground">Aprovar e acompanhar os pedidos de kits</p>
                {lastUpdate && (
                  <span className="text-xs text-muted-foreground">
                    Última atualização: {lastUpdate.toLocaleTimeString('pt-PT')}
@@ -586,7 +586,7 @@ export default function AdminKitsPage() {
             <div className="text-sm text-muted-foreground">Pendentes</div>
           </Card>
           <Card className="p-4 text-center border-l-4 border-l-[hsl(283,45%,33%)] hover:shadow-md transition-shadow">
-            <div className="text-2xl font-bold text-[hsl(283,45%,33%)]">{getStatusCount("approved")}</div>
+            <div className="text-2xl font-bold text-[hsl(283,45%,33%]">{getStatusCount("approved")}</div>
             <div className="text-sm text-muted-foreground">Aprovados</div>
           </Card>
           <Card className="p-4 text-center border-l-4 border-l-[hsl(189,68%,64%)] hover:shadow-md transition-shadow">

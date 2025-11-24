@@ -34,7 +34,6 @@ export default function TeacherDashboard() {
 
     async function loadTeacher() {
       try {
-        // ✅ CORREÇÃO: Usar a rota CORRETA que existe
         console.log('🔄 Buscando dados do professor...');
         const response = await fetch(`${API_URL}/api/teachers/email/${loggedInTeacher}`);
         
@@ -53,7 +52,6 @@ export default function TeacherDashboard() {
           phone: found.phone || "" 
         });
         
-        // ✅ CORREÇÃO: Carregar estatísticas com rotas que EXISTEM
         await loadStats(found.id);
         
       } catch (err) {
@@ -69,18 +67,15 @@ export default function TeacherDashboard() {
       try {
         console.log('📊 Carregando estatísticas...');
         
-        // ✅ CORREÇÃO: Buscar turmas do professor
         const classesRes = await fetch(`${API_URL}/api/classes`);
         if (classesRes.ok) {
           const allClasses = await classesRes.json();
           const teacherClasses = allClasses.filter(cls => cls.teacherId === teacherId);
           
-          // ✅ CORREÇÃO: Buscar kits do professor  
           const kitsRes = await fetch(`${API_URL}/api/kits`);
           const allKits = await kitsRes.ok ? await kitsRes.json() : [];
           const teacherKits = allKits.filter(kit => kit.teacherId === teacherId);
           
-          // Calcular totais
           const totalStudents = teacherClasses.reduce((sum, cls) => sum + (cls.students || 0), 0);
           
           setStats({
@@ -97,7 +92,6 @@ export default function TeacherDashboard() {
         }
       } catch (err) {
         console.error("❌ Erro ao carregar estatísticas:", err);
-        // Não bloqueia a renderização se as estatísticas falharem
       }
     }
 
@@ -166,7 +160,7 @@ export default function TeacherDashboard() {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold">Meu Perfil</h1>
+            <h1 className="text-3xl font-bold">O Meu Perfil</h1>
             <p className="text-muted-foreground mt-2">
               {editing ? "Editar informações pessoais" : "Informações pessoais e estatísticas"}
             </p>
@@ -282,7 +276,7 @@ export default function TeacherDashboard() {
                       <div className="text-center p-6 bg-green-50 rounded-lg border border-green-200">
                         <Package className="w-8 h-8 text-green-600 mx-auto mb-2" />
                         <p className="text-2xl font-bold text-green-800">{stats.kits}</p>
-                        <p className="text-sm text-green-700">Kits Pedidos</p>
+                        <p className="text-sm text-green-700">Kits Solicitados</p>
                       </div>
                       <div className="text-center p-6 bg-purple-50 rounded-lg border border-purple-200">
                         <Users className="w-8 h-8 text-purple-600 mx-auto mb-2" />
@@ -306,7 +300,7 @@ export default function TeacherDashboard() {
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         className="w-full rounded-lg border border-input bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                         required
-                        placeholder="Seu nome completo"
+                        placeholder="O seu nome completo"
                       />
                     </div>
 
@@ -349,7 +343,7 @@ export default function TeacherDashboard() {
 
                   <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
                     <p className="text-sm text-blue-700">
-                      💡 <strong>Dica:</strong> Apenas o nome e telefone podem ser editados. 
+                      💡 <strong>Nota:</strong> Apenas o nome e telefone podem ser editados. 
                       Para alterar outros dados, contacte o administrador.
                     </p>
                   </div>

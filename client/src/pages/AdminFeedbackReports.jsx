@@ -78,7 +78,7 @@ export default function AdminFeedbackReports() {
   }
 
   async function deleteFolder(id) {
-    if (!confirm("Tem a certeza que quer eliminar esta pasta?")) return;
+    if (!confirm("Tem a certeza que pretende eliminar esta pasta?")) return;
     
     try {
       const res = await fetch(`${API_URL}/api/report-folders/${id}`, {
@@ -127,7 +127,7 @@ export default function AdminFeedbackReports() {
         <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
            <div>
              <h1 className="text-3xl font-bold">Gestão de Relatórios</h1>
-             <p className="text-muted-foreground">Criar e gerir pastas no Google Drive para professores</p>
+             <p className="text-muted-foreground">Criar e gerir pastas no Google Drive para os professores</p>
            </div>
            <div className="w-full sm:w-auto">
             <Button onClick={() => setShowCreateForm(true)} className="w-full sm:w-auto">
@@ -144,9 +144,9 @@ export default function AdminFeedbackReports() {
             <input
               type="text"
               placeholder="Pesquisar pastas..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-full h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+               value={searchTerm}
+               onChange={(e) => setSearchTerm(e.target.value)}
+               className="pl-10 w-full h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
            </div>
            </div>
@@ -163,7 +163,7 @@ export default function AdminFeedbackReports() {
                     value={newFolder.title}
                     onChange={(e) => setNewFolder(prev => ({ ...prev, title: e.target.value }))}
                     className="w-full rounded border border-input px-3 py-2"
-                    placeholder="Ex: Relatórios Professor João"
+                    placeholder="Exemplo: Relatórios do Professor João"
                     required
                   />
                 </div>
@@ -187,7 +187,7 @@ export default function AdminFeedbackReports() {
                      className="w-full rounded border border-input px-3 py-2"
                      required
                    >
-                     <option value="">Selecionar Professor</option>
+                     <option value="">Selecionar professor</option>
                      {teachers.map(teacher => (
                        <option key={teacher.id} value={teacher.id}>
                          {teacher.name} - {teacher.school.name}
@@ -293,7 +293,7 @@ export default function AdminFeedbackReports() {
         {filteredFolders.length === 0 && !loading && (
           <div className="text-center py-12">
             <Folder className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-            <p className="text-muted-foreground">Nenhuma pasta encontrada</p>
+            <p className="text-muted-foreground">Não foram encontradas pastas</p>
             <Button onClick={() => setShowCreateForm(true)} className="mt-4">
               <Plus className="w-4 h-4 mr-2" />
               Criar Primeira Pasta
