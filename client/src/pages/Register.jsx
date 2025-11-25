@@ -163,27 +163,44 @@ export default function Register() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header consistente */}
+      {/* Header responsiva */}
       <header className="rd-header-bg text-white backdrop-blur-md shadow-lg">
-        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shadow-md">
-              <GraduationCap className="w-6 h-6 text-white" />
+        <div className="container mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
+          {/* Logo */}
+          <div className="flex items-center gap-3 flex-1">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/20 flex items-center justify-center shadow-md">
+              <GraduationCap className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
             </div>
-            <span className="text-2xl font-bold text-white tracking-tight">
+            <span className="text-xl sm:text-2xl font-bold text-white tracking-tight">
               Informar sem Dramatizar
             </span>
           </div>
-          <div className="flex items-center gap-4">
+
+          {/* Botões - lado direito */}
+          <div className="flex items-center gap-3">
+            {/* Botão Voltar - apenas ícone em mobile */}
             <Button
               variant="outline"
               size="sm"
               onClick={() => navigate("/")}
-              className="text-white border-white/30 hover:bg-white/20"
+              className="text-white border-white/30 hover:bg-white/20 hidden sm:flex"
+              title="Voltar à Página Inicial"
             >
               <Home className="w-4 h-4 mr-2" />
-              Voltar à Página Inicial
+              <span className="hidden sm:inline">Voltar</span>
             </Button>
+            
+            {/* Versão mobile do botão Voltar - apenas ícone */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/")}
+              className="text-white border-white/30 hover:bg-white/20 sm:hidden"
+              title="Voltar à Página Inicial"
+            >
+              <Home className="w-4 h-4" />
+            </Button>
+            
             <ThemeToggle />
           </div>
         </div>

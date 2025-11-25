@@ -37,17 +37,10 @@ export function Sidebar() {
     localStorage.setItem("theme", theme);
   }, [theme]);
 
-  // Fechar sidebar mobile ao clicar em um item
+  // Fechar sidebar mobile ao mudar de rota
   useEffect(() => {
-    if (isMobileOpen) {
-      const handleClickOutside = () => {
-        setIsMobileOpen(false);
-      };
-      
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
-    }
-  }, [isMobileOpen]);
+    setIsMobileOpen(false);
+  }, [location.pathname]);
 
   const getActivePage = () => {
     const currentPath = location.pathname;
@@ -70,12 +63,21 @@ export function Sidebar() {
 
   const handleNavigation = (path) => {
     navigate(path);
-    setIsMobileOpen(false); // Fecha sidebar mobile após navegação
   };
 
   return (
     <>
-      {/* Mobile Overlay */}
+      {/* Mobile Menu Button - SÓ APARECE EM MOBILE */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setIsMobileOpen(true)}
+        className="lg:hidden fixed top-4 left-4 z-50 bg-card border border-border shadow-md"
+      >
+        <Menu className="w-5 h-5" />
+      </Button>
+
+      {/* Mobile Overlay - SÓ APARECE QUANDO SIDEBAR ESTÁ ABERTA EM MOBILE */}
       {isMobileOpen && (
         <div 
           className="lg:hidden fixed inset-0 bg-black/50 z-40"
@@ -83,13 +85,14 @@ export function Sidebar() {
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar Principal */}
       <div className={`
         fixed lg:relative h-screen flex flex-col z-50
         bg-card border-r border-border
         transition-all duration-300 ease-in-out
         ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         ${isCollapsed ? 'w-16' : 'w-64'}
+        flex-shrink-0
       `}>
         
         {/* Header */}
@@ -98,6 +101,7 @@ export function Sidebar() {
             <h1 className="text-xl font-bold text-foreground">Professor</h1>
           )}
           <div className="flex gap-1">
+            {/* Botão collapse - SÓ NO DESKTOP */}
             <Button
               variant="ghost"
               size="sm"
@@ -110,6 +114,7 @@ export function Sidebar() {
                 <ChevronLeft className="w-4 h-4" />
               )}
             </Button>
+            {/* Botão fechar - SÓ NO MOBILE */}
             <Button
               variant="ghost"
               size="sm"
@@ -177,16 +182,6 @@ export function Sidebar() {
           </Button>
         </div>
       </div>
-
-      {/* Mobile Menu Button */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => setIsMobileOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-50 bg-card border border-border"
-      >
-        <Menu className="w-5 h-5" />
-      </Button>
     </>
   );
 }
