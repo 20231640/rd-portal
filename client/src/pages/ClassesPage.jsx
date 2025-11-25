@@ -18,6 +18,7 @@ export default function ClassesPage() {
   const [editingClass, setEditingClass] = useState(null);
   const [newClass, setNewClass] = useState({ name: "", students: "", cycle: "", year: "" });
   const [showTrainingAlert, setShowTrainingAlert] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const cycles = {
     "Pré-Escolar": ["3 anos", "4 anos", "5 anos"],

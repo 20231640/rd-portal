@@ -14,13 +14,13 @@ import {
   Search,
   Download,
   Archive,
-  RotateCcw
+  RotateCcw,
+  Menu // ← Ícone novo adicionado
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { AdminSidebar } from "../components/ui/admin-sidebar";
 import { API_URL } from "../config/api";
-
 
 export default function AdminDashboard() {
   const [schools, setSchools] = useState([]);
@@ -41,11 +41,15 @@ export default function AdminDashboard() {
   const [archivedSchools, setArchivedSchools] = useState([]);
   const [archivedTeachers, setArchivedTeachers] = useState([]);
   const [showArchived, setShowArchived] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false); // ← Estado novo
+
   const districts = [
-  "Aveiro", "Beja", "Braga", "Bragança", "Castelo Branco", 
-  "Coimbra", "Évora", "Faro", "Guarda", "Leiria", 
-  "Lisboa", "Portalegre", "Porto", "Santarém", "Setúbal", 
-  "Viana do Castelo", "Vila Real", "Viseu", "Região Autónoma da Madeira", "Região Autónoma dos Açores"];
+    "Aveiro", "Beja", "Braga", "Bragança", "Castelo Branco", 
+    "Coimbra", "Évora", "Faro", "Guarda", "Leiria", 
+    "Lisboa", "Portalegre", "Porto", "Santarém", "Setúbal", 
+    "Viana do Castelo", "Vila Real", "Viseu", "Região Autónoma da Madeira", "Região Autónoma dos Açores"
+  ];
+  
   const navigate = useNavigate();
 
   // Toast helper
@@ -104,6 +108,7 @@ export default function AdminDashboard() {
       setLoading(false);
     }
   }
+
   // Logout
   function handleLogout() {
     localStorage.removeItem("loggedInAdmin");
@@ -122,7 +127,7 @@ export default function AdminDashboard() {
         body: JSON.stringify({ 
           name: newSchool.trim(), 
           region: newRegion.trim(),
-          address: "Morada a definir" // Campo básico
+          address: "Morada a definir"
         }),
       });
       const data = await res.json();
@@ -247,9 +252,7 @@ export default function AdminDashboard() {
     }
   }
 
-  // 🏫 FUNÇÕES PARA ESCOLAS - CORRIGIDAS
-
-  // Arquivar Escola (AGORA COM API)
+  // Arquivar Escola
   async function archiveSchool(id) {
     try {
       console.log('📤 Arquivando escola ID:', id);
@@ -269,7 +272,6 @@ export default function AdminDashboard() {
       const updatedSchool = await res.json();
       console.log('✅ Escola arquivada na BD:', updatedSchool);
       
-      // Atualiza o estado local
       setSchools(prev => prev.filter(s => s.id !== id));
       setArchivedSchools(prev => [...prev, updatedSchool]);
       
@@ -280,7 +282,7 @@ export default function AdminDashboard() {
     }
   }
 
-  // Restaurar Escola (AGORA COM API)
+  // Restaurar Escola
   async function restoreSchool(id) {
     try {
       console.log('📤 Restaurando escola ID:', id);
@@ -300,7 +302,6 @@ export default function AdminDashboard() {
       const restoredSchool = await res.json();
       console.log('✅ Escola restaurada na BD:', restoredSchool);
       
-      // Atualiza o estado local
       setArchivedSchools(prev => prev.filter(s => s.id !== id));
       setSchools(prev => [...prev, restoredSchool]);
       
@@ -311,8 +312,7 @@ export default function AdminDashboard() {
     }
   }
 
-
-  // Arquivar Professor (AGORA COM API)
+  // Arquivar Professor
   async function archiveTeacher(id) {
     try {
       console.log('📤 Arquivando professor ID:', id);
@@ -332,7 +332,6 @@ export default function AdminDashboard() {
       const updatedTeacher = await res.json();
       console.log('✅ Professor arquivado na BD:', updatedTeacher);
       
-      // Atualiza o estado local
       setTeachers(prev => prev.filter(t => t.id !== id));
       setArchivedTeachers(prev => [...prev, updatedTeacher]);
       
@@ -343,7 +342,7 @@ export default function AdminDashboard() {
     }
   }
 
-  // Restaurar Professor (AGORA COM API)
+  // Restaurar Professor
   async function restoreTeacher(id) {
     try {
       console.log('📤 Restaurando professor ID:', id);
@@ -363,7 +362,6 @@ export default function AdminDashboard() {
       const restoredTeacher = await res.json();
       console.log('✅ Professor restaurado na BD:', restoredTeacher);
       
-      // Atualiza o estado local
       setArchivedTeachers(prev => prev.filter(t => t.id !== id));
       setTeachers(prev => [...prev, restoredTeacher]);
       
@@ -374,7 +372,7 @@ export default function AdminDashboard() {
     }
   }
 
-  // Professores - Eliminar (CORRIGIDA)
+  // Professores - Eliminar
   async function handleDeleteTeacher(id) {
     if (!window.confirm("Tem a certeza que quer apagar este professor?")) return;
     
@@ -422,7 +420,6 @@ export default function AdminDashboard() {
   );
 
   const filteredArchivedTeachers = archivedTeachers.filter(teacher => {
-    // Para professores arquivados, pode ser que a escola esteja arquivada também
     const allSchools = [...schools, ...archivedSchools];
     const schoolName = allSchools.find(s => s.id === teacher.schoolId)?.name || "";
     const schoolRegion = allSchools.find(s => s.id === teacher.schoolId)?.region;
@@ -473,12 +470,45 @@ export default function AdminDashboard() {
 
   return (
     <div className="flex min-h-screen bg-background">
+      {/* Sidebar para desktop */}
       <div className="hidden sm:block">
         <AdminSidebar />
       </div>
+      
+      {/* Overlay para mobile sidebar */}
+      {isMobileSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 sm:hidden"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
+      
+      {/* Sidebar mobile */}
+      <div className={`
+        fixed top-0 left-0 h-full z-50 transition-transform duration-300
+        ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        sm:hidden
+      `}>
+        <AdminSidebar />
+      </div>
+
+      {/* Conteúdo principal */}
       <div className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+        {/* Header mobile */}
+        <div className="flex justify-between items-center mb-6 sm:hidden">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsMobileSidebarOpen(true)}
+          >
+            <Menu className="w-6 h-6" />
+          </Button>
+          <h1 className="text-xl font-bold">Admin</h1>
+          <div className="w-10"></div> {/* Espaçador para centralizar */}
+        </div>
+
+        {/* Header desktop */}
+        <div className="hidden sm:flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold">Painel de Administração</h1>
             <p className="text-muted-foreground mt-2">
@@ -497,7 +527,7 @@ export default function AdminDashboard() {
                 className="pl-10 w-full sm:w-64 h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
-            {/* Filtro por Distrito escondido em mobile por espaço */}
+            
             <select
               value={selectedDistrict}
               onChange={(e) => setSelectedDistrict(e.target.value)}
@@ -510,7 +540,6 @@ export default function AdminDashboard() {
               ))}
             </select>
 
-            {/* Botão para mostrar arquivados */}
             <Button
               variant={showArchived ? "default" : "outline"}
               onClick={() => setShowArchived(!showArchived)}
@@ -518,6 +547,41 @@ export default function AdminDashboard() {
             >
               <Archive className="w-4 h-4" />
               {showArchived ? "Mostrar Ativos" : "Mostrar Arquivados"}
+            </Button>
+          </div>
+        </div>
+
+        {/* Filtros mobile */}
+        <div className="sm:hidden flex flex-col gap-3 mb-6">
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Pesquisar..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 w-full h-12 rounded-lg border border-input bg-background px-4 text-base focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+          
+          <div className="flex gap-3">
+            <select
+              value={selectedDistrict}
+              onChange={(e) => setSelectedDistrict(e.target.value)}
+              className="flex-1 h-12 rounded-lg border border-input bg-background px-4 text-base focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="all">Todos distritos</option>
+              {districts.map((d) => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
+
+            <Button
+              variant={showArchived ? "default" : "outline"}
+              onClick={() => setShowArchived(!showArchived)}
+              className="h-12 px-4"
+            >
+              <Archive className="w-4 h-4" />
             </Button>
           </div>
         </div>
@@ -537,11 +601,11 @@ export default function AdminDashboard() {
         )}
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-muted p-1 rounded-lg mb-6 w-fit">
+        <div className="flex gap-1 bg-muted p-1 rounded-lg mb-6 w-full sm:w-fit overflow-x-auto">
           <Button
             variant={activeTab === "schools" ? "default" : "ghost"}
             onClick={() => setActiveTab("schools")}
-            className="rounded-lg"
+            className="rounded-lg flex-1 sm:flex-none"
           >
             <Building className="w-4 h-4 mr-2" />
             Escolas ({showArchived ? archivedSchools.length : schools.length})
@@ -549,7 +613,7 @@ export default function AdminDashboard() {
           <Button
             variant={activeTab === "teachers" ? "default" : "ghost"}
             onClick={() => setActiveTab("teachers")}
-            className="rounded-lg"
+            className="rounded-lg flex-1 sm:flex-none"
           >
             <Users className="w-4 h-4 mr-2" />
             Professores ({showArchived ? archivedTeachers.length : teachers.length})
@@ -567,20 +631,20 @@ export default function AdminDashboard() {
                     <Plus className="w-5 h-5" />
                     Adicionar Nova Escola
                   </h2>
-                  <form onSubmit={addSchool} className="flex flex-col sm:flex-row gap-3">
+                  <form onSubmit={addSchool} className="flex flex-col gap-3">
                     <input
                       value={newSchool}
                       onChange={(e) => setNewSchool(e.target.value)}
                       placeholder="Nome da Escola"
                       required
-                      className="flex-1 min-w-0 h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="w-full h-12 rounded-lg border border-input bg-background px-4 text-base focus:outline-none focus:ring-2 focus:ring-primary"
                     />
 
                     <select
                       value={newRegion}
                       onChange={(e) => setNewRegion(e.target.value)}
                       required
-                      className="flex-1 min-w-0 h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                      className="w-full h-12 rounded-lg border border-input bg-background px-4 text-base focus:outline-none focus:ring-2 focus:ring-primary"
                     >
                       <option value="">Selecionar Distrito</option>
                       {districts.map((d) => (
@@ -588,8 +652,8 @@ export default function AdminDashboard() {
                       ))}
                     </select>
 
-                    <Button type="submit" className="w-full sm:w-auto">
-                      <Plus className="w-4 h-4 mr-2" />
+                    <Button type="submit" className="w-full h-12 text-base">
+                      <Plus className="w-5 h-5 mr-2" />
                       Criar escola
                     </Button>
                   </form>
@@ -608,24 +672,22 @@ export default function AdminDashboard() {
                     <div className="space-y-4">
                       {filteredSchools.map((school) => (
                         <div key={school.id} className="border border-border rounded-lg p-4">
-                          <div className="flex items-center justify-between">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                             <div className="flex items-center gap-3">
                               <Building className="w-5 h-5 text-primary" />
-                              <div>
+                              <div className="flex-1">
                                 {editingSchoolId === school.id ? (
-                                  <div className="flex gap-2 items-center">
-                                    {/* Nome */}
+                                  <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
                                     <input
                                       value={tempEditValue.name}
                                       onChange={(e) => setTempEditValue(prev => ({ ...prev, name: e.target.value }))}
-                                      className="w-64 h-8 rounded border border-input bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                                      className="w-full sm:w-64 h-8 rounded border border-input bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                                     />
                                     
-                                    {/* Região */}
                                     <select
                                       value={tempEditValue.region}
                                       onChange={(e) => setTempEditValue(prev => ({ ...prev, region: e.target.value }))}
-                                      className="h-8 rounded border border-input bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                                      className="w-full sm:w-auto h-8 rounded border border-input bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                                     >
                                       <option value="">Selecionar Distrito</option>
                                       {districts.map((d) => (
@@ -633,35 +695,46 @@ export default function AdminDashboard() {
                                       ))}
                                     </select>
 
-                                    <Button
-                                      size="sm"
-                                      onClick={() => saveSchoolEdit(school.id, tempEditValue)}
-                                    >
-                                      <Save className="w-4 h-4 mr-1" />
-                                      Guardar
-                                    </Button>
+                                    <div className="flex gap-2">
+                                      <Button
+                                        size="sm"
+                                        onClick={() => saveSchoolEdit(school.id, tempEditValue)}
+                                      >
+                                        <Save className="w-4 h-4 mr-1" />
+                                        Guardar
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setEditingSchoolId(null)}
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </Button>
+                                    </div>
                                   </div>
                                 ) : (
-                                  <h3 
-                                    className="font-semibold cursor-pointer hover:text-primary transition-colors"
-                                    onClick={() => {
-                                      setEditingSchoolId(school.id);
-                                      setTempEditValue({ name: school.name, region: school.region || "" });
-                                    }}
-                                  >
-                                    {school.name} {school.region && `📍 ${school.region}`}
-                                  </h3>
+                                  <div>
+                                    <h3 
+                                      className="font-semibold cursor-pointer hover:text-primary transition-colors text-lg sm:text-base"
+                                      onClick={() => {
+                                        setEditingSchoolId(school.id);
+                                        setTempEditValue({ name: school.name, region: school.region || "" });
+                                      }}
+                                    >
+                                      {school.name}
+                                    </h3>
+                                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-sm text-muted-foreground mt-1">
+                                      <p>{teachers.filter(t => t.schoolId === school.id).length} professores</p>
+                                      {school.region && (
+                                        <p>📍 {school.region}</p>
+                                      )}
+                                    </div>
+                                  </div>
                                 )}
-                                <div className="flex gap-4 text-sm text-muted-foreground mt-1">
-                                  <p>{teachers.filter(t => t.schoolId === school.id).length} professores</p>
-                                  {school.region && (
-                                    <p>📍 {school.region}</p>
-                                  )}
-                                </div>
                               </div>
                             </div>
                             
-                            <div className="flex items-center gap-2 flex-wrap">
+                            <div className="flex flex-wrap gap-2">
                               {!school.approved ? (
                                 <Button
                                   size="sm"
@@ -672,7 +745,7 @@ export default function AdminDashboard() {
                                   Aprovar
                                 </Button>
                               ) : (
-                                <span className="flex items-center gap-1 text-sm text-green-600">
+                                <span className="flex items-center gap-1 text-sm text-green-600 dark:text-green-400">
                                   <CheckCircle className="w-4 h-4" />
                                   Aprovada
                                 </span>
@@ -686,23 +759,19 @@ export default function AdminDashboard() {
                                 {expandedSchool === school.id ? "Fechar" : "Ver professores"}
                               </Button>
                               
-                              {/* Botão de Arquivar - AGORA FUNCIONAL */}
                               <Button
-                                variant="outline"
                                 size="sm"
                                 onClick={() => archiveSchool(school.id)}
-                                className="bg-amber-100 hover:bg-amber-200 text-amber-700 border-amber-300"
                               >
                                 <Archive className="w-4 h-4 mr-1" />
                                 Arquivar
                               </Button>
                               
-                              {/* Botão de Eliminar - CINZA CLARO */}
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => rejectSchool(school.id)}
-                                className="bg-gray-200 hover:bg-gray-300 text-gray-700 border-gray-300"
+                                className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
@@ -711,7 +780,7 @@ export default function AdminDashboard() {
 
                           {/* Expanded Teachers List */}
                           {expandedSchool === school.id && (
-                            <div className="mt-4 pl-8 border-l-2 border-border">
+                            <div className="mt-4 pl-4 sm:pl-8 border-l-2 border-border">
                               <h4 className="font-medium mb-2">Professores desta escola:</h4>
                               {teachers.filter(t => t.schoolId === school.id).length > 0 ? (
                                 <div className="space-y-2">
@@ -755,26 +824,27 @@ export default function AdminDashboard() {
                 ) : (
                   <div className="space-y-4">
                     {filteredArchivedSchools.map((school) => (
-                      <div key={school.id} className="border border-amber-200 rounded-lg p-4 bg-amber-50">
-                        <div className="flex items-center justify-between">
+                      <div key={school.id} className="border border-amber-200 dark:border-amber-700 rounded-lg p-4 bg-amber-50 dark:bg-amber-900/30">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                           <div className="flex items-center gap-3">
-                            <Building className="w-5 h-5 text-amber-600" />
+                            <Building className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                             <div>
-                              <h3 className="font-semibold text-amber-800">
-                                {school.name} {school.region && `📍 ${school.region}`}
+                              <h3 className="font-semibold text-amber-800 dark:text-amber-300">
+                                {school.name}
                               </h3>
-                              <div className="flex gap-4 text-sm text-amber-600 mt-1">
+                              <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-sm text-amber-600 dark:text-amber-400 mt-1">
+                                {school.region && <p>📍 {school.region}</p>}
                                 <p>Arquivada em: {new Date(school.archivedAt).toLocaleDateString('pt-PT')}</p>
                               </div>
                             </div>
                           </div>
                           
-                          <div className="flex items-center gap-2">
+                          <div className="flex gap-2">
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => restoreSchool(school.id)}
-                              className="bg-green-100 hover:bg-green-200 text-green-700 border-green-300"
+                              className="bg-green-100 dark:bg-green-900/40 hover:bg-green-200 dark:hover:bg-green-800 text-green-700 dark:text-green-300 border-green-300 dark:border-green-600"
                             >
                               <RotateCcw className="w-4 h-4 mr-1" />
                               Restaurar
@@ -787,7 +857,7 @@ export default function AdminDashboard() {
                                 setArchivedSchools(prev => prev.filter(s => s.id !== school.id));
                                 showToast("Escola removida permanentemente.");
                               }}
-                              className="bg-gray-200 hover:bg-gray-300 text-gray-700 border-gray-300"
+                              className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600"
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
@@ -808,7 +878,8 @@ export default function AdminDashboard() {
             <h2 className="text-xl font-semibold mb-4">
               {showArchived ? "Professores Arquivados" : "Professores Ativos"}
             </h2>
-            {/* Filtrar por Escola: mostra sempre, muda as opções conforme o modo */}
+            
+            {/* Filtrar por Escola */}
             <div className="flex gap-3 items-center mb-4">
               <label className="text-sm text-muted-foreground">Filtrar por Escola:</label>
               <select
@@ -822,203 +893,305 @@ export default function AdminDashboard() {
                 ))}
               </select>
             </div>
-            {!showArchived ? (
-              filteredTeachers.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Nenhum professor ativo encontrado</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th className="text-left p-3 font-medium">Nome</th>
-                        <th className="text-left p-3 font-medium">Email</th>
-                        <th className="text-left p-3 font-medium">Telefone</th>
-                        <th className="text-left p-3 font-medium">Escola</th>
-                        <th className="text-left p-3 font-medium">Estado</th>
-                        <th className="text-left p-3 font-medium">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredTeachers.map((teacher) => (
-                        <tr key={teacher.id} className="border-b border-border hover:bg-muted/50 transition-colors">
-                          <td className="p-3">
-                            {editingTeacherId === `name-${teacher.id}` ? (
-                              <input
-                                value={tempEditValue}
-                                onChange={(e) => setTempEditValue(e.target.value)}
-                                onBlur={() => saveTeacherEdit(teacher.id, "name", tempEditValue)}
-                                autoFocus
-                                className="w-full h-8 rounded border border-input bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                              />
-                            ) : (
-                              <span
-                                className="cursor-pointer hover:text-primary transition-colors"
-                                onClick={() => {
-                                  setEditingTeacherId(`name-${teacher.id}`);
-                                  setTempEditValue(teacher.name);
-                                }}
-                              >
-                                {teacher.name}
-                              </span>
-                            )}
-                          </td>
 
-                          <td className="p-3">
-                            {editingTeacherId === `email-${teacher.id}` ? (
-                              <input
-                                value={tempEditValue}
-                                onChange={(e) => setTempEditValue(e.target.value)}
-                                onBlur={() => saveTeacherEdit(teacher.id, "email", tempEditValue)}
-                                autoFocus
-                                className="w-full h-8 rounded border border-input bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                              />
-                            ) : (
-                              <span
-                                className="cursor-pointer hover:text-primary transition-colors"
-                                onClick={() => {
-                                  setEditingTeacherId(`email-${teacher.id}`);
-                                  setTempEditValue(teacher.email);
-                                }}
-                              >
-                                {teacher.email}
-                              </span>
-                            )}
-                          </td>
-
-                          <td className="p-3">
-                            {editingTeacherId === `phone-${teacher.id}` ? (
-                              <input
-                                value={tempEditValue}
-                                onChange={(e) => setTempEditValue(e.target.value)}
-                                onBlur={() => saveTeacherEdit(teacher.id, "phone", tempEditValue)}
-                                autoFocus
-                                className="w-full h-8 rounded border border-input bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                              />
-                            ) : (
-                              <span
-                                className="cursor-pointer hover:text-primary transition-colors"
-                                onClick={() => {
-                                  setEditingTeacherId(`phone-${teacher.id}`);
-                                  setTempEditValue(teacher.phone || "");
-                                }}
-                              >
-                                {teacher.phone || "—"}
-                              </span>
-                            )}
-                          </td>
-
-                          <td className="p-3">
+            {/* Vista Mobile - Cards */}
+            <div className="sm:hidden space-y-4">
+              {!showArchived ? (
+                filteredTeachers.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>Nenhum professor ativo encontrado</p>
+                  </div>
+                ) : (
+                  filteredTeachers.map((teacher) => (
+                    <Card key={teacher.id} className="p-4">
+                      <div className="space-y-3">
+                        <div>
+                          <p className="font-semibold text-lg">{teacher.name}</p>
+                          <p className="text-muted-foreground">{teacher.email}</p>
+                          <p className="text-sm">{teacher.phone || "—"}</p>
+                          <p className="text-sm text-primary">
                             {schools.find(s => s.id === teacher.schoolId)?.name || "—"}
-                          </td>
-
-                          <td className="p-3">
-                            <Button
-                              variant={teacher.blocked ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => toggleTeacherBlock(teacher.id, teacher.blocked)}
-                              className={teacher.blocked ? "bg-green-600 hover:bg-green-700" : ""}
+                          </p>
+                        </div>
+                        
+                        <div className="flex justify-between items-center">
+                          <Button
+                            variant={teacher.blocked ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => toggleTeacherBlock(teacher.id, teacher.blocked)}
+                            className={teacher.blocked ? "bg-green-600 hover:bg-green-700" : ""}
+                          >
+                            {teacher.blocked ? "Desbloquear" : "Bloquear"}
+                          </Button>
+                          
+                          <div className="flex gap-2">
+                            <Button 
+                              size="sm" 
+                              onClick={() => archiveTeacher(teacher.id)}
                             >
-                              {teacher.blocked ? "Desbloquear" : "Bloquear"}
+                              <Archive className="w-4 h-4" />
                             </Button>
-                          </td>
-
-                          <td className="p-3">
-                            <div className="flex gap-2">
-                              {/* Botão de Arquivar - AGORA FUNCIONAL */}
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => archiveTeacher(teacher.id)}
-                                className="bg-amber-100 hover:bg-amber-200 text-amber-700 border-amber-300"
-                              >
-                                <Archive className="w-4 h-4 mr-1" />
-                                Arquivar
-                              </Button>
-                              
-                              {/* Botão de Eliminar - CINZA CLARO */}
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleDeleteTeacher(teacher.id)}
-                                className="bg-gray-200 hover:bg-gray-300 text-gray-700 border-gray-300"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )
-            ) : (
-              /* Professores Arquivados */
-              filteredArchivedTeachers.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Nenhum professor arquivado</p>
-                </div>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+                              onClick={() => handleDeleteTeacher(teacher.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  ))
+                )
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-amber-200">
-                        <th className="text-left p-3 font-medium">Nome</th>
-                        <th className="text-left p-3 font-medium">Email</th>
-                        <th className="text-left p-3 font-medium">Telefone</th>
-                        <th className="text-left p-3 font-medium">Escola</th>
-                        <th className="text-left p-3 font-medium">Arquivado em</th>
-                        <th className="text-left p-3 font-medium">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredArchivedTeachers.map((teacher) => (
-                        <tr key={teacher.id} className="border-b border-amber-200 bg-amber-50 hover:bg-amber-100 transition-colors">
-                          <td className="p-3 text-amber-800 font-medium">{teacher.name}</td>
-                          <td className="p-3 text-amber-700">{teacher.email}</td>
-                          <td className="p-3 text-amber-700">{teacher.phone || "—"}</td>
-                          <td className="p-3 text-amber-700">
-                            {schools.find(s => s.id === teacher.schoolId)?.name || "—"}
-                          </td>
-                          <td className="p-3 text-amber-600 text-sm">
-                            {new Date(teacher.archivedAt).toLocaleDateString('pt-PT')}
-                          </td>
-                          <td className="p-3">
-                            <div className="flex gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => restoreTeacher(teacher.id)}
-                                className="bg-green-100 hover:bg-green-200 text-green-700 border-green-300"
-                              >
-                                <RotateCcw className="w-4 h-4 mr-1" />
-                                Restaurar
-                              </Button>
-                              
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  setArchivedTeachers(prev => prev.filter(t => t.id !== teacher.id));
-                                  showToast("Professor removido permanentemente.");
-                                }}
-                                className="bg-gray-200 hover:bg-gray-300 text-gray-700 border-gray-300"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </td>
+                /* Professores Arquivados Mobile */
+                filteredArchivedTeachers.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>Nenhum professor arquivado</p>
+                  </div>
+                ) : (
+                  filteredArchivedTeachers.map((teacher) => (
+                    <Card key={teacher.id} className="p-4 bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-700">
+                      <div className="space-y-3">
+                        <div>
+                          <p className="font-semibold text-lg text-amber-800 dark:text-amber-300">{teacher.name}</p>
+                          <p className="text-amber-700 dark:text-amber-400">{teacher.email}</p>
+                          <p className="text-sm text-amber-600 dark:text-amber-500">{teacher.phone || "—"}</p>
+                          <p className="text-sm text-amber-600 dark:text-amber-500">
+                            Arquivado em: {new Date(teacher.archivedAt).toLocaleDateString('pt-PT')}
+                          </p>
+                        </div>
+                        
+                        <div className="flex justify-between items-center">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => restoreTeacher(teacher.id)}
+                            className="bg-green-100 dark:bg-green-900/40 hover:bg-green-200 dark:hover:bg-green-800 text-green-700 dark:text-green-300 border-green-300 dark:border-green-600"
+                          >
+                            <RotateCcw className="w-4 h-4 mr-1" />
+                            Restaurar
+                          </Button>
+                          
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600"
+                            onClick={() => {
+                              setArchivedTeachers(prev => prev.filter(t => t.id !== teacher.id));
+                              showToast("Professor removido permanentemente.");
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))
+                )
+              )}
+            </div>
+
+            {/* Vista Desktop - Tabela */}
+            <div className="hidden sm:block">
+              {!showArchived ? (
+                filteredTeachers.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>Nenhum professor ativo encontrado</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="text-left p-3 font-medium">Nome</th>
+                          <th className="text-left p-3 font-medium">Email</th>
+                          <th className="text-left p-3 font-medium">Telefone</th>
+                          <th className="text-left p-3 font-medium">Escola</th>
+                          <th className="text-left p-3 font-medium">Estado</th>
+                          <th className="text-left p-3 font-medium">Ações</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )
-            )}
+                      </thead>
+                      <tbody>
+                        {filteredTeachers.map((teacher) => (
+                          <tr key={teacher.id} className="border-b border-border hover:bg-muted/50 transition-colors">
+                            <td className="p-3">
+                              {editingTeacherId === `name-${teacher.id}` ? (
+                                <input
+                                  value={tempEditValue}
+                                  onChange={(e) => setTempEditValue(e.target.value)}
+                                  onBlur={() => saveTeacherEdit(teacher.id, "name", tempEditValue)}
+                                  autoFocus
+                                  className="w-full h-8 rounded border border-input bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                                />
+                              ) : (
+                                <span
+                                  className="cursor-pointer hover:text-primary transition-colors"
+                                  onClick={() => {
+                                    setEditingTeacherId(`name-${teacher.id}`);
+                                    setTempEditValue(teacher.name);
+                                  }}
+                                >
+                                  {teacher.name}
+                                </span>
+                              )}
+                            </td>
+
+                            <td className="p-3">
+                              {editingTeacherId === `email-${teacher.id}` ? (
+                                <input
+                                  value={tempEditValue}
+                                  onChange={(e) => setTempEditValue(e.target.value)}
+                                  onBlur={() => saveTeacherEdit(teacher.id, "email", tempEditValue)}
+                                  autoFocus
+                                  className="w-full h-8 rounded border border-input bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                                />
+                              ) : (
+                                <span
+                                  className="cursor-pointer hover:text-primary transition-colors"
+                                  onClick={() => {
+                                    setEditingTeacherId(`email-${teacher.id}`);
+                                    setTempEditValue(teacher.email);
+                                  }}
+                                >
+                                  {teacher.email}
+                                </span>
+                              )}
+                            </td>
+
+                            <td className="p-3">
+                              {editingTeacherId === `phone-${teacher.id}` ? (
+                                <input
+                                  value={tempEditValue}
+                                  onChange={(e) => setTempEditValue(e.target.value)}
+                                  onBlur={() => saveTeacherEdit(teacher.id, "phone", tempEditValue)}
+                                  autoFocus
+                                  className="w-full h-8 rounded border border-input bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                                />
+                              ) : (
+                                <span
+                                  className="cursor-pointer hover:text-primary transition-colors"
+                                  onClick={() => {
+                                    setEditingTeacherId(`phone-${teacher.id}`);
+                                    setTempEditValue(teacher.phone || "");
+                                  }}
+                                >
+                                  {teacher.phone || "—"}
+                                </span>
+                              )}
+                            </td>
+
+                            <td className="p-3">
+                              {schools.find(s => s.id === teacher.schoolId)?.name || "—"}
+                            </td>
+
+                            <td className="p-3">
+                              <Button
+                                variant={teacher.blocked ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => toggleTeacherBlock(teacher.id, teacher.blocked)}
+                                className={teacher.blocked ? "bg-green-600 hover:bg-green-700" : ""}
+                              >
+                                {teacher.blocked ? "Desbloquear" : "Bloquear"}
+                              </Button>
+                            </td>
+
+                            <td className="p-3">
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  onClick={() => archiveTeacher(teacher.id)}
+                                >
+                                  <Archive className="w-4 h-4 mr-1" />
+                                  Arquivar
+                                </Button>
+                                
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDeleteTeacher(teacher.id)}
+                                  className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )
+              ) : (
+                /* Professores Arquivados Desktop */
+                filteredArchivedTeachers.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>Nenhum professor arquivado</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-amber-200 dark:border-amber-700">
+                          <th className="text-left p-3 font-medium">Nome</th>
+                          <th className="text-left p-3 font-medium">Email</th>
+                          <th className="text-left p-3 font-medium">Telefone</th>
+                          <th className="text-left p-3 font-medium">Escola</th>
+                          <th className="text-left p-3 font-medium">Arquivado em</th>
+                          <th className="text-left p-3 font-medium">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredArchivedTeachers.map((teacher) => (
+                          <tr key={teacher.id} className="border-b border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/30 hover:bg-amber-100 dark:hover:bg-amber-800/50 transition-colors">
+                            <td className="p-3 text-amber-800 dark:text-amber-300 font-medium">{teacher.name}</td>
+                            <td className="p-3 text-amber-700 dark:text-amber-400">{teacher.email}</td>
+                            <td className="p-3 text-amber-700 dark:text-amber-400">{teacher.phone || "—"}</td>
+                            <td className="p-3 text-amber-700 dark:text-amber-400">
+                              {schools.find(s => s.id === teacher.schoolId)?.name || "—"}
+                            </td>
+                            <td className="p-3 text-amber-600 dark:text-amber-500 text-sm">
+                              {new Date(teacher.archivedAt).toLocaleDateString('pt-PT')}
+                            </td>
+                            <td className="p-3">
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => restoreTeacher(teacher.id)}
+                                  className="bg-green-100 dark:bg-green-900/40 hover:bg-green-200 dark:hover:bg-green-800 text-green-700 dark:text-green-300 border-green-300 dark:border-green-600"
+                                >
+                                  <RotateCcw className="w-4 h-4 mr-1" />
+                                  Restaurar
+                                </Button>
+                                
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setArchivedTeachers(prev => prev.filter(t => t.id !== teacher.id));
+                                    showToast("Professor removido permanentemente.");
+                                  }}
+                                  className="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )
+              )}
+            </div>
           </Card>
         )}
       </div>

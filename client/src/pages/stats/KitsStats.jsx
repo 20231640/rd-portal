@@ -40,7 +40,6 @@ export function KitsStats({ kitRequests, classes, metrics }) {
   ];
 
   // Evolução temporal: agrupar por mês usando requestedAt (fallback createdAt) e permitir drilldown por dias
-  // parse date helper (fallback to createdAt)
   const parseDateSafe = (d) => {
     if (!d) return null;
     const dt = new Date(d);
@@ -54,7 +53,6 @@ export function KitsStats({ kitRequests, classes, metrics }) {
  
   // --- construir lista de meses (DE JAN/2025 até ao mês mais recente) ---
   const monthsMap = {};
-  // determinar mês final: o maior entre a data atual e a última data de pedido presente
   const parseDateSafeForRange = (d) => {
     if (!d) return null;
     const dt = new Date(d);
@@ -81,11 +79,9 @@ export function KitsStats({ kitRequests, classes, metrics }) {
   const [selectedMonth, setSelectedMonth] = useState('all');
   const [selectedYearFilter, setSelectedYearFilter] = useState('all');
  
-  // função que gera dados do gráfico: se selectedMonth === 'all' -> série mensal (todos os meses desde Jan/2025)
-  // se selectedYearFilter != 'all' filtra os meses mostrados na dropdown; se selectedMonth != 'all' -> daily buckets desse mês
+  // função que gera dados do gráfico
   const buildTimeline = () => {
     if (selectedMonth === 'all') {
-      // gerar mês a mês usando o intervalo já construído (monthsList)
       const monthly = {};
       kitRequests.forEach(kit => {
         const dReq = getRequested(kit);
@@ -120,7 +116,7 @@ export function KitsStats({ kitRequests, classes, metrics }) {
       const months = Object.values(monthly).sort((a,b) => a.ts - b.ts);
       return months;
     } else {
-      // daily view for selected month: contar cada evento no seu dia respectivo
+      // daily view for selected month
       const [y, m] = selectedMonth.split('-').map(Number);
       if (!y || !m) return [];
       const daysInMonth = new Date(y, m, 0).getDate();
@@ -162,98 +158,119 @@ export function KitsStats({ kitRequests, classes, metrics }) {
   const avgDeliveryTime = calculateAverageTime('delivered');
 
   return (
-    <div className="space-y-6">
-      {/* Cards de Resumo */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="p-4 text-center">
-          <Package className="w-6 h-6 text-blue-500 mx-auto mb-2" />
-          <div className="text-xl font-bold">{kitStats.total}</div>
-          <div className="text-sm text-muted-foreground">Total de Kits</div>
+    <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
+      {/* Cards de Resumo - RESPONSIVOS */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+        <Card className="p-3 sm:p-4 text-center">
+          <Package className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 mx-auto mb-1 sm:mb-2" />
+          <div className="text-lg sm:text-xl font-bold">{kitStats.total}</div>
+          <div className="text-xs sm:text-sm text-muted-foreground">Total de Kits</div>
         </Card>
         
-        <Card className="p-4 text-center">
-          <CheckCircle className="w-6 h-6 text-green-500 mx-auto mb-2" />
-          <div className="text-xl font-bold">{kitStats.delivered}</div>
-          <div className="text-sm text-muted-foreground">Entregues</div>
+        <Card className="p-3 sm:p-4 text-center">
+          <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-500 mx-auto mb-1 sm:mb-2" />
+          <div className="text-lg sm:text-xl font-bold">{kitStats.delivered}</div>
+          <div className="text-xs sm:text-sm text-muted-foreground">Entregues</div>
         </Card>
         
-        <Card className="p-4 text-center">
-          <Truck className="w-6 h-6 text-orange-500 mx-auto mb-2" />
-          <div className="text-xl font-bold">{kitStats.shipped + kitStats.approved}</div>
-          <div className="text-sm text-muted-foreground">Em Processamento</div>
+        <Card className="p-3 sm:p-4 text-center">
+          <Truck className="w-5 h-5 sm:w-6 sm:h-6 text-orange-500 mx-auto mb-1 sm:mb-2" />
+          <div className="text-lg sm:text-xl font-bold">{kitStats.shipped + kitStats.approved}</div>
+          <div className="text-xs sm:text-sm text-muted-foreground">Em Processamento</div>
         </Card>
         
-        <Card className="p-4 text-center">
-          <AlertCircle className="w-6 h-6 text-red-500 mx-auto mb-2" />
-          <div className="text-xl font-bold">{kitStats.withProblems}</div>
-          <div className="text-sm text-muted-foreground">Com Problemas</div>
+        <Card className="p-3 sm:p-4 text-center">
+          <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 text-red-500 mx-auto mb-1 sm:mb-2" />
+          <div className="text-lg sm:text-xl font-bold">{kitStats.withProblems}</div>
+          <div className="text-xs sm:text-sm text-muted-foreground">Com Problemas</div>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Distribuição por Tipo */}
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <BarChart3 className="w-5 h-5 text-purple-500" />
-            <h3 className="text-lg font-semibold">Kits por Ciclo</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        {/* Distribuição por Tipo - RESPONSIVO */}
+        <Card className="p-4 sm:p-6">
+          <div className="flex items-center gap-2 mb-3 sm:mb-4">
+            <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500 flex-shrink-0" />
+            <h3 className="text-base sm:text-lg font-semibold break-words">Kits por Ciclo</h3>
           </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={kitCycleData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip formatter={(value) => [`${value} kits`, 'Quantidade']} />
-              <Bar dataKey="value" name="Kits" fill="#8b5cf6">
-                {kitCycleData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={`hsl(${index * 60}, 70%, 60%)`} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="w-full overflow-x-auto -mx-2 sm:mx-0 px-2 sm:px-0">
+            <ResponsiveContainer width="100%" minHeight={250} height={300} className="text-xs">
+              <BarChart data={kitCycleData} margin={{ top: 20, right: 10, left: 0, bottom: 30 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis 
+                  dataKey="name" 
+                  angle={-45}
+                  textAnchor="end"
+                  height={50}
+                  interval={0}
+                  fontSize={11}
+                />
+                <YAxis fontSize={11} />
+                <Tooltip formatter={(value) => [`${value} kits`, 'Quantidade']} />
+                <Bar dataKey="value" name="Kits" fill="#8b5cf6">
+                  {kitCycleData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={`hsl(${index * 60}, 70%, 60%)`} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </Card>
 
-        {/* Status Detalhado */}
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Package className="w-5 h-5 text-orange-500" />
-            <h3 className="text-lg font-semibold">Status dos Kits</h3>
+        {/* Status Detalhado - RESPONSIVO */}
+        <Card className="p-4 sm:p-6">
+          <div className="flex items-center gap-2 mb-3 sm:mb-4">
+            <Package className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500 flex-shrink-0" />
+            <h3 className="text-base sm:text-lg font-semibold break-words">Status dos Kits</h3>
           </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={statusData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ status, percent }) => `${status} (${(percent * 100).toFixed(0)}%)`}
-                outerRadius={100}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {statusData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip formatter={(value) => [`${value} kits`, 'Quantidade']} />
-            </PieChart>
-          </ResponsiveContainer>
+          <div className="w-full overflow-x-auto">
+            <ResponsiveContainer width="100%" minHeight={250} height={300}>
+              <PieChart>
+                <Pie
+                  data={statusData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ status, percent }) => `${status} (${(percent * 100).toFixed(0)}%)`}
+                  outerRadius={80}
+                  innerRadius={40}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {statusData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => [`${value} kits`, 'Quantidade']} />
+                <Legend 
+                  wrapperStyle={{
+                    fontSize: '12px',
+                    paddingTop: '10px'
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
         </Card>
       </div>
 
-      {/* Timeline de Pedidos */}
-      <Card className="p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <TrendingUp className="w-5 h-5 text-blue-500" />
-          <h3 className="text-lg font-semibold">Evolução de pedidos</h3>
-          {/* Filtros: Ano + Mês (desde Jan/2025 até ao mês atual) */}
-          <div className="ml-auto flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+      {/* Timeline de Pedidos - OTIMIZADO PARA MOBILE */}
+      <Card className="p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3 sm:mb-4">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 flex-shrink-0" />
+            <h3 className="text-base sm:text-lg font-semibold break-words">Evolução de pedidos</h3>
+          </div>
+          
+          {/* Filtros: Ano + Mês - RESPONSIVOS */}
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <select
               value={selectedYearFilter}
               onChange={(e) => {
                 setSelectedYearFilter(e.target.value);
                 setSelectedMonth('all');
               }}
-              className="w-full sm:w-auto h-8 rounded border border-input bg-background px-2 py-1 text-sm"
+              className="w-full sm:w-auto h-8 rounded border border-input bg-background px-2 py-1 text-xs sm:text-sm"
             >
                <option value="all">Todos os Anos</option>
                {Array.from(new Set(monthsList.map(m => m.label.split('/')[1]))).map(year => (
@@ -264,7 +281,7 @@ export function KitsStats({ kitRequests, classes, metrics }) {
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="w-full sm:w-auto h-8 rounded border border-input bg-background px-2 py-1 text-sm"
+              className="w-full sm:w-auto h-8 rounded border border-input bg-background px-2 py-1 text-xs sm:text-sm"
             >
                <option value="all">{selectedYearFilter === 'all' ? 'Todos os Meses' : `Todos os Meses de ${selectedYearFilter}`}</option>
                {monthsList
@@ -276,17 +293,31 @@ export function KitsStats({ kitRequests, classes, metrics }) {
              </select>
            </div>
          </div>
-         <p className="text-muted-foreground mb-4">
+         
+         <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
             Veja a evolução de pedidos e filtre por mês/ano para detalhar os eventos.
           </p>
-        <div className="w-full overflow-x-auto">
-          <ResponsiveContainer width="100%" height={300}>
-             <AreaChart data={timelineData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+          
+        <div className="w-full overflow-x-auto -mx-2 sm:mx-0 px-2 sm:px-0">
+          <ResponsiveContainer width="100%" minHeight={250} height={300} className="text-xs">
+             <AreaChart data={timelineData} margin={{ top: 20, right: 10, left: 0, bottom: 30 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey={selectedMonth === 'all' ? "month" : "label"} />
-              <YAxis />
+              <XAxis 
+                dataKey={selectedMonth === 'all' ? "month" : "label"} 
+                angle={selectedMonth === 'all' ? -45 : 0}
+                textAnchor={selectedMonth === 'all' ? "end" : "middle"}
+                height={selectedMonth === 'all' ? 60 : 40}
+                interval={0}
+                fontSize={11}
+              />
+              <YAxis fontSize={11} />
               <Tooltip />
-              <Legend />
+              <Legend 
+                wrapperStyle={{
+                  fontSize: '12px',
+                  paddingTop: '10px'
+                }}
+              />
               <Area 
                 type="monotone" 
                 dataKey="requested" 
@@ -324,32 +355,32 @@ export function KitsStats({ kitRequests, classes, metrics }) {
         </div>
        </Card>
 
-      {/* Métricas de Performance */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-4 text-center">
-          <Clock className="w-6 h-6 text-blue-500 mx-auto mb-2" />
-          <div className="text-xl font-bold">{avgDeliveryTime}</div>
-          <div className="text-sm text-muted-foreground">Dias para Entrega</div>
+      {/* Métricas de Performance - RESPONSIVAS */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+        <Card className="p-3 sm:p-4 text-center">
+          <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 mx-auto mb-1 sm:mb-2" />
+          <div className="text-lg sm:text-xl font-bold">{avgDeliveryTime}</div>
+          <div className="text-xs sm:text-sm text-muted-foreground">Dias para Entrega</div>
           <div className="text-xs text-muted-foreground mt-1">Tempo médio</div>
         </Card>
         
-        <Card className="p-4 text-center">
-          <Zap className="w-6 h-6 text-green-500 mx-auto mb-2" />
-          <div className="text-xl font-bold">
+        <Card className="p-3 sm:p-4 text-center">
+          <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-green-500 mx-auto mb-1 sm:mb-2" />
+          <div className="text-lg sm:text-xl font-bold">
             {kitStats.total > 0 ? `${((kitStats.delivered / kitStats.total) * 100).toFixed(1)}%` : '0%'}
           </div>
-          <div className="text-sm text-muted-foreground">Taxa de Entrega</div>
+          <div className="text-xs sm:text-sm text-muted-foreground">Taxa de Entrega</div>
           <div className="text-xs text-muted-foreground mt-1">
             {kitStats.delivered}/{kitStats.total} kits
           </div>
         </Card>
         
-        <Card className="p-4 text-center">
-          <AlertCircle className="w-6 h-6 text-orange-500 mx-auto mb-2" />
-          <div className="text-xl font-bold">
+        <Card className="p-3 sm:p-4 text-center">
+          <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 text-orange-500 mx-auto mb-1 sm:mb-2" />
+          <div className="text-lg sm:text-xl font-bold">
             {kitStats.total > 0 ? `${((kitStats.withProblems / kitStats.total) * 100).toFixed(1)}%` : '0%'}
           </div>
-          <div className="text-sm text-muted-foreground">Taxa de Problemas</div>
+          <div className="text-xs sm:text-sm text-muted-foreground">Taxa de Problemas</div>
           <div className="text-xs text-muted-foreground mt-1">
             {kitStats.withProblems} kits reportados
           </div>

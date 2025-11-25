@@ -7,6 +7,8 @@ import { KitsStats } from "./stats/KitsStats";
 import { SchoolsStats } from "./stats/SchoolsStats";
 import { ProblemsStats } from "./stats/ProblemsStats";
 import { API_URL } from "../config/api";
+import { Menu } from "lucide-react"; // ← Adicionar este ícone
+import { Button } from "../components/ui/button"; // ← Adicionar import do Button
 
 export default function AdminStatistics() {
   const [schools, setSchools] = useState([]);
@@ -16,6 +18,7 @@ export default function AdminStatistics() {
   const [loading, setLoading] = useState(true);
   const [selectedDistrict, setSelectedDistrict] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -115,51 +118,118 @@ export default function AdminStatistics() {
     } catch (err) {
       console.error("Erro ao renderizar tab de estatísticas:", err);
       return (
-        <div className="p-6 text-center text-destructive">
+        <div className="p-4 sm:p-6 text-center text-destructive text-sm sm:text-base">
           Ocorreu um erro ao carregar as estatísticas. Verifique a consola para detalhes.
         </div>
       );
     }
   };
  
-   if (loading) return (
-     <div className="flex min-h-screen bg-background">
-       <div className="hidden sm:block">
-         <AdminSidebar />
-       </div>
-       <div className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full flex items-center justify-center">
-         <div className="text-center">
-           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-           <p className="text-muted-foreground">A carregar estatísticas...</p>
-         </div>
-       </div>
-     </div>
-   );
+  if (loading) return (
+    <div className="flex min-h-screen bg-background">
+      <div className="hidden sm:block">
+        <AdminSidebar />
+      </div>
+      
+      {/* Mobile Sidebar Overlay */}
+      {isMobileSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 sm:hidden"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
+      
+      {/* Mobile Sidebar */}
+      <div className={`
+        fixed top-0 left-0 h-full z-50 transition-transform duration-300
+        ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        sm:hidden
+      `}>
+        <AdminSidebar />
+      </div>
+
+      <div className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full flex items-center justify-center">
+        {/* Mobile Header */}
+        <div className="flex justify-between items-center mb-6 sm:hidden absolute top-4 left-4 right-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsMobileSidebarOpen(true)}
+          >
+            <Menu className="w-6 h-6" />
+          </Button>
+          <h1 className="text-xl font-bold">Estatísticas</h1>
+          <div className="w-10"></div>
+        </div>
+
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-primary mx-auto mb-3 sm:mb-4"></div>
+          <p className="text-muted-foreground text-sm sm:text-base">A carregar estatísticas...</p>
+        </div>
+      </div>
+    </div>
+  );
   
-    return (
-     <div className="flex min-h-screen bg-background">
-       <div className="hidden sm:block">
-         <AdminSidebar />
-       </div>
-       <div className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full space-y-6">
-          <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold">Estatísticas do Projeto</h1>
-            <div className="text-sm text-muted-foreground">
-              Dados atualizados em tempo real
-            </div>
+  return (
+    <div className="flex min-h-screen bg-background">
+      <div className="hidden sm:block">
+        <AdminSidebar />
+      </div>
+      
+      {/* Mobile Sidebar Overlay */}
+      {isMobileSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 sm:hidden"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
+      
+      {/* Mobile Sidebar */}
+      <div className={`
+        fixed top-0 left-0 h-full z-50 transition-transform duration-300
+        ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        sm:hidden
+      `}>
+        <AdminSidebar />
+      </div>
+
+      <div className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full space-y-4 sm:space-y-6">
+        {/* Mobile Header */}
+        <div className="flex justify-between items-center sm:hidden">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsMobileSidebarOpen(true)}
+          >
+            <Menu className="w-6 h-6" />
+          </Button>
+          <h1 className="text-xl font-bold">Estatísticas</h1>
+          <div className="w-10"></div>
+        </div>
+
+        {/* Desktop Header */}
+        <div className="hidden sm:flex justify-between items-center">
+          <h1 className="text-2xl sm:text-3xl font-bold">Estatísticas do Projeto</h1>
+          <div className="text-sm text-muted-foreground">
+            Dados atualizados em tempo real
           </div>
- 
-         {/* Navegação por Tabs */} 
-         <div className="overflow-x-auto">
-           <StatisticsTabs activeTab={activeTab} onTabChange={setActiveTab} />
-         </div>
- 
-         {/* Conteúdo da Tab Ativa */} 
-         <div className="min-h-[600px]">
-           {renderActiveTab()}
-         </div>
- 
-       </div>
-     </div>
-   );
+        </div>
+
+        {/* Mobile Subtitle */}
+        <div className="sm:hidden text-xs text-muted-foreground text-center">
+          Dados atualizados em tempo real
+        </div>
+
+        {/* Navegação por Tabs - OTIMIZADO PARA MOBILE */} 
+        <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+          <StatisticsTabs activeTab={activeTab} onTabChange={setActiveTab} />
+        </div>
+
+        {/* Conteúdo da Tab Ativa - ALTURA RESPONSIVA */} 
+        <div className="min-h-[400px] sm:min-h-[600px]">
+          {renderActiveTab()}
+        </div>
+      </div>
+    </div>
+  );
 }

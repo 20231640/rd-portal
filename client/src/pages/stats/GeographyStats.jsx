@@ -58,19 +58,19 @@ export function GeographyStats({ schools, teachers, classes, kitRequests, distri
   };
 
   return (
-    <div className="space-y-6 px-4 sm:px-0">
-      {/* Filtros */}
-      <Card className="p-4">
-        <div className="flex flex-col md:flex-row gap-4">
+    <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
+      {/* Filtros - RESPONSIVOS */}
+      <Card className="p-3 sm:p-4">
+        <div className="flex flex-col gap-3 sm:gap-4">
           <div className="flex-1">
-            <label className="block text-sm font-medium mb-2">Filtrar por distrito:</label>
+            <label className="block text-sm font-medium mb-1 sm:mb-2">Filtrar por distrito:</label>
             <select
               value={selectedDistrict}
               onChange={(e) => {
                 setSelectedDistrict(e.target.value);
                 onDistrictChange?.(e.target.value);
               }}
-              className="w-full h-10 rounded-lg border border-input bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full h-9 sm:h-10 rounded-lg border border-input bg-background px-3 py-1 sm:py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">Todos os Distritos</option>
               {districts.map(d => (
@@ -80,11 +80,11 @@ export function GeographyStats({ schools, teachers, classes, kitRequests, distri
           </div>
           
           <div className="flex-1">
-            <label className="block text-sm font-medium mb-2">Tipo de Dados:</label>
+            <label className="block text-sm font-medium mb-1 sm:mb-2">Tipo de Dados:</label>
             <select
               value={dataType}
               onChange={(e) => setDataType(e.target.value)}
-              className="w-full h-10 rounded-lg border border-input bg-background px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full h-9 sm:h-10 rounded-lg border border-input bg-background px-3 py-1 sm:py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="schools">Escolas</option>
               <option value="teachers">Professores</option>
@@ -95,24 +95,31 @@ export function GeographyStats({ schools, teachers, classes, kitRequests, distri
         </div>
       </Card>
 
-      {/* Gráfico de Barras */}
-      <Card className="p-4 sm:p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <MapPin className="w-5 h-5 text-blue-500" />
-          <h3 className="text-lg font-semibold">Distribuição por distrito - {dataType}</h3>
+      {/* Gráfico de Barras - OTIMIZADO PARA MOBILE */}
+      <Card className="p-3 sm:p-6">
+        <div className="flex items-center gap-2 mb-3 sm:mb-4">
+          <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 flex-shrink-0" />
+          <h3 className="text-base sm:text-lg font-semibold break-words">
+            Distribuição por distrito - {dataType}
+          </h3>
         </div>
-        <div className="w-full overflow-x-auto">
-          <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+        <div className="w-full overflow-x-auto -mx-2 sm:mx-0 px-2 sm:px-0">
+          <ResponsiveContainer width="100%" minHeight={300} height={400} className="text-xs">
+            <BarChart 
+              data={chartData} 
+              margin={{ top: 20, right: 10, left: 0, bottom: 80 }}
+            >
              <CartesianGrid strokeDasharray="3 3" />
              <XAxis 
                dataKey="region" 
                angle={-45} 
                textAnchor="end" 
-               height={80}
+               height={70}
                interval={0}
+               fontSize={11}
+               tick={{ fontSize: 11 }}
              />
-             <YAxis allowDecimals={false} />
+             <YAxis allowDecimals={false} fontSize={11} />
              <Tooltip 
                formatter={(value, name) => {
                  const labels = {
@@ -124,7 +131,12 @@ export function GeographyStats({ schools, teachers, classes, kitRequests, distri
                  return [value, labels[name] || name];
                }}
              />
-             <Legend />
+             <Legend 
+               wrapperStyle={{
+                 fontSize: '12px',
+                 paddingTop: '10px'
+               }}
+             />
              <Bar 
                dataKey={dataType} 
                name={dataType}
@@ -137,32 +149,40 @@ export function GeographyStats({ schools, teachers, classes, kitRequests, distri
             </BarChart>
           </ResponsiveContainer>
         </div>
-        </Card>
+      </Card>
 
-      {/* Resumo por Região */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-4 text-center">
-          <School className="w-6 h-6 text-blue-500 mx-auto mb-2" />
-          <div className="text-lg font-bold">{Object.values(districtData).reduce((sum, d) => sum + d.schools, 0)}</div>
-          <div className="text-sm text-muted-foreground">Escolas</div>
+      {/* Resumo por Região - RESPONSIVO */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+        <Card className="p-3 text-center">
+          <School className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 mx-auto mb-1 sm:mb-2" />
+          <div className="text-lg sm:text-lg font-bold">
+            {Object.values(districtData).reduce((sum, d) => sum + d.schools, 0)}
+          </div>
+          <div className="text-xs sm:text-sm text-muted-foreground">Escolas</div>
         </Card>
         
-        <Card className="p-4 text-center">
-          <Users className="w-6 h-6 text-green-500 mx-auto mb-2" />
-          <div className="text-lg font-bold">{Object.values(districtData).reduce((sum, d) => sum + d.teachers, 0)}</div>
-          <div className="text-sm text-muted-foreground">Professores</div>
+        <Card className="p-3 text-center">
+          <Users className="w-5 h-5 sm:w-6 sm:h-6 text-green-500 mx-auto mb-1 sm:mb-2" />
+          <div className="text-lg sm:text-lg font-bold">
+            {Object.values(districtData).reduce((sum, d) => sum + d.teachers, 0)}
+          </div>
+          <div className="text-xs sm:text-sm text-muted-foreground">Professores</div>
         </Card>
         
-        <Card className="p-4 text-center">
-          <Package className="w-6 h-6 text-orange-500 mx-auto mb-2" />
-          <div className="text-lg font-bold">{Object.values(districtData).reduce((sum, d) => sum + d.kits, 0)}</div>
-          <div className="text-sm text-muted-foreground">Kits</div>
+        <Card className="p-3 text-center">
+          <Package className="w-5 h-5 sm:w-6 sm:h-6 text-orange-500 mx-auto mb-1 sm:mb-2" />
+          <div className="text-lg sm:text-lg font-bold">
+            {Object.values(districtData).reduce((sum, d) => sum + d.kits, 0)}
+          </div>
+          <div className="text-xs sm:text-sm text-muted-foreground">Kits</div>
         </Card>
         
-        <Card className="p-4 text-center">
-          <Users className="w-6 h-6 text-purple-500 mx-auto mb-2" />
-          <div className="text-lg font-bold">{Object.values(districtData).reduce((sum, d) => sum + d.students, 0)}</div>
-          <div className="text-sm text-muted-foreground">Alunos</div>
+        <Card className="p-3 text-center">
+          <Users className="w-5 h-5 sm:w-6 sm:h-6 text-purple-500 mx-auto mb-1 sm:mb-2" />
+          <div className="text-lg sm:text-lg font-bold">
+            {Object.values(districtData).reduce((sum, d) => sum + d.students, 0)}
+          </div>
+          <div className="text-xs sm:text-sm text-muted-foreground">Alunos</div>
         </Card>
       </div>
     </div>

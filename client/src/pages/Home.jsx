@@ -1,11 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { ThemeToggle } from "../components/ui/theme-toggle";
-import { HeroSection } from "../components/ui/hero-section";
 import { FeatureCard } from "../components/ui/feature-card";
 import { GraduationCap, School, Users, BookOpen, Heart } from "lucide-react";
 import logoImage from "../assets/logo.png"; 
-import { API_URL } from "../config/api";
 
 export default function Home() {
   const navigate = useNavigate();

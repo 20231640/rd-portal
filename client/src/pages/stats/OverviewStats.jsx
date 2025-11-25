@@ -113,141 +113,157 @@ export function OverviewStats({ metrics, monthlyData, kitRequests, classes, scho
   ).map(([name, value]) => ({ name, value }));
 
   return (
-    <div className="space-y-6 px-4 sm:px-0">
-      {/* Cards de Métricas Gerais */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="p-6 text-center">
-          <School className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-          <div className="text-2xl font-bold">{metrics.schools}</div>
-          <div className="text-sm text-muted-foreground">Escolas</div>
+    <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
+      {/* Cards de Métricas Gerais - RESPONSIVOS */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+        <Card className="p-3 sm:p-6 text-center">
+          <School className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500 mx-auto mb-1 sm:mb-2" />
+          <div className="text-xl sm:text-2xl font-bold">{metrics.schools}</div>
+          <div className="text-xs sm:text-sm text-muted-foreground">Escolas</div>
         </Card>
         
-        <Card className="p-6 text-center">
-          <Users className="w-8 h-8 text-green-500 mx-auto mb-2" />
-          <div className="text-2xl font-bold">{metrics.teachers}</div>
-          <div className="text-sm text-muted-foreground">Professores</div>
+        <Card className="p-3 sm:p-6 text-center">
+          <Users className="w-6 h-6 sm:w-8 sm:h-8 text-green-500 mx-auto mb-1 sm:mb-2" />
+          <div className="text-xl sm:text-2xl font-bold">{metrics.teachers}</div>
+          <div className="text-xs sm:text-sm text-muted-foreground">Professores</div>
         </Card>
         
-        <Card className="p-6 text-center">
-          <Package className="w-8 h-8 text-orange-500 mx-auto mb-2" />
-          <div className="text-2xl font-bold">{metrics.kitsDelivered}</div>
-          <div className="text-sm text-muted-foreground">Kits Entregues</div>
+        <Card className="p-3 sm:p-6 text-center">
+          <Package className="w-6 h-6 sm:w-8 sm:h-8 text-orange-500 mx-auto mb-1 sm:mb-2" />
+          <div className="text-xl sm:text-2xl font-bold">{metrics.kitsDelivered}</div>
+          <div className="text-xs sm:text-sm text-muted-foreground">Kits Entregues</div>
         </Card>
         
-        <Card className="p-6 text-center">
-          <TrendingUp className="w-8 h-8 text-purple-500 mx-auto mb-2" />
-          <div className="text-2xl font-bold">{metrics.students}</div>
-          <div className="text-sm text-muted-foreground">Alunos Impactados</div>
+        <Card className="p-3 sm:p-6 text-center">
+          <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-purple-500 mx-auto mb-1 sm:mb-2" />
+          <div className="text-xl sm:text-2xl font-bold">{metrics.students}</div>
+          <div className="text-xs sm:text-sm text-muted-foreground">Alunos Impactados</div>
         </Card>
       </div>
 
-      {/* Gráficos Principais removidos (Evolução Mensal e Status dos Kits) conforme solicitado */}
-      {/* Novo: Retenção de Escolas — Novas / Continuam / Desistiram por mês */}
-      <Card className="p-6">
-        <div className="flex items-start gap-2 mb-4">
-          <TrendingUp className="w-5 h-5 text-blue-500 mt-1" />
-          <div className="flex-1">
-            <h3 className="text-lg font-semibold">Retenção de Escolas — Novas / Continuam / Desistiram</h3>
-            <p className="text-sm text-muted-foreground">
+      {/* Retenção de Escolas - OTIMIZADO PARA MOBILE */}
+      <Card className="p-4 sm:p-6">
+        <div className="flex items-start gap-2 mb-3 sm:mb-4">
+          <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 mt-1 flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <h3 className="text-base sm:text-lg font-semibold break-words">
+              Retenção de Escolas — Novas / Continuam / Desistiram
+            </h3>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
               Vê a atividade das escolas no contexto do ano letivo. Definição: <strong>Ano letivo = Setembro → Junho</strong>.
             </p>
-            {/* Legenda funcional explicativa */}
-            <div className="flex flex-col sm:flex-row flex-wrap gap-3 mt-3 text-sm">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 bg-[#8884d8] rounded-sm inline-block" /> 
-                Novas: escolas que registaram a sua primeira turma neste mês académico.
+            {/* Legenda funcional explicativa - RESPONSIVA */}
+            <div className="flex flex-col gap-2 mt-2 sm:mt-3 text-xs sm:text-sm">
+              <div className="flex items-start gap-2">
+                <span className="w-3 h-3 bg-[#8884d8] rounded-sm flex-shrink-0 mt-0.5" /> 
+                <span className="flex-1 min-w-0"><strong>Novas:</strong> escolas que registaram a sua primeira turma neste mês académico.</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 bg-[#3b82f6] rounded-sm inline-block" /> 
-                Continuam: escolas que tiveram turma no mês académico anterior e também neste mês.
+              <div className="flex items-start gap-2">
+                <span className="w-3 h-3 bg-[#3b82f6] rounded-sm flex-shrink-0 mt-0.5" /> 
+                <span className="flex-1 min-w-0"><strong>Continuam:</strong> escolas que tiveram turma no mês académico anterior e também neste mês.</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 bg-[#ef4444] rounded-sm inline-block" /> 
-                Desistiram: escolas que tinham turma no mês académico anterior e não têm neste mês.
+              <div className="flex items-start gap-2">
+                <span className="w-3 h-3 bg-[#ef4444] rounded-sm flex-shrink-0 mt-0.5" /> 
+                <span className="flex-1 min-w-0"><strong>Desistiram:</strong> escolas que tinham turma no mês académico anterior e não têm neste mês.</span>
               </div>
             </div>
           </div>
         </div>
-        <div className="w-full overflow-x-auto">
-          <ResponsiveContainer width="100%" height={320}>
-            <ComposedChart data={schoolRetentionTimeline} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+        <div className="w-full overflow-x-auto -mx-2 sm:mx-0 px-2 sm:px-0">
+          <ResponsiveContainer width="100%" minHeight={280} height={320} className="text-xs">
+            <ComposedChart 
+              data={schoolRetentionTimeline} 
+              margin={{ top: 10, right: 10, left: 0, bottom: 30 }}
+            >
              <CartesianGrid strokeDasharray="3 3" />
-             <XAxis dataKey="month" />
-             <YAxis />
+             <XAxis 
+               dataKey="month" 
+               angle={-45}
+               textAnchor="end"
+               height={60}
+               interval={0}
+               fontSize={12}
+             />
+             <YAxis fontSize={12} />
              <Tooltip />
-             <Legend />
-             <Bar dataKey="newSchools" name="Novas Escolas" barSize={20} fill="#8884d8" />
-             <Line type="monotone" dataKey="continuing" name="Continuam" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} />
-             <Line type="monotone" dataKey="dropped" name="Desistiram" stroke="#ef4444" strokeWidth={2} dot={{ r: 3 }} />
+             <Legend 
+               wrapperStyle={{
+                 fontSize: '12px',
+                 paddingTop: '10px'
+               }}
+             />
+             <Bar dataKey="newSchools" name="Novas Escolas" barSize={15} fill="#8884d8" />
+             <Line type="monotone" dataKey="continuing" name="Continuam" stroke="#3b82f6" strokeWidth={2} dot={{ r: 2 }} />
+             <Line type="monotone" dataKey="dropped" name="Desistiram" stroke="#ef4444" strokeWidth={2} dot={{ r: 2 }} />
             </ComposedChart>
           </ResponsiveContainer>
         </div>
       </Card>
 
-      {/* Métricas Adicionais */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-4 text-center">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <CheckCircle className="w-5 h-5 text-green-500" />
-            <span className="font-medium">Taxa de Entrega</span>
+      {/* Métricas Adicionais - RESPONSIVAS */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+        <Card className="p-3 sm:p-4 text-center">
+          <div className="flex items-center justify-center gap-1 sm:gap-2 mb-1 sm:mb-2">
+            <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" />
+            <span className="font-medium text-sm sm:text-base">Taxa de Entrega</span>
           </div>
-          <div className="text-2xl font-bold">
+          <div className="text-xl sm:text-2xl font-bold">
             {metrics.kitsRequested > 0 
               ? `${((metrics.kitsDelivered / metrics.kitsRequested) * 100).toFixed(1)}%` 
               : '0%'
             }
           </div>
-          <div className="text-sm text-muted-foreground">
+          <div className="text-xs sm:text-sm text-muted-foreground">
             {metrics.kitsDelivered} de {metrics.kitsRequested} kits
           </div>
         </Card>
 
-        <Card className="p-4 text-center">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <AlertCircle className="w-5 h-5 text-red-500" />
-            <span className="font-medium">Kits Pendentes</span>
+        <Card className="p-3 sm:p-4 text-center">
+          <div className="flex items-center justify-center gap-1 sm:gap-2 mb-1 sm:mb-2">
+            <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-500" />
+            <span className="font-medium text-sm sm:text-base">Kits Pendentes</span>
           </div>
-          <div className="text-2xl font-bold text-orange-500">{metrics.kitsPending}</div>
-          <div className="text-sm text-muted-foreground">Por entregar</div>
+          <div className="text-xl sm:text-2xl font-bold text-orange-500">{metrics.kitsPending}</div>
+          <div className="text-xs sm:text-sm text-muted-foreground">Por entregar</div>
         </Card>
 
-        <Card className="p-4 text-center">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <School className="w-5 h-5 text-purple-500" />
-            <span className="font-medium">Média por Escola</span>
+        <Card className="p-3 sm:p-4 text-center">
+          <div className="flex items-center justify-center gap-1 sm:gap-2 mb-1 sm:mb-2">
+            <School className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500" />
+            <span className="font-medium text-sm sm:text-base">Média por Escola</span>
           </div>
-          <div className="text-2xl font-bold">
+          <div className="text-xl sm:text-2xl font-bold">
             {metrics.schools > 0 ? (metrics.classes / metrics.schools).toFixed(1) : '0'}
           </div>
-          <div className="text-sm text-muted-foreground">Turmas por escola</div>
+          <div className="text-xs sm:text-sm text-muted-foreground">Turmas por escola</div>
         </Card>
       </div>
 
-      {/* Tabela de Escolas Persistentes (novo componente adicionado) */}
-      <div className="grid grid-cols-1 gap-4">
+      {/* Tabela de Escolas Persistentes - RESPONSIVA */}
+      <div className="grid grid-cols-1 gap-3 sm:gap-4">
         <div className="overflow-hidden rounded-lg border">
-          <div className="bg-white p-4">
-            <h3 className="text-lg font-semibold mb-2">Escolas Persistentes</h3>
-            <p className="text-sm text-muted-foreground mb-4">
+          <div className="bg-white p-3 sm:p-4">
+            <h3 className="text-base sm:text-lg font-semibold mb-1 sm:mb-2">Escolas Persistentes</h3>
+            <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
               Escolas que tiveram atividade contínua ao longo dos meses.
             </p>
-            <Card className="p-4">
+            <Card className="p-3 sm:p-4">
               {persistentSchools.length === 0 ? (
-                <div className="text-muted-foreground">Nenhuma escola persistente encontrada para o período.</div>
+                <div className="text-muted-foreground text-sm text-center py-4">Nenhuma escola persistente encontrada para o período.</div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm min-w-0">
+                <div className="overflow-x-auto -mx-2 sm:mx-0">
+                  <table className="w-full text-xs sm:text-sm min-w-full">
                     <thead>
-                      <tr className="text-left border-b mb-2">
-                        <th className="pb-2">Escola</th>
-                        <th className="pb-2">Persistente</th>
+                      <tr className="text-left border-b">
+                        <th className="pb-2 px-2 sm:px-4 font-medium">Escola</th>
+                        <th className="pb-2 px-2 sm:px-4 font-medium text-center">Persistente</th>
                       </tr>
                     </thead>
                     <tbody>
                       {persistentSchools.map(s => (
                         <tr key={s.id} className="border-b">
-                          <td className="py-2">{s.name}</td>
-                          <td className="py-2 text-green-600 font-medium">Sim</td>
+                          <td className="py-2 px-2 sm:px-4 break-words">{s.name}</td>
+                          <td className="py-2 px-2 sm:px-4 text-green-600 font-medium text-center">Sim</td>
                         </tr>
                       ))}
                     </tbody>

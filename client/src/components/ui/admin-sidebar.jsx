@@ -63,6 +63,7 @@ export function AdminSidebar() {
       bg-card border-r border-border
       transition-all duration-300 ease-in-out
       ${isCollapsed ? 'w-16' : 'w-64'}
+      flex-shrink-0 // ← CORREÇÃO: Adicionar esta linha
     `}>
       
       {/* Header */}
@@ -136,7 +137,6 @@ export function AdminSidebar() {
           {!isCollapsed && <span className="ml-3">Terminar Sessão</span>}
         </Button>
       </div>
-    <div className="border-t border-sidebar-border space-y-2"></div>
     </div>
   );
 }

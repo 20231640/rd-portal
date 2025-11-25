@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
-import { Plus, Calendar, Video, Trash2, CheckCircle, Users, Filter } from "lucide-react";
+import { Plus, Calendar, Video, Trash2, CheckCircle, Users, Filter, Menu } from "lucide-react";
 import { AdminSidebar } from "../components/ui/admin-sidebar";
 import axios from "axios";
 import { CompleteTrainingModal } from "../components/ui/CompleteTrainingModal";
@@ -23,6 +23,7 @@ export default function AdminTrainingsPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [trainingToComplete, setTrainingToComplete] = useState(null);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   
   // Filtros hierárquicos
   const [selectedCycle, setSelectedCycle] = useState("");
@@ -63,14 +64,12 @@ export default function AdminTrainingsPage() {
   const getAvailableSchools = () => {
     if (!selectedCycle) return [];
     
-    // Obter professores que têm turmas neste ciclo
     const teacherIdsInCycle = new Set(
       allClasses
         .filter(cls => cls.cycle === selectedCycle)
         .map(cls => cls.teacherId)
     );
     
-    // Obter escolas desses professores
     const schoolsMap = new Map();
     allTeachers
       .filter(teacher => 
@@ -91,14 +90,12 @@ export default function AdminTrainingsPage() {
   const getAvailableTeachers = () => {
     if (!selectedCycle) return [];
     
-    // Professores que têm turmas neste ciclo
     const teacherIdsInCycle = new Set(
       allClasses
         .filter(cls => cls.cycle === selectedCycle)
         .map(cls => cls.teacherId)
     );
     
-    // Filtrar por escola se selecionada
     let filtered = allTeachers.filter(teacher => 
       !teacher.blocked && 
       teacher.schoolApproved &&
@@ -106,7 +103,6 @@ export default function AdminTrainingsPage() {
       (selectedSchools.length === 0 || selectedSchools.includes(teacher.schoolId?.toString()))
     );
     
-    // Excluir professores que já têm formação
     const teachersWithTrainings = new Set(
       trainings.map(training => training.teacherId)
     );
@@ -141,7 +137,6 @@ export default function AdminTrainingsPage() {
     setSelectedSchools(prev => {
       const idStr = schoolId.toString();
       if (prev.includes(idStr)) {
-        // Quando desselecionar escola, remover professores dessa escola da seleção
         setSelectedTeacherIds(currentIds => {
           return allTeachers
             .filter(t => currentIds.includes(t.id.toString()))
@@ -187,10 +182,8 @@ export default function AdminTrainingsPage() {
     }
 
     try {
-      // Gerar ID de grupo único
       const groupId = `group_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
-      // Criar sessão para cada professor
       const promises = selectedTeacherIds.map(teacherId =>
         axios.post(`${API_URL}/api/trainings`, {
           title: formData.title,
@@ -299,10 +292,41 @@ export default function AdminTrainingsPage() {
         <div className="hidden sm:block">
           <AdminSidebar />
         </div>
+        
+        {/* Mobile Sidebar Overlay */}
+        {isMobileSidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black/50 z-40 sm:hidden"
+            onClick={() => setIsMobileSidebarOpen(false)}
+          />
+        )}
+        
+        {/* Mobile Sidebar */}
+        <div className={`
+          fixed top-0 left-0 h-full z-50 transition-transform duration-300
+          ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          sm:hidden
+        `}>
+          <AdminSidebar />
+        </div>
+
         <div className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full flex items-center justify-center">
+          {/* Mobile Header */}
+          <div className="flex justify-between items-center mb-6 sm:hidden absolute top-4 left-4 right-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsMobileSidebarOpen(true)}
+            >
+              <Menu className="w-6 h-6" />
+            </Button>
+            <h1 className="text-xl font-bold">Formações</h1>
+            <div className="w-10"></div>
+          </div>
+
           <div className="text-center">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-            <p>A carregar sessões...</p>
+            <p className="text-muted-foreground">A carregar sessões...</p>
           </div>
         </div>
       </div>
@@ -314,9 +338,40 @@ export default function AdminTrainingsPage() {
       <div className="hidden sm:block">
         <AdminSidebar />
       </div>
+      
+      {/* Mobile Sidebar Overlay */}
+      {isMobileSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 sm:hidden"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
+      
+      {/* Mobile Sidebar */}
+      <div className={`
+        fixed top-0 left-0 h-full z-50 transition-transform duration-300
+        ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        sm:hidden
+      `}>
+        <AdminSidebar />
+      </div>
+
       <div className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
+        {/* Mobile Header */}
+        <div className="flex justify-between items-center mb-6 sm:hidden">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsMobileSidebarOpen(true)}
+          >
+            <Menu className="w-6 h-6" />
+          </Button>
+          <h1 className="text-xl font-bold">Formações</h1>
+          <div className="w-10"></div>
+        </div>
+
+        {/* Desktop Header */}
+        <div className="hidden sm:flex justify-between items-center mb-6 flex-wrap gap-3">
           <div>
             <h1 className="text-3xl font-bold">Sessões de Formação em Grupo</h1>
             <p className="text-muted-foreground mt-2">
@@ -331,14 +386,22 @@ export default function AdminTrainingsPage() {
           </div>
         </div>
 
+        {/* Mobile Create Button */}
+        <div className="sm:hidden mb-6">
+          <Button onClick={() => setShowForm(true)} className="w-full">
+            <Plus className="w-4 h-4 mr-2" />
+            Nova Sessão de Grupo
+          </Button>
+        </div>
+
         {/* Formulário para Criar Sessão de Grupo */}
         {showForm && (
-          <Card className="p-6 mb-6">
+          <Card className="p-4 sm:p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4">Agendar Sessão de Grupo</h2>
             <form onSubmit={handleCreateTraining} className="space-y-6">
-              {/* Filtros Hierárquicos */}
-              <div className="border border-border rounded-lg p-6 space-y-6 bg-card">
-                <div className="flex items-center gap-2 mb-4">
+              {/* Filtros Hierárquicos - OTIMIZADO PARA MOBILE */}
+              <div className="border border-border rounded-lg p-4 sm:p-6 space-y-4 sm:space-y-6 bg-card">
+                <div className="flex items-center gap-2 mb-3 sm:mb-4">
                   <Filter className="w-5 h-5 text-primary" />
                   <h3 className="font-semibold text-foreground">Filtros de Seleção</h3>
                 </div>
@@ -356,7 +419,7 @@ export default function AdminTrainingsPage() {
                       setSelectedSchools([]);
                       setSelectedTeacherIds([]);
                     }}
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2"
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm sm:text-base"
                   >
                     <option value="">Selecione um ciclo</option>
                     {Object.keys(cycles).map(cycle => (
@@ -365,26 +428,26 @@ export default function AdminTrainingsPage() {
                   </select>
                 </div>
 
-                {/* 2. Seleção de Escolas */}
+                {/* 2. Seleção de Escolas - RESPONSIVO */}
                 {selectedCycle && (
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <label className="block text-sm font-medium">
-                        2. Escolas (opcional - deixe vazio para todas)
+                        2. Escolas (opcional)
                       </label>
                       {availableSchools.length > 0 && (
-                        <label className="flex items-center gap-2 text-sm cursor-pointer">
+                        <label className="flex items-center gap-2 text-xs sm:text-sm cursor-pointer">
                           <input
                             type="checkbox"
                             checked={allSchoolsSelected}
                             onChange={(e) => handleSelectAllSchools(e.target.checked)}
                             className="rounded"
                           />
-                          Selecionar todas ({availableSchools.length})
+                          Selecionar todas
                         </label>
                       )}
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto p-3 border rounded-lg bg-background">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 sm:p-3 border rounded-lg bg-background">
                       {availableSchools.length === 0 ? (
                         <p className="text-sm text-muted-foreground col-span-full text-center py-2">
                           Nenhuma escola encontrada para este ciclo
@@ -395,7 +458,7 @@ export default function AdminTrainingsPage() {
                           return (
                             <label 
                               key={school.id} 
-                              className={`flex items-center gap-2 text-sm cursor-pointer p-2 rounded-lg transition-all ${
+                              className={`flex items-center gap-2 text-xs sm:text-sm cursor-pointer p-2 rounded-lg transition-all ${
                                 isSelected
                                   ? "bg-primary/10 border-2 border-primary"
                                   : "hover:bg-muted/50 border-2 border-transparent"
@@ -407,7 +470,7 @@ export default function AdminTrainingsPage() {
                                 onChange={() => handleToggleSchool(school.id)}
                                 className="rounded"
                               />
-                              <span className="flex-1">{school.name}</span>
+                              <span className="flex-1 truncate">{school.name}</span>
                             </label>
                           );
                         })
@@ -416,7 +479,7 @@ export default function AdminTrainingsPage() {
                   </div>
                 )}
 
-                {/* 3. Seleção de Professores */}
+                {/* 3. Seleção de Professores - RESPONSIVO */}
                 {selectedCycle && (
                   <div>
                     <div className="flex items-center justify-between mb-2">
@@ -424,22 +487,22 @@ export default function AdminTrainingsPage() {
                         3. Professores * ({selectedTeacherIds.length} selecionados)
                       </label>
                       {availableTeachers.length > 0 && (
-                        <label className="flex items-center gap-2 text-sm cursor-pointer">
+                        <label className="flex items-center gap-2 text-xs sm:text-sm cursor-pointer">
                           <input
                             type="checkbox"
                             checked={allTeachersSelected}
                             onChange={(e) => handleSelectAllTeachers(e.target.checked)}
                             className="rounded"
                           />
-                          Selecionar todos ({availableTeachers.length})
+                          Selecionar todos
                         </label>
                       )}
                     </div>
-                    <div className="max-h-60 overflow-y-auto p-3 border rounded-lg bg-background space-y-2">
+                    <div className="max-h-48 sm:max-h-60 overflow-y-auto p-2 sm:p-3 border rounded-lg bg-background space-y-2">
                       {availableTeachers.length === 0 ? (
                         <p className="text-sm text-muted-foreground text-center py-4">
                           {selectedCycle 
-                            ? "Nenhum professor disponível para este ciclo/escolas selecionadas"
+                            ? "Nenhum professor disponível"
                             : "Selecione primeiro um ciclo"}
                         </p>
                       ) : (
@@ -448,7 +511,7 @@ export default function AdminTrainingsPage() {
                           return (
                             <label
                               key={teacher.id}
-                              className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all ${
+                              className={`flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg cursor-pointer transition-all ${
                                 isSelected 
                                   ? "bg-primary/10 border-2 border-primary shadow-sm" 
                                   : "hover:bg-muted/50 border-2 border-transparent"
@@ -460,15 +523,14 @@ export default function AdminTrainingsPage() {
                                 onChange={() => handleToggleTeacher(teacher.id)}
                                 className="rounded"
                               />
-                              <div className="flex-1">
-                                <div className="font-medium">{teacher.name}</div>
-                                <div className="text-xs text-muted-foreground">
+                              <div className="flex-1 min-w-0">
+                                <div className="font-medium text-sm sm:text-base truncate">{teacher.name}</div>
+                                <div className="text-xs text-muted-foreground truncate">
                                   {teacher.school?.name || "Escola não definida"}
-                                  {teacher.email && ` • ${teacher.email}`}
                                 </div>
                               </div>
                               {isSelected && (
-                                <CheckCircle className="w-5 h-5 text-primary" />
+                                <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
                               )}
                             </label>
                           );
@@ -479,7 +541,7 @@ export default function AdminTrainingsPage() {
                 )}
               </div>
 
-              {/* Informações da Sessão */}
+              {/* Informações da Sessão - RESPONSIVO */}
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">Título *</label>
@@ -488,7 +550,7 @@ export default function AdminTrainingsPage() {
                     required
                     value={formData.title}
                     onChange={(e) => setFormData({...formData, title: e.target.value})}
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2"
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm sm:text-base"
                     placeholder="Exemplo: Formação em Grupo - 1º Ciclo"
                   />
                 </div>
@@ -498,13 +560,13 @@ export default function AdminTrainingsPage() {
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({...formData, description: e.target.value})}
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2"
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm sm:text-base"
                     rows="3"
                     placeholder="Descrição da sessão de grupo..."
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-2">Data e Hora *</label>
                     <input
@@ -512,7 +574,7 @@ export default function AdminTrainingsPage() {
                       required
                       value={formData.date}
                       onChange={(e) => setFormData({...formData, date: e.target.value})}
-                      className="w-full rounded-lg border border-input bg-background px-3 py-2"
+                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm sm:text-base"
                     />
                   </div>
 
@@ -523,7 +585,7 @@ export default function AdminTrainingsPage() {
                       required
                       value={formData.zoomLink}
                       onChange={(e) => setFormData({...formData, zoomLink: e.target.value})}
-                      className="w-full rounded-lg border border-input bg-background px-3 py-2"
+                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm sm:text-base"
                       placeholder="https://zoom.us/j/..."
                     />
                   </div>
@@ -538,25 +600,25 @@ export default function AdminTrainingsPage() {
                     setShowForm(false);
                     resetSelections();
                   }}
-                  className="w-full sm:w-auto"
+                  className="w-full sm:w-auto order-2 sm:order-1"
                 >
                   Cancelar
                 </Button>
                 <Button 
                   type="submit"
                   disabled={selectedTeacherIds.length === 0}
-                  className="w-full sm:w-auto"
+                  className="w-full sm:w-auto order-1 sm:order-2"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Agendar Sessão de Grupo ({selectedTeacherIds.length} professor{selectedTeacherIds.length !== 1 ? 'es' : ''})
+                  Agendar ({selectedTeacherIds.length})
                 </Button>
               </div>
-             </form>
-           </Card>
-         )}
+            </form>
+          </Card>
+        )}
 
-        {/* Lista de Sessões Agrupadas */}
-        <Card className="p-6">
+        {/* Lista de Sessões Agrupadas - RESPONSIVO */}
+        <Card className="p-4 sm:p-6">
           <h2 className="text-xl font-semibold mb-4">
             Sessões Agendadas ({Object.keys(groupedTrainings).length})
           </h2>
@@ -564,33 +626,36 @@ export default function AdminTrainingsPage() {
           {Object.keys(groupedTrainings).length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>Nenhuma sessão agendada</p>
+              <p className="text-sm sm:text-base">Nenhuma sessão agendada</p>
               <Button 
                 variant="outline" 
                 className="mt-4"
                 onClick={() => setShowForm(true)}
+                size="sm"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Criar Primeira Sessão
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {Object.values(groupedTrainings).map((group) => (
-                <Card key={group.id} className="p-4 flex flex-col justify-between">
+                <Card key={group.id} className="p-3 sm:p-4 flex flex-col justify-between">
                   <div>
                     <div className="flex justify-between items-start mb-2">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-lg">{group.title}</h3>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <h3 className="font-semibold text-base sm:text-lg truncate flex-1 min-w-0">
+                            {group.title}
+                          </h3>
                           {group.isGroup && (
-                            <Badge variant="secondary" className="text-xs">
+                            <Badge variant="secondary" className="text-xs flex-shrink-0">
                               <Users className="w-3 h-3 mr-1" />
                               {group.trainings.length}
                             </Badge>
                           )}
                           {group.completed && (
-                            <CheckCircle className="w-5 h-5 text-green-600" />
+                            <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" />
                           )}
                         </div>
                         
@@ -600,17 +665,16 @@ export default function AdminTrainingsPage() {
                           </div>
                         )}
 
-                        {/* Lista de Professores */}
+                        {/* Lista de Professores - COMPACTO EM MOBILE */}
                         <div className="space-y-1 mb-2">
-                          {group.trainings.slice(0, 3).map((training, idx) => (
-                            <p key={idx} className="text-sm text-muted-foreground">
+                          {group.trainings.slice(0, 2).map((training, idx) => (
+                            <p key={idx} className="text-xs sm:text-sm text-muted-foreground truncate">
                               {training.teacher?.name}
-                              {training.teacher?.school && ` - ${training.teacher.school.name}`}
                             </p>
                           ))}
-                          {group.trainings.length > 3 && (
+                          {group.trainings.length > 2 && (
                             <p className="text-xs text-muted-foreground italic">
-                              +{group.trainings.length - 3} mais professor(es)
+                              +{group.trainings.length - 2} mais
                             </p>
                           )}
                         </div>
@@ -638,38 +702,40 @@ export default function AdminTrainingsPage() {
                             handleDeleteTraining(group.trainings[0].id);
                           }
                         }}
+                        className="flex-shrink-0 ml-2"
                       >
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
                     </div>
                     
                     {group.description && (
-                      <p className="text-sm text-muted-foreground mb-3">
+                      <p className="text-xs sm:text-sm text-muted-foreground mb-3 line-clamp-2">
                         {group.description}
                       </p>
                     )}
                     
-                    <div className="space-y-2 text-sm">
+                    <div className="space-y-2 text-xs sm:text-sm">
                       <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-muted-foreground" />
-                        <span>
+                        <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground flex-shrink-0" />
+                        <span className="truncate">
                           {new Date(group.date).toLocaleString('pt-PT')}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Video className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-primary">Link Zoom Disponível</span>
+                        <Video className="w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground flex-shrink-0" />
+                        <span className="text-primary text-xs sm:text-sm truncate">Link Zoom Disponível</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-2 mt-4">
+                  <div className="flex flex-col gap-2 mt-3 sm:mt-4">
                     <Button
                       variant="outline"
-                      className="w-full sm:flex-1"
+                      size="sm"
                       onClick={() => window.open(group.zoomLink, "_blank")}
+                      className="w-full text-xs sm:text-sm"
                     >
-                      <Video className="w-4 h-4 mr-2" />
+                      <Video className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                       Abrir Zoom
                     </Button>
                     
@@ -679,9 +745,9 @@ export default function AdminTrainingsPage() {
                         variant="default"
                         size="sm"
                         onClick={() => setTrainingToComplete(group.trainings[0])}
-                        className="w-full sm:w-auto bg-green-600 hover:bg-green-700"
+                        className="w-full bg-green-600 hover:bg-green-700 text-xs sm:text-sm"
                       >
-                        <CheckCircle className="w-4 h-4 mr-2" />
+                        <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                         Concluir Sessão
                       </Button>
                     )}
@@ -692,7 +758,7 @@ export default function AdminTrainingsPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => window.open(`${API_URL}${group.certificateUrl}`, '_blank')}
-                        className="w-full sm:w-auto"
+                        className="w-full text-xs sm:text-sm"
                       >
                         Ver Certificado
                       </Button>

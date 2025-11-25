@@ -4,7 +4,8 @@ import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { 
   Download, BarChart3, Package, Users, Database,
-  FileSpreadsheet, TrendingUp, Calendar, CheckCircle
+  FileSpreadsheet, TrendingUp, Calendar, CheckCircle,
+  Menu // ← Adicionar este ícone
 } from "lucide-react";
 import * as XLSX from 'xlsx';
 import { API_URL } from "../config/api";
@@ -12,6 +13,7 @@ import { API_URL } from "../config/api";
 export default function AdminExport() {
   const [exporting, setExporting] = useState(false);
   const [recentExports, setRecentExports] = useState([]);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Função para buscar dados da API
   const fetchData = async (endpoint) => {
@@ -401,33 +403,64 @@ export default function AdminExport() {
       <div className="hidden sm:block">
         <AdminSidebar />
       </div>
-      <div className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full space-y-6">
+      
+      {/* Mobile Sidebar Overlay */}
+      {isMobileSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 sm:hidden"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
+      
+      {/* Mobile Sidebar */}
+      <div className={`
+        fixed top-0 left-0 h-full z-50 transition-transform duration-300
+        ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        sm:hidden
+      `}>
+        <AdminSidebar />
+      </div>
+
+      <div className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full space-y-4 sm:space-y-6">
+        {/* Mobile Header */}
+        <div className="flex justify-between items-center sm:hidden">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsMobileSidebarOpen(true)}
+          >
+            <Menu className="w-6 h-6" />
+          </Button>
+          <h1 className="text-xl font-bold">Exportar Dados</h1>
+          <div className="w-10"></div>
+        </div>
+
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="hidden sm:flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold flex items-center gap-3">
-              <FileSpreadsheet className="w-8 h-8 text-primary" />
+            {/* CORREÇÃO: Remover ícone FileSpreadsheet antes do título */}
+            <h1 className="text-2xl sm:text-3xl font-bold">
               Exportar Dados
             </h1>
-            <p className="text-muted-foreground mt-2">
+            <p className="text-muted-foreground mt-2 text-sm sm:text-base">
               Permite exportar dados completos do sistema para análise em Excel
             </p>
           </div>
         </div>
 
         {/* Exportação Principal */}
-        <Card className="p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <Database className="w-6 h-6 text-primary" />
-            <h2 className="text-2xl font-semibold">Exportação Completa do Sistema</h2>
-          </div>
-          <p className="text-muted-foreground mb-6">
+        <Card className="p-4 sm:p-6">
+          {/* CORREÇÃO: Remover ícone Database antes do título */}
+          <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4">
+            Exportação Completa do Sistema
+          </h2>
+          <p className="text-muted-foreground mb-4 sm:mb-6 text-sm sm:text-base">
             Exportação dos dados do sistema num único ficheiro Excel com múltiplas folhas organizadas.
           </p>
           
-          <div className="bg-muted p-4 rounded-lg mb-6">
+          <div className="bg-muted p-3 sm:p-4 rounded-lg mb-4 sm:mb-6">
             <p className="text-sm font-medium mb-2">Inclui:</p>
-            <ul className="text-sm space-y-1 grid grid-cols-2 gap-2">
+            <ul className="text-xs sm:text-sm space-y-1 grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
               <li>• Resumo estatístico completo</li>
               <li>• Todas as escolas com detalhes</li>
               <li>• Todos os professores com informações</li>
@@ -440,7 +473,7 @@ export default function AdminExport() {
           <Button 
             onClick={handleFullExport}
             disabled={exporting}
-            className="w-full md:w-auto"
+            className="w-full text-sm sm:text-base"
             size="lg"
           >
             {exporting ? (
@@ -450,7 +483,7 @@ export default function AdminExport() {
               </>
             ) : (
               <>
-                <Download className="w-5 h-5 mr-2" />
+                <Download className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                 Exportar dados completos
               </>
             )}
@@ -458,19 +491,19 @@ export default function AdminExport() {
         </Card>
 
         {/* Exportações Específicas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="p-6 hover:shadow-lg transition-shadow">
-            <div className="flex items-center gap-3 mb-4">
-              <Users className="w-6 h-6 text-primary" />
-              <h3 className="text-xl font-semibold">Exportação de Utilizadores</h3>
-            </div>
-            <p className="text-muted-foreground mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          <Card className="p-4 sm:p-6 hover:shadow-lg transition-shadow">
+            {/* CORREÇÃO: Remover ícone Users antes do título */}
+            <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
+              Exportação de Utilizadores
+            </h3>
+            <p className="text-muted-foreground mb-3 sm:mb-4 text-sm sm:text-base">
               Exportação de escolas, professores e turmas com todos os detalhes.
             </p>
             <div className="space-y-2">
               <Button 
                 variant="outline" 
-                className="w-full justify-start"
+                className="w-full justify-start text-xs sm:text-sm"
                 onClick={handleUsersExport}
                 disabled={exporting}
               >
@@ -480,18 +513,18 @@ export default function AdminExport() {
             </div>
           </Card>
 
-          <Card className="p-6 hover:shadow-lg transition-shadow">
-            <div className="flex items-center gap-3 mb-4">
-              <Package className="w-6 h-6 text-primary" />
-              <h3 className="text-xl font-semibold">Exportação de Kits</h3>
-            </div>
-            <p className="text-muted-foreground mb-4">
+          <Card className="p-4 sm:p-6 hover:shadow-lg transition-shadow">
+            {/* CORREÇÃO: Remover ícone Package antes do título */}
+            <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
+              Exportação de Kits
+            </h3>
+            <p className="text-muted-foreground mb-3 sm:mb-4 text-sm sm:text-base">
               Relatório completo de todos os kits e seus estados.
             </p>
             <div className="space-y-2">
               <Button 
                 variant="outline" 
-                className="w-full justify-start"
+                className="w-full justify-start text-xs sm:text-sm"
                 onClick={handleKitsExport}
                 disabled={exporting}
               >
@@ -500,7 +533,7 @@ export default function AdminExport() {
               </Button>
               <Button 
                 variant="outline" 
-                className="w-full justify-start"
+                className="w-full justify-start text-xs sm:text-sm"
                 onClick={handleDeliveriesExport}
                 disabled={exporting}
               >
@@ -513,24 +546,24 @@ export default function AdminExport() {
 
         {/* Histórico de Exportações */}
         {recentExports.length > 0 && (
-          <Card className="p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Calendar className="w-5 h-5 text-primary" />
-              <h3 className="text-lg font-semibold">Exportações Recentes</h3>
-            </div>
+          <Card className="p-4 sm:p-6">
+            {/* CORREÇÃO: Remover ícone Calendar antes do título */}
+            <h3 className="text-lg font-semibold mb-3 sm:mb-4">
+              Exportações Recentes
+            </h3>
             <div className="space-y-2">
               {recentExports.map(exportItem => (
                 <div key={exportItem.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
                   <div className="flex items-center gap-3">
-                    <FileSpreadsheet className="w-5 h-5 text-green-600" />
-                    <div>
-                      <div className="font-medium">{exportItem.filename}</div>
-                      <div className="text-sm text-muted-foreground">
+                    <FileSpreadsheet className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium text-sm sm:text-base truncate">{exportItem.filename}</div>
+                      <div className="text-xs text-muted-foreground">
                         {exportItem.date} • {exportItem.size}
                       </div>
                     </div>
                   </div>
-                  <span className="px-3 py-1 text-xs bg-green-100 text-green-800 rounded-full font-medium">
+                  <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full font-medium flex-shrink-0">
                     Excel
                   </span>
                 </div>
@@ -540,12 +573,12 @@ export default function AdminExport() {
         )}
 
         {/* Informações Técnicas */}
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="w-5 h-5 text-primary" />
-            <h3 className="text-lg font-semibold">Funcionalidades de Exportação</h3>
-          </div>
-          <ul className="text-sm text-muted-foreground space-y-2">
+        <Card className="p-4 sm:p-6">
+          {/* CORREÇÃO: Remover ícone TrendingUp antes do título */}
+          <h3 className="text-lg font-semibold mb-3 sm:mb-4">
+            Funcionalidades de Exportação
+          </h3>
+          <ul className="text-xs sm:text-sm text-muted-foreground space-y-2">
             <li className="flex items-start gap-2">
               <span className="text-green-600 font-bold">✓</span>
               <span><strong>Excel:</strong> Múltiplas folhas organizadas com dados completos e detalhados</span>

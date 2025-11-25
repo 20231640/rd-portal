@@ -25,11 +25,14 @@ export function CompleteTrainingModal({ training, onClose, onComplete }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-background p-6 rounded-lg w-96 border">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-background p-4 sm:p-6 rounded-lg w-full max-w-full sm:max-w-md border max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold">Concluir Sessão</h3>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+          <button 
+            onClick={onClose} 
+            className="text-muted-foreground hover:text-foreground p-1"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -47,7 +50,7 @@ export function CompleteTrainingModal({ training, onClose, onComplete }) {
                     star <= rating ? 'text-yellow-400' : 'text-gray-300'
                   }`}
                 >
-                  <Star className="w-8 h-8 fill-current" />
+                  <Star className="w-7 h-7 sm:w-8 sm:h-8 fill-current" />
                 </button>
               ))}
             </div>
@@ -61,22 +64,34 @@ export function CompleteTrainingModal({ training, onClose, onComplete }) {
             <textarea
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
-              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
               rows="3"
               placeholder="Comentários sobre a sessão..."
             />
           </div>
 
-          <div className="flex gap-2 justify-end pt-4">
-            <Button variant="outline" onClick={onClose} disabled={loading}>
+          <div className="flex flex-col sm:flex-row gap-2 justify-end pt-4">
+            <Button 
+              variant="outline" 
+              onClick={onClose} 
+              disabled={loading}
+              className="w-full sm:w-auto order-2 sm:order-1"
+            >
               Cancelar
             </Button>
             <Button 
               onClick={handleSubmit}
               disabled={loading || rating === 0}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-green-600 hover:bg-green-700 w-full sm:w-auto order-1 sm:order-2"
             >
-              {loading ? "A gerar..." : "✅ Gerar Certificado"}
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  A gerar...
+                </>
+              ) : (
+                "✅ Gerar Certificado"
+              )}
             </Button>
           </div>
         </div>

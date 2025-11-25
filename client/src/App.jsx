@@ -16,7 +16,6 @@ import TeacherKitsPage from "./pages/TeacherKitsPage";
 import AdminKitsPage from "./pages/AdminKitsPage";
 import AdminExport from "./pages/AdminExport";
 
-// 🔥 NOVAS IMPORTACOES
 import VerifyEmail from "./pages/verify-email";
 import ForgotPassword from "./pages/forgot-password";
 import ResetPassword from "./pages/reset-password";

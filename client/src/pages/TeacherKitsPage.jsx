@@ -1,4 +1,4 @@
-// TeacherKitsPage.jsx - VERSÃO ATUALIZADA COM ESTÉTICA DO ADMIN
+// TeacherKitsPage.jsx - VERSÃO RESPONSIVA
 import { useState, useEffect, useRef } from "react";
 import { Sidebar } from "../components/ui/sidebar";
 import { Card } from "../components/ui/card";
@@ -10,7 +10,7 @@ import {
   Package, Plus, CheckCircle, AlertCircle, 
   RefreshCw, Users, BookOpen, Calendar,
   MapPin, School, Clock, Truck, Home,
-  Search
+  Search, Filter, X
 } from "lucide-react";
 
 export default function TeacherKitsPage() {
@@ -28,6 +28,7 @@ export default function TeacherKitsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [newUpdates, setNewUpdates] = useState(0);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   // Novos estados para filtros por ciclo e ano
   const [selectedCycle, setSelectedCycle] = useState("all");
@@ -290,28 +291,30 @@ export default function TeacherKitsPage() {
     fetchData();
   }, []);
 
-  // Componente RequestCard atualizado - APENAS a parte que muda
+  // Componente RequestCard atualizado - RESPONSIVO
   const RequestCard = ({ request }) => {
     const classInfo = classes.find(c => c.id === request.classId);
     
     return (
-      <Card key={request.id} className="p-6 hover:shadow-lg transition-all duration-300 border-l-4 border-l-blue-500">
+      <Card key={request.id} className="p-4 lg:p-6 hover:shadow-lg transition-all duration-300 border-l-4 border-l-blue-500">
         {/* Header do Pedido */}
-        <div className="flex justify-between items-start mb-4">
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4 mb-4">
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
-              <Package className="w-6 h-6 text-primary" />
-              <h4 className="text-xl font-bold">
-                {classInfo ? classInfo.name : "Turma não encontrada"}
-                <span className="text-lg font-normal text-muted-foreground ml-2">
-                  - {classInfo?.cycle} {classInfo?.year} | Kit Padrão
-                </span>
-              </h4>
+              <Package className="w-5 h-5 lg:w-6 lg:h-6 text-primary" />
+              <div>
+                <h4 className="text-lg lg:text-xl font-bold text-foreground">
+                  {classInfo ? classInfo.name : "Turma não encontrada"}
+                </h4>
+                <p className="text-sm lg:text-base text-muted-foreground">
+                  {classInfo?.cycle} {classInfo?.year} | Kit Padrão
+                </p>
+              </div>
             </div>
             
             {/* Informações da Turma EM CAIXA CINZA */}
-            <Card className="p-3 bg-gray-50 border border-gray-200 mb-3">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-gray-700">
+            <Card className="p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 mb-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm text-gray-700 dark:text-gray-300">
                 <div className="flex items-center gap-1">
                   <Users className="w-4 h-4" />
                   <span>{classInfo?.students || "N/A"} alunos</span>
@@ -328,12 +331,12 @@ export default function TeacherKitsPage() {
             </Card>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 self-start">
             <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-              request.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-              request.status === 'approved' ? 'bg-blue-100 text-blue-800' :
-              request.status === 'shipped' ? 'bg-orange-100 text-orange-800' :
-              'bg-green-100 text-green-800'
+              request.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' :
+              request.status === 'approved' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' :
+              request.status === 'shipped' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300' :
+              'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
             }`}>
               {request.status === 'pending' ? 'Pendente' :
               request.status === 'approved' ? 'Aprovado' :
@@ -343,12 +346,14 @@ export default function TeacherKitsPage() {
         </div>
 
         {/* Timeline Visual */}
-        <KitJourney request={request} />
+        <div className="mb-4">
+          <KitJourney request={request} />
+        </div>
 
         {/* Notas do Admin */}
         {request.adminNotes && (
-          <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-            <p className="text-sm text-blue-700">
+          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900 rounded-lg border border-blue-200 dark:border-blue-700">
+            <p className="text-sm text-blue-700 dark:text-blue-300">
               <strong>📝 Nota do Administrador:</strong> {request.adminNotes}
             </p>
           </div>
@@ -356,22 +361,22 @@ export default function TeacherKitsPage() {
 
         {/* Problemas Reportados */}
         {request.reports && request.reports.length > 0 && (
-          <div className="mt-4 p-3 bg-red-50 rounded-lg border border-red-200">
+          <div className="mt-4 p-3 bg-red-50 dark:bg-red-900 rounded-lg border border-red-200 dark:border-red-700">
             <div className="flex items-center gap-2 mb-2">
-              <AlertCircle className="w-4 h-4 text-red-600" />
-              <p className="text-sm text-red-700 font-medium">
+              <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
+              <p className="text-sm text-red-700 dark:text-red-300 font-medium">
                 Problema Reportado
               </p>
             </div>
-            <p className="text-sm text-red-600 mb-2">
+            <p className="text-sm text-red-600 dark:text-red-400 mb-2">
               {request.reports[request.reports.length - 1].message}
             </p>
-            <div className="flex justify-between items-center text-xs text-red-500">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 text-xs text-red-500 dark:text-red-400">
               <span>
                 Reportado em: {new Date(request.reports[request.reports.length - 1].createdAt).toLocaleDateString('pt-PT')}
               </span>
               {request.reports[request.reports.length - 1].resolved && (
-                <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                <span className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 px-2 py-1 rounded-full">
                   <CheckCircle className="w-3 h-3 inline mr-1" />
                   Resolvido
                 </span>
@@ -381,15 +386,15 @@ export default function TeacherKitsPage() {
         )}
 
         {/* Actions - BOTÃO ROSA ATUALIZADO E SEM ID */}
-        <div className="flex justify-end items-center pt-4 mt-4 border-t">
-          <div className="flex gap-2">
+        <div className="flex justify-end items-center pt-4 mt-4 border-t border-border">
+          <div className="flex gap-2 flex-wrap">
             {request.status === "shipped" && (
               <Button
                 size="sm"
                 onClick={() => handleMarkAsDelivered(request.id)}
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-green-600 hover:bg-green-700 text-white text-xs lg:text-sm"
               >
-                <CheckCircle className="w-4 h-4 mr-1" />
+                <CheckCircle className="w-3 h-3 lg:w-4 lg:h-4 mr-1" />
                 Confirmar Receção
               </Button>
             )}
@@ -402,9 +407,9 @@ export default function TeacherKitsPage() {
                   setSelectedRequestForReport(request);
                   setShowReportForm(true);
                 }}
-                className="border-[hsl(327,83%,50%)] text-[hsl(327,83%,50%)] hover:bg-[hsl(327,83%,50%)] hover:text-white transition-all duration-300"
+                className="border-[hsl(327,83%,50%)] text-[hsl(327,83%,50%)] hover:bg-[hsl(327,83%,50%)] hover:text-white transition-all duration-300 text-xs lg:text-sm"
               >
-                <AlertCircle className="w-4 h-4 mr-1" />
+                <AlertCircle className="w-3 h-3 lg:w-4 lg:h-4 mr-1" />
                 Reportar Problema
               </Button>
             )}
@@ -416,31 +421,31 @@ export default function TeacherKitsPage() {
 
   // Loading Skeleton
   const RequestSkeleton = () => (
-    <div className="border border-border rounded-lg p-6 animate-pulse">
-      <div className="flex items-center justify-between">
+    <div className="border border-border rounded-lg p-4 lg:p-6 animate-pulse">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div className="flex items-start gap-4 flex-1">
-          <div className="w-10 h-10 bg-gray-300 rounded-full mt-1"></div>
+          <div className="w-8 h-8 lg:w-10 lg:h-10 bg-gray-300 dark:bg-gray-700 rounded-full mt-1"></div>
           <div className="flex-1 space-y-3">
-            <div className="flex items-center gap-3">
-              <Skeleton className="h-6 w-48" />
-              <Skeleton className="h-7 w-24 rounded-full" />
+            <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+              <div className="h-5 lg:h-6 bg-gray-300 dark:bg-gray-700 rounded w-32 lg:w-48"></div>
+              <div className="h-5 lg:h-7 bg-gray-300 dark:bg-gray-700 rounded w-20 lg:w-24"></div>
             </div>
-            <Skeleton className="h-4 w-64" />
+            <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-40 lg:w-64"></div>
             {/* Skeleton da timeline */}
             <div className="space-y-2 mt-4">
-              <Skeleton className="h-2 w-full" />
+              <div className="h-2 bg-gray-300 dark:bg-gray-700 rounded w-full"></div>
               <div className="flex justify-between">
-                <Skeleton className="h-4 w-16" />
-                <Skeleton className="h-4 w-16" />
-                <Skeleton className="h-4 w-16" />
-                <Skeleton className="h-4 w-16" />
+                <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-12 lg:w-16"></div>
+                <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-12 lg:w-16"></div>
+                <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-12 lg:w-16"></div>
+                <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-12 lg:w-16"></div>
               </div>
             </div>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Skeleton className="h-9 w-24" />
-          <Skeleton className="h-9 w-24" />
+        <div className="flex gap-2 self-end">
+          <div className="h-8 lg:h-9 bg-gray-300 dark:bg-gray-700 rounded w-16 lg:w-24"></div>
+          <div className="h-8 lg:h-9 bg-gray-300 dark:bg-gray-700 rounded w-16 lg:w-24"></div>
         </div>
       </div>
     </div>
@@ -451,10 +456,10 @@ export default function TeacherKitsPage() {
     const availableClasses = classes.filter(cls => !classHasRequest(cls.id));
     
     return (
-      <Card className="p-8 text-center border-dashed">
-        <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-        <h3 className="text-lg font-semibold mb-2">Nenhum pedido de kit</h3>
-        <p className="text-muted-foreground mb-4">
+      <Card className="p-6 lg:p-8 text-center border-dashed">
+        <Package className="w-12 h-12 lg:w-16 lg:h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+        <h3 className="text-base lg:text-lg font-semibold mb-2 text-foreground">Nenhum pedido de kit</h3>
+        <p className="text-muted-foreground mb-4 text-sm lg:text-base">
           {availableClasses.length === 0 && classes.length > 0 
             ? "🎉 Excelente! Já fez pedidos para todas as suas turmas disponíveis."
             : "📚 Comece por pedir o seu primeiro kit educativo para as suas turmas."
@@ -463,7 +468,7 @@ export default function TeacherKitsPage() {
         <Button 
           onClick={() => setShowRequestForm(true)} 
           disabled={availableClasses.length === 0}
-          className="bg-primary hover:bg-primary/90"
+          className="bg-primary hover:bg-primary/90 w-full sm:w-auto"
         >
           <Plus className="w-4 h-4 mr-2" />
           {availableClasses.length === 0 ? "Todas as Turmas com Pedido" : "Fazer Primeiro Pedido"}
@@ -505,20 +510,20 @@ export default function TeacherKitsPage() {
       <div className="hidden sm:block">
         <Sidebar />
       </div>
-      <div className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full">
+      <div className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
         {/* Header com controles de atualização */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6 lg:mb-8">
+          <div className="mt-12 lg:mt-0">
             <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold">Gestão de Kits</h1>
+              <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Gestão de Kits</h1>
               {newUpdates > 0 && (
                 <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">
                   {newUpdates} nova(s)
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-4 mt-2">
-              <p className="text-muted-foreground">Pedir e acompanhar kits para as suas turmas</p>
+            <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-4 mt-2">
+              <p className="text-muted-foreground text-sm lg:text-base">Pedir e acompanhar kits para as suas turmas</p>
               {lastUpdate && (
                 <span className="text-xs text-muted-foreground">
                   Última atualização: {lastUpdate.toLocaleTimeString('pt-PT')}
@@ -533,19 +538,31 @@ export default function TeacherKitsPage() {
               size="sm"
               onClick={fetchData}
               disabled={loading}
+              className="flex-1 sm:flex-none"
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              Atualizar
+              <span className="hidden sm:inline">Atualizar</span>
+            </Button>
+
+            {/* Botão Filtros Mobile */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowMobileFilters(!showMobileFilters)}
+              className="sm:hidden"
+            >
+              <Filter className="w-4 h-4 mr-2" />
+              Filtros
             </Button>
 
             {!loading && (
               <Button 
                 onClick={() => setShowRequestForm(true)} 
                 disabled={availableClasses.length === 0}
-                className="bg-primary hover:bg-primary/90 w-full sm:w-auto"
+                className="bg-primary hover:bg-primary/90 w-full sm:w-auto flex-1 sm:flex-none"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Pedir Kit
+                <span className="hidden sm:inline">Pedir Kit</span>
                 {availableClasses.length > 0 && (
                   <span className="ml-2 bg-white text-primary px-2 py-1 rounded-full text-sm font-bold min-w-6">
                     {availableClasses.length}
@@ -567,28 +584,28 @@ export default function TeacherKitsPage() {
         </div>
 
         {/* Estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <Card className="p-4 text-center border-l-4 border-l-[hsl(26,90%,57%)] hover:shadow-md transition-shadow">
-            <div className="text-2xl font-bold text-[hsl(26,90%,57%)]">{getStatusCount("pending")}</div>
-            <div className="text-sm text-muted-foreground">Pendentes</div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-6">
+          <Card className="p-3 lg:p-4 text-center border-l-4 border-l-[hsl(26,90%,57%)] hover:shadow-md transition-shadow">
+            <div className="text-lg lg:text-2xl font-bold text-[hsl(26,90%,57%)]">{getStatusCount("pending")}</div>
+            <div className="text-xs lg:text-sm text-muted-foreground">Pendentes</div>
           </Card>
-          <Card className="p-4 text-center border-l-4 border-l-[hsl(283,45%,33%)] hover:shadow-md transition-shadow">
-            <div className="text-2xl font-bold text-[hsl(283,45%,33%)]">{getStatusCount("approved")}</div>
-            <div className="text-sm text-muted-foreground">Aprovados</div>
+          <Card className="p-3 lg:p-4 text-center border-l-4 border-l-[hsl(283,45%,33%)] hover:shadow-md transition-shadow">
+            <div className="text-lg lg:text-2xl font-bold text-[hsl(283,45%,33%)]">{getStatusCount("approved")}</div>
+            <div className="text-xs lg:text-sm text-muted-foreground">Aprovados</div>
           </Card>
-          <Card className="p-4 text-center border-l-4 border-l-[hsl(189,68%,64%)] hover:shadow-md transition-shadow">
-            <div className="text-2xl font-bold text-[hsl(189,68%,64%)]">{getStatusCount("shipped")}</div>
-            <div className="text-sm text-muted-foreground">Enviados</div>
+          <Card className="p-3 lg:p-4 text-center border-l-4 border-l-[hsl(189,68%,64%)] hover:shadow-md transition-shadow">
+            <div className="text-lg lg:text-2xl font-bold text-[hsl(189,68%,64%)]">{getStatusCount("shipped")}</div>
+            <div className="text-xs lg:text-sm text-muted-foreground">Enviados</div>
           </Card>
-          <Card className="p-4 text-center border-l-4 border-l-[hsl(76,49%,52%)] hover:shadow-md transition-shadow">
-            <div className="text-2xl font-bold text-[hsl(76,49%,52%)]">{getStatusCount("delivered")}</div>
-            <div className="text-sm text-muted-foreground">Entregues</div>
+          <Card className="p-3 lg:p-4 text-center border-l-4 border-l-[hsl(76,49%,52%)] hover:shadow-md transition-shadow">
+            <div className="text-lg lg:text-2xl font-bold text-[hsl(76,49%,52%)]">{getStatusCount("delivered")}</div>
+            <div className="text-xs lg:text-sm text-muted-foreground">Entregues</div>
           </Card>
         </div>
 
-        {/* Filtros */}
-        <Card className="p-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
+        {/* Filtros Desktop */}
+        <Card className="p-4 mb-6 hidden sm:block">
+          <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1 relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
               <input
@@ -638,14 +655,76 @@ export default function TeacherKitsPage() {
           </div>
         </Card>
 
+        {/* Filtros Mobile */}
+        {showMobileFilters && (
+          <Card className="p-4 mb-6 sm:hidden">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-semibold">Filtros</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowMobileFilters(false)}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            <div className="space-y-4">
+              <div className="relative">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Pesquisar..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 w-full h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+              
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="all">Todos os Estados</option>
+                <option value="pending">Pendentes</option>
+                <option value="approved">Aprovados</option>
+                <option value="shipped">Enviados</option>
+                <option value="delivered">Entregues</option>
+              </select>
+
+              <select
+                value={selectedCycle}
+                onChange={(e) => setSelectedCycle(e.target.value)}
+                className="w-full h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="all">Todos os Ciclos</option>
+                {Array.from(new Set(classes.map(c => c.cycle))).map(cycle => (
+                  <option key={cycle} value={cycle}>{cycle}</option>
+                ))}
+              </select>
+
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                className="w-full h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="all">Todos os Anos</option>
+                {Array.from(new Set(classes.map(c => String(c.year)))).sort().map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+            </div>
+          </Card>
+        )}
+
         {/* Avisos */}
         {!loading && availableClasses.length === 0 && classes.length > 0 && (
-          <Card className="p-4 mb-6 bg-green-50 border border-green-200">
+          <Card className="p-4 mb-6 bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700">
             <div className="flex items-center gap-3">
-              <CheckCircle className="w-5 h-5 text-green-600" />
+              <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
               <div>
-                <h3 className="font-semibold text-green-800">Todos os pedidos realizados</h3>
-                <p className="text-green-700 text-sm">
+                <h3 className="font-semibold text-green-800 dark:text-green-300">Todos os pedidos realizados</h3>
+                <p className="text-green-700 dark:text-green-400 text-sm">
                   Já fez pedidos para todas as suas turmas disponíveis.
                 </p>
               </div>
@@ -654,12 +733,12 @@ export default function TeacherKitsPage() {
         )}
 
         {!loading && classes.length === 0 && (
-          <Card className="p-4 mb-6 bg-yellow-50 border border-yellow-200">
+          <Card className="p-4 mb-6 bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700">
             <div className="flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 text-yellow-600" />
+              <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
               <div>
-                <h3 className="font-semibold text-yellow-800">Sem turmas disponíveis</h3>
-                <p className="text-yellow-700 text-sm">
+                <h3 className="font-semibold text-yellow-800 dark:text-yellow-300">Sem turmas disponíveis</h3>
+                <p className="text-yellow-700 dark:text-yellow-400 text-sm">
                   Precisa de criar turmas antes de poder pedir kits.
                 </p>
               </div>
@@ -669,114 +748,117 @@ export default function TeacherKitsPage() {
 
         {/* Formulário de Pedido */}
         {showRequestForm && (
-          <Card className="p-6 mb-6">
-            <div className="flex items-center gap-3 mb-4">
-              <Plus className="w-6 h-6 text-primary" />
-              <h3 className="text-xl font-bold">Novo Pedido de Kit</h3>
-            </div>
-            
-            <form onSubmit={handleRequestKit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Selecionar Turma</label>
-                <select
-                  value={selectedClass}
-                  onChange={(e) => setSelectedClass(e.target.value)}
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                  required
-                  disabled={availableClasses.length === 0}
-                >
-                  <option value="">Selecionar Turma...</option>
-                  {availableClasses.map(cls => (
-                    <option key={cls.id} value={cls.id}>
-                      {cls.name} - {cls.cycle} {cls.year} ({cls.students} alunos)
-                    </option>
-                  ))}
-                </select>
-                
-                {availableClasses.length === 0 ? (
-                  <p className="text-muted-foreground mt-2 text-sm text-center py-2 bg-muted rounded-lg">
-                    Não tem turmas disponíveis para pedido
-                  </p>
-                ) : (
-                  <p className="text-primary mt-2 font-medium text-sm text-center">
-                    🎯 {availableClasses.length} turma(s) disponível(is)
-                  </p>
-                )}
+          <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+            <Card className="p-4 lg:p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center gap-3 mb-4">
+                <Plus className="w-5 h-5 lg:w-6 lg:h-6 text-primary" />
+                <h3 className="text-lg lg:text-xl font-bold text-foreground">Novo Pedido de Kit</h3>
               </div>
-
-              {selectedClass && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Card className="p-4 bg-green-50 border border-green-200">
-                    <div className="flex items-center gap-3">
-                      <Users className="w-5 h-5 text-green-600" />
-                      <div>
-                        <h4 className="font-semibold text-green-800">Informações da Turma</h4>
-                        <div className="space-y-1 text-sm text-green-700 mt-2">
-                          <div className="flex items-center gap-2">
-                            <School className="w-4 h-4" />
-                            <span>{classes.find(c => c.id === parseInt(selectedClass))?.name}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Users className="w-4 h-4" />
-                            <span>{classes.find(c => c.id === parseInt(selectedClass))?.students} alunos</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4" />
-                            <span>{classes.find(c => c.id === parseInt(selectedClass))?.cycle}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-
-                  <Card className="p-4 bg-blue-50 border border-blue-200">
-                    <div className="flex items-center gap-3">
-                      <Package className="w-5 h-5 text-blue-600" />
-                      <div>
-                        <h4 className="font-semibold text-blue-800">Kit Padrão Inclui</h4>
-                        <div className="text-sm text-blue-700 mt-2 space-y-1">
-                          <div>• Material educativo completo</div>
-                          <div>• Recursos para {classes.find(c => c.id === parseInt(selectedClass))?.students} alunos</div>
-                          <div>• Guias do professor</div>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
+              
+              <form onSubmit={handleRequestKit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-foreground">Selecionar Turma</label>
+                  <select
+                    value={selectedClass}
+                    onChange={(e) => setSelectedClass(e.target.value)}
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    required
+                    disabled={availableClasses.length === 0}
+                  >
+                    <option value="">Selecionar Turma...</option>
+                    {availableClasses.map(cls => (
+                      <option key={cls.id} value={cls.id}>
+                        {cls.name} - {cls.cycle} {cls.year} ({cls.students} alunos)
+                      </option>
+                    ))}
+                  </select>
+                  
+                  {availableClasses.length === 0 ? (
+                    <p className="text-muted-foreground mt-2 text-sm text-center py-2 bg-muted rounded-lg">
+                      Não tem turmas disponíveis para pedido
+                    </p>
+                  ) : (
+                    <p className="text-primary mt-2 font-medium text-sm text-center">
+                      🎯 {availableClasses.length} turma(s) disponível(is)
+                    </p>
+                  )}
                 </div>
-              )}
 
-              <div className="flex gap-3 pt-2">
-                <Button 
-                  type="submit" 
-                  disabled={!selectedClass}
-                  className="bg-primary hover:bg-primary/90"
-                >
-                  <Package className="w-4 h-4 mr-2" />
-                  Confirmar Pedido de Kit
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowRequestForm(false)}
-                >
-                  Cancelar
-                </Button>
-              </div>
-            </form>
-          </Card>
+                {selectedClass && (
+                  <div className="grid grid-cols-1 gap-4">
+                    <Card className="p-4 bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700">
+                      <div className="flex items-center gap-3">
+                        <Users className="w-5 h-5 text-green-600 dark:text-green-400" />
+                        <div>
+                          <h4 className="font-semibold text-green-800 dark:text-green-300">Informações da Turma</h4>
+                          <div className="space-y-1 text-sm text-green-700 dark:text-green-400 mt-2">
+                            <div className="flex items-center gap-2">
+                              <School className="w-4 h-4" />
+                              <span>{classes.find(c => c.id === parseInt(selectedClass))?.name}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Users className="w-4 h-4" />
+                              <span>{classes.find(c => c.id === parseInt(selectedClass))?.students} alunos</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <MapPin className="w-4 h-4" />
+                              <span>{classes.find(c => c.id === parseInt(selectedClass))?.cycle}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+
+                    <Card className="p-4 bg-blue-50 dark:bg-blue-900 border border-blue-200 dark:border-blue-700">
+                      <div className="flex items-center gap-3">
+                        <Package className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                        <div>
+                          <h4 className="font-semibold text-blue-800 dark:text-blue-300">Kit Padrão Inclui</h4>
+                          <div className="text-sm text-blue-700 dark:text-blue-400 mt-2 space-y-1">
+                            <div>• Material educativo completo</div>
+                            <div>• Recursos para {classes.find(c => c.id === parseInt(selectedClass))?.students} alunos</div>
+                            <div>• Guias do professor</div>
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  </div>
+                )}
+
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  <Button 
+                    type="submit" 
+                    disabled={!selectedClass}
+                    className="bg-primary hover:bg-primary/90 flex-1"
+                  >
+                    <Package className="w-4 h-4 mr-2" />
+                    Confirmar Pedido de Kit
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowRequestForm(false)}
+                    className="flex-1"
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </form>
+            </Card>
+          </div>
         )}
 
         {/* Modal de Reportar Problema - ATUALIZADO */}
         {showReportForm && (
           <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-            <Card className="p-6 w-full max-w-2xl">
+            <Card className="p-4 lg:p-6 w-full max-w-2xl">
               <div className="flex items-center gap-3 mb-4">
-                <AlertCircle className="w-6 h-6 text-[hsl(327,83%,50%)]" />
-                <h3 className="text-xl font-bold">Reportar Problema</h3>
+                <AlertCircle className="w-5 h-5 lg:w-6 lg:h-6 text-[hsl(327,83%,50%)]" />
+                <h3 className="text-lg lg:text-xl font-bold text-foreground">Reportar Problema</h3>
               </div>
               
               <form onSubmit={handleReportProblem} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">
+                  <label className="block text-sm font-medium mb-2 text-foreground">
                     Descrição do Problema
                   </label>
                   <textarea
@@ -789,10 +871,10 @@ export default function TeacherKitsPage() {
                   />
                 </div>
                 
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <Button 
                     type="submit"
-                    className="bg-[hsl(327,83%,50%)] hover:bg-[hsl(327,83%,50%)] text-white"
+                    className="bg-[hsl(327,83%,50%)] hover:bg-[hsl(327,83%,50%)] text-white flex-1"
                   >
                     <AlertCircle className="w-4 h-4 mr-2" />
                     Reportar Problema
@@ -804,6 +886,7 @@ export default function TeacherKitsPage() {
                       setSelectedRequestForReport(null);
                       setReportMessage("");
                     }}
+                    className="flex-1"
                   >
                     Cancelar
                   </Button>
@@ -812,10 +895,11 @@ export default function TeacherKitsPage() {
             </Card>
           </div>
         )}
+
         {/* Lista de Pedidos */}
-        <Card className="p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold">Os Meus Pedidos de Kits</h3>
+        <Card className="p-4 lg:p-6">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
+            <h3 className="text-base lg:text-lg font-semibold text-foreground">Os Meus Pedidos de Kits</h3>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Package className="w-4 h-4" />
               <span>{filteredRequests.length} pedido(s)</span>
@@ -829,11 +913,11 @@ export default function TeacherKitsPage() {
               ))}
             </div>
           ) : filteredRequests.length === 0 ? (
-            searchTerm || statusFilter !== "all" ? (
-              <Card className="p-8 text-center border-dashed">
-                <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-semibold mb-2">Nenhum resultado encontrado</h3>
-                <p className="text-muted-foreground">
+            searchTerm || statusFilter !== "all" || selectedCycle !== "all" || selectedYear !== "all" ? (
+              <Card className="p-6 lg:p-8 text-center border-dashed">
+                <Search className="w-10 h-10 lg:w-12 lg:h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                <h3 className="text-base lg:text-lg font-semibold mb-2 text-foreground">Nenhum resultado encontrado</h3>
+                <p className="text-muted-foreground text-sm lg:text-base">
                   Tente ajustar os termos de pesquisa ou filtros.
                 </p>
               </Card>
@@ -841,7 +925,7 @@ export default function TeacherKitsPage() {
               <EmptyState />
             )
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4 lg:space-y-6">
               {filteredRequests.map(request => (
                 <RequestCard key={request.id} request={request} />
               ))}
