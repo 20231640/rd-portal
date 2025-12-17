@@ -1,3 +1,4 @@
+// src/pages/TeacherTrainingsPage.jsx - VERSÃO CORRIGIDA COM MENU MOBILE
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "../components/ui/card";
@@ -143,9 +144,7 @@ export default function TeacherTrainingsPage() {
   if (loading) {
     return (
       <div className="flex min-h-screen bg-background">
-        <div className="hidden sm:block">
-          <Sidebar />
-        </div>
+        <Sidebar />
         <div className="flex-1 p-4 sm:p-6 lg:p-8">
           <div className="mb-6 lg:mb-8">
             <div className="h-8 lg:h-9 bg-gray-300 dark:bg-gray-700 rounded w-64 mb-2 animate-pulse"></div>
@@ -188,9 +187,7 @@ export default function TeacherTrainingsPage() {
 
   return (
     <div className="flex min-h-screen bg-background">
-      <div className="hidden sm:block">
-        <Sidebar />
-      </div>
+      <Sidebar />
       
       <div className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
         {/* Header */}

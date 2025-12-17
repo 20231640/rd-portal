@@ -44,7 +44,7 @@ router.get("/schools", async (req, res) => {
    ============================================ */
 router.post("/schools", async (req, res) => {
   try {
-    const { name, region, address } = req.body;
+    const { name, municipality, address } = req.body; // MUDADO: region → municipality
 
     if (!name?.trim()) {
       return res.status(400).json({ error: "Nome da escola é obrigatório" });
@@ -65,7 +65,7 @@ router.post("/schools", async (req, res) => {
     const school = await prisma.school.create({
       data: {
         name: name.trim(),
-        region: region?.trim() || null,
+        municipality: municipality?.trim() || null, // MUDADO: region → municipality
         approved: false,
         code: `SCH${Date.now()}`,
         archived: false
@@ -129,7 +129,7 @@ router.put("/schools/:id/approve", async (req, res) => {
 router.put("/schools/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, region } = req.body;
+    const { name, municipality } = req.body; // MUDADO: region → municipality
 
     if (!name?.trim()) {
       return res.status(400).json({ error: "Nome da escola é obrigatório" });
@@ -139,7 +139,7 @@ router.put("/schools/:id", async (req, res) => {
       where: { id: parseInt(id) },
       data: {
         name: name.trim(),
-        region: region?.trim() || null
+        municipality: municipality?.trim() || null // MUDADO: region → municipality
       },
       include: {
         teachers: {
@@ -297,7 +297,8 @@ router.get("/teachers", async (req, res) => {
             id: true,
             name: true,
             approved: true,
-            archived: true
+            archived: true,
+            municipality: true // MUDADO: Adicionado municipality
           }
         },
         classes: {
@@ -330,7 +331,8 @@ router.get("/teachers/:id", async (req, res) => {
           select: {
             id: true,
             name: true,
-            approved: true
+            approved: true,
+            municipality: true // MUDADO: Adicionado municipality
           }
         },
         classes: {
@@ -371,7 +373,8 @@ router.put("/teachers/:id/archive", async (req, res) => {
           select: {
             id: true,
             name: true,
-            approved: true
+            approved: true,
+            municipality: true // MUDADO: Adicionado municipality
           }
         },
         classes: {
@@ -413,7 +416,8 @@ router.put("/teachers/:id/restore", async (req, res) => {
           select: {
             id: true,
             name: true,
-            approved: true
+            approved: true,
+            municipality: true // MUDADO: Adicionado municipality
           }
         },
         classes: {
@@ -453,7 +457,8 @@ router.put("/teachers/:id/block", async (req, res) => {
           select: {
             id: true,
             name: true,
-            approved: true
+            approved: true,
+            municipality: true // MUDADO: Adicionado municipality
           }
         },
         classes: {
@@ -483,7 +488,7 @@ router.put("/teachers/:id/block", async (req, res) => {
 router.put("/teachers/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, phone } = req.body;
+    const { name, email, phone, municipality } = req.body; // MUDADO: Adicionado municipality
 
     // Verificar se email já existe noutro professor (só professores ativos)
     if (email) {
@@ -505,14 +510,22 @@ router.put("/teachers/:id", async (req, res) => {
       data: {
         ...(name && { name: name.trim() }),
         ...(email && { email: email.trim() }),
-        ...(phone !== undefined && { phone: phone?.trim() || null })
+        ...(phone !== undefined && { phone: phone?.trim() || null }),
+        ...(municipality !== undefined && {
+          school: {
+            update: {
+              municipality: municipality?.trim() || null // MUDADO: Atualiza municipality da escola
+            }
+          }
+        })
       },
       include: {
         school: {
           select: {
             id: true,
             name: true,
-            approved: true
+            approved: true,
+            municipality: true // MUDADO: Adicionado municipality
           }
         },
         classes: {

@@ -6,18 +6,18 @@ import {
 } from "recharts";
 import { MapPin, Users, School, Package } from "lucide-react";
 
-export function GeographyStats({ schools, teachers, classes, kitRequests, districts, selectedDistrict: initialDistrict, onDistrictChange }) {
-  const [selectedDistrict, setSelectedDistrict] = useState(initialDistrict || "");
+export function GeographyStats({ schools, teachers, classes, kitRequests, municipalities, selectedMunicipality: initialMunicipality, onMunicipalityChange }) { // MUDADO
+  const [selectedMunicipality, setSelectedMunicipality] = useState(initialMunicipality || ""); // MUDADO
   const [dataType, setDataType] = useState("schools"); // "schools", "teachers", "kits"
 
-  // Dados por distrito
-  const districtData = schools.reduce((acc, school) => {
-    const region = school.region || "Não Definido";
-    if (selectedDistrict && region !== selectedDistrict) return acc;
+  // Dados por município
+  const municipalityData = schools.reduce((acc, school) => {
+    const municipality = school.municipality || "Não Definido"; // MUDADO: region → municipality
+    if (selectedMunicipality && municipality !== selectedMunicipality) return acc;
 
-    if (!acc[region]) {
-      acc[region] = { 
-        region, 
+    if (!acc[municipality]) {
+      acc[municipality] = { 
+        municipality, // MUDADO
         schools: 0, 
         teachers: 0,
         classes: 0,
@@ -26,25 +26,25 @@ export function GeographyStats({ schools, teachers, classes, kitRequests, distri
       };
     }
     
-    acc[region].schools += 1;
-    acc[region].teachers += teachers.filter(t => t.schoolId === school.id).length;
+    acc[municipality].schools += 1;
+    acc[municipality].teachers += teachers.filter(t => t.schoolId === school.id).length;
     
     const schoolClasses = classes.filter(c => c.schoolId === school.id);
-    acc[region].classes += schoolClasses.length;
-    acc[region].students += schoolClasses.reduce((sum, cls) => sum + cls.students, 0);
+    acc[municipality].classes += schoolClasses.length;
+    acc[municipality].students += schoolClasses.reduce((sum, cls) => sum + cls.students, 0);
     
-    acc[region].kits += kitRequests.filter(k => 
+    acc[municipality].kits += kitRequests.filter(k => 
       schoolClasses.some(c => c.id === k.classId)
     ).length;
     
     return acc;
   }, {});
 
-  const chartData = Object.values(districtData).sort((a, b) => b[dataType] - a[dataType]);
+  const chartData = Object.values(municipalityData).sort((a, b) => b[dataType] - a[dataType]);
 
-  // Dados para mapa de calor (exemplo simplificado)
-  const regionDistribution = Object.entries(districtData).map(([region, data]) => ({
-    name: region,
+  // Dados para mapa de calor
+  const municipalityDistribution = Object.entries(municipalityData).map(([municipality, data]) => ({ // MUDADO
+    name: municipality,
     value: data.kits,
     schools: data.schools,
     students: data.students
@@ -63,18 +63,18 @@ export function GeographyStats({ schools, teachers, classes, kitRequests, distri
       <Card className="p-3 sm:p-4">
         <div className="flex flex-col gap-3 sm:gap-4">
           <div className="flex-1">
-            <label className="block text-sm font-medium mb-1 sm:mb-2">Filtrar por distrito:</label>
+            <label className="block text-sm font-medium mb-1 sm:mb-2">Filtrar por município:</label> {/* MUDADO */}
             <select
-              value={selectedDistrict}
+              value={selectedMunicipality}
               onChange={(e) => {
-                setSelectedDistrict(e.target.value);
-                onDistrictChange?.(e.target.value);
+                setSelectedMunicipality(e.target.value);
+                onMunicipalityChange?.(e.target.value); // MUDADO
               }}
               className="w-full h-9 sm:h-10 rounded-lg border border-input bg-background px-3 py-1 sm:py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             >
-              <option value="">Todos os Distritos</option>
-              {districts.map(d => (
-                <option key={d} value={d}>{d}</option>
+              <option value="">Todos os Municípios</option> {/* MUDADO */}
+              {municipalities.map(m => ( // MUDADO: districts → municipalities
+                <option key={m} value={m}>{m}</option>
               ))}
             </select>
           </div>
@@ -100,7 +100,7 @@ export function GeographyStats({ schools, teachers, classes, kitRequests, distri
         <div className="flex items-center gap-2 mb-3 sm:mb-4">
           <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 flex-shrink-0" />
           <h3 className="text-base sm:text-lg font-semibold break-words">
-            Distribuição por distrito - {dataType}
+            Distribuição por município - {dataType} {/* MUDADO */}
           </h3>
         </div>
         <div className="w-full overflow-x-auto -mx-2 sm:mx-0 px-2 sm:px-0">
@@ -111,7 +111,7 @@ export function GeographyStats({ schools, teachers, classes, kitRequests, distri
             >
              <CartesianGrid strokeDasharray="3 3" />
              <XAxis 
-               dataKey="region" 
+               dataKey="municipality" // MUDADO
                angle={-45} 
                textAnchor="end" 
                height={70}
@@ -151,12 +151,12 @@ export function GeographyStats({ schools, teachers, classes, kitRequests, distri
         </div>
       </Card>
 
-      {/* Resumo por Região - RESPONSIVO */}
+      {/* Resumo por Município - RESPONSIVO */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
         <Card className="p-3 text-center">
           <School className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 mx-auto mb-1 sm:mb-2" />
           <div className="text-lg sm:text-lg font-bold">
-            {Object.values(districtData).reduce((sum, d) => sum + d.schools, 0)}
+            {Object.values(municipalityData).reduce((sum, d) => sum + d.schools, 0)}
           </div>
           <div className="text-xs sm:text-sm text-muted-foreground">Escolas</div>
         </Card>
@@ -164,7 +164,7 @@ export function GeographyStats({ schools, teachers, classes, kitRequests, distri
         <Card className="p-3 text-center">
           <Users className="w-5 h-5 sm:w-6 sm:h-6 text-green-500 mx-auto mb-1 sm:mb-2" />
           <div className="text-lg sm:text-lg font-bold">
-            {Object.values(districtData).reduce((sum, d) => sum + d.teachers, 0)}
+            {Object.values(municipalityData).reduce((sum, d) => sum + d.teachers, 0)}
           </div>
           <div className="text-xs sm:text-sm text-muted-foreground">Professores</div>
         </Card>
@@ -172,7 +172,7 @@ export function GeographyStats({ schools, teachers, classes, kitRequests, distri
         <Card className="p-3 text-center">
           <Package className="w-5 h-5 sm:w-6 sm:h-6 text-orange-500 mx-auto mb-1 sm:mb-2" />
           <div className="text-lg sm:text-lg font-bold">
-            {Object.values(districtData).reduce((sum, d) => sum + d.kits, 0)}
+            {Object.values(municipalityData).reduce((sum, d) => sum + d.kits, 0)}
           </div>
           <div className="text-xs sm:text-sm text-muted-foreground">Kits</div>
         </Card>
@@ -180,7 +180,7 @@ export function GeographyStats({ schools, teachers, classes, kitRequests, distri
         <Card className="p-3 text-center">
           <Users className="w-5 h-5 sm:w-6 sm:h-6 text-purple-500 mx-auto mb-1 sm:mb-2" />
           <div className="text-lg sm:text-lg font-bold">
-            {Object.values(districtData).reduce((sum, d) => sum + d.students, 0)}
+            {Object.values(municipalityData).reduce((sum, d) => sum + d.students, 0)}
           </div>
           <div className="text-xs sm:text-sm text-muted-foreground">Alunos</div>
         </Card>

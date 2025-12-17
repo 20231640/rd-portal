@@ -9,7 +9,7 @@ router.post("/", async (req, res) => {
   try {
     console.log('📥 Recebendo dados para criar professor:', req.body);
     
-    const { supabaseUserId, name, email, phone, school, region } = req.body;
+    const { supabaseUserId, name, email, phone, school, municipality } = req.body; // MUDADO: region → municipality
 
     // VALIDAÇÕES
     if (!supabaseUserId || !name || !email) {
@@ -40,7 +40,7 @@ router.post("/", async (req, res) => {
       schoolRecord = await prisma.school.create({
         data: {
           name: school,
-          region: region || null,
+          municipality: municipality || null, // MUDADO: region → municipality
           approved: false,
           code: `SCH${Date.now()}`,
           archived: false
@@ -68,7 +68,7 @@ router.post("/", async (req, res) => {
             id: true,
             name: true,
             approved: true,
-            archived: true // ✅ Incluir status da escola
+            archived: true, // ✅ Incluir status da escola
           }
         }
       },

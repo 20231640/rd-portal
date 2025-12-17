@@ -22,7 +22,7 @@ export function ProblemsStats({ kitRequests, schools, classes, teachers }) {
         kitId: kit.id,
         kitType: kit.kitType || 'Não especificado',
         schoolName: schoolInfo?.name || 'Escola não encontrada',
-        region: schoolInfo?.region || 'Região não definida',
+        municipality: schoolInfo?.municipality || 'Município não definido', // MUDADO: region → municipality
         className: classInfo?.name || 'Turma não encontrada'
       };
     });
@@ -58,10 +58,10 @@ export function ProblemsStats({ kitRequests, schools, classes, teachers }) {
     }, {})
   ).map(([name, value]) => ({ name, value }));
 
-  // Problemas por região
-  const problemsByRegion = Object.entries(
+  // Problemas por município
+  const problemsByMunicipality = Object.entries( // MUDADO
     allReports.reduce((acc, report) => {
-      acc[report.region] = (acc[report.region] || 0) + 1;
+      acc[report.municipality] = (acc[report.municipality] || 0) + 1; // MUDADO
       return acc;
     }, {})
   ).map(([name, value]) => ({ name, value }))

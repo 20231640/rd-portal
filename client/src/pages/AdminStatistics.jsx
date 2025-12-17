@@ -7,8 +7,8 @@ import { KitsStats } from "./stats/KitsStats";
 import { SchoolsStats } from "./stats/SchoolsStats";
 import { ProblemsStats } from "./stats/ProblemsStats";
 import { API_URL } from "../config/api";
-import { Menu } from "lucide-react"; // ← Adicionar este ícone
-import { Button } from "../components/ui/button"; // ← Adicionar import do Button
+import { Menu } from "lucide-react";
+import { Button } from "../components/ui/button";
 
 export default function AdminStatistics() {
   const [schools, setSchools] = useState([]);
@@ -16,7 +16,7 @@ export default function AdminStatistics() {
   const [classes, setClasses] = useState([]);
   const [kitRequests, setKitRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDistrict, setSelectedDistrict] = useState("");
+  const [selectedMunicipality, setSelectedMunicipality] = useState(""); // MUDADO: district → municipality
   const [activeTab, setActiveTab] = useState("overview");
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
@@ -101,9 +101,9 @@ export default function AdminStatistics() {
     classes,
     schools,
     teachers,
-    selectedDistrict,
-    districts: [...new Set(schools.map(s => s.region || "Não Definido"))].sort(),
-    onDistrictChange: setSelectedDistrict
+    selectedMunicipality, // MUDADO
+    municipalities: [...new Set(schools.map(s => s.municipality || "Não Definido"))].sort(), // MUDADO: districts → municipalities
+    onMunicipalityChange: setSelectedMunicipality // MUDADO
   };
 
   // Renderização segura das tabs: evita página em branco se um componente filho lançar

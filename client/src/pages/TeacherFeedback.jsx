@@ -1,4 +1,4 @@
-// src/pages/TeacherFeedback.jsx - VERSÃO RESPONSIVA
+// src/pages/TeacherFeedback.jsx - VERSÃO CORRIGIDA COM MENU MOBILE
 import { useState, useEffect } from "react";
 import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -75,9 +75,7 @@ export default function TeacherFeedback() {
   if (loading) {
     return (
       <div className="flex min-h-screen bg-background">
-        <div className="hidden sm:block">
-          <Sidebar />
-        </div>
+        <Sidebar />
         <div className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
           <div className="mb-6">
             <h1 className="text-2xl lg:text-3xl font-bold text-foreground">Feedback & Relatórios</h1>
@@ -115,9 +113,7 @@ export default function TeacherFeedback() {
 
   return (
     <div className="flex min-h-screen bg-background">
-      <div className="hidden sm:block">
-        <Sidebar />
-      </div>
+      <Sidebar />
       
       <div className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
         {/* Header */}

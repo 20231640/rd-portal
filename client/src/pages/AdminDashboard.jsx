@@ -15,7 +15,7 @@ import {
   Download,
   Archive,
   RotateCcw,
-  Menu // ← Ícone novo adicionado
+  Menu
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
@@ -28,27 +28,71 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [newSchool, setNewSchool] = useState("");
-  const [newRegion, setNewRegion] = useState("");
+  const [newMunicipality, setNewMunicipality] = useState(""); // MUDADO: region → municipality
   const [editingSchoolId, setEditingSchoolId] = useState(null);
   const [editingTeacherId, setEditingTeacherId] = useState(null);
-  const [tempEditValue, setTempEditValue] = useState({ name: "", region: "" });
+  const [tempEditValue, setTempEditValue] = useState({ name: "", municipality: "" }); // MUDADO
   const [toast, setToast] = useState(null);
   const [expandedSchool, setExpandedSchool] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("schools");
-  const [selectedDistrict, setSelectedDistrict] = useState("all");
+  const [selectedMunicipality, setSelectedMunicipality] = useState("all"); // MUDADO: district → municipality
   const [selectedTeacherSchool, setSelectedTeacherSchool] = useState("all");
   const [archivedSchools, setArchivedSchools] = useState([]);
   const [archivedTeachers, setArchivedTeachers] = useState([]);
   const [showArchived, setShowArchived] = useState(false);
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false); // ← Estado novo
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-  const districts = [
-    "Aveiro", "Beja", "Braga", "Bragança", "Castelo Branco", 
-    "Coimbra", "Évora", "Faro", "Guarda", "Leiria", 
-    "Lisboa", "Portalegre", "Porto", "Santarém", "Setúbal", 
-    "Viana do Castelo", "Vila Real", "Viseu", "Região Autónoma da Madeira", "Região Autónoma dos Açores"
-  ];
+  // LISTA COMPLETA DE MUNICÍPIOS (em ordem alfabética)
+  const municipalities = [
+    "Abrantes", "Águeda", "Aguiar da Beira", "Alandroal", "Albergaria-a-Velha", "Albufeira",
+    "Alcácer do Sal", "Alcanena", "Alcobaça", "Alcochete", "Alcoutim", "Alenquer", "Alfândega da Fé",
+    "Alijó", "Aljezur", "Aljustrel", "Almada", "Almeida", "Almeirim", "Almodôvar", "Alpiarça",
+    "Alter do Chão", "Alvaiázere", "Alvito", "Amadora", "Amarante", "Amares", "Anadia",
+    "Angra do Heroísmo", "Ansião", "Arcos de Valdevez", "Arganil", "Armamar", "Arouca", "Arraiolos",
+    "Arronches", "Arruda dos Vinhos", "Aveiro", "Avis", "Azambuja", "Baião", "Barcelos", "Barrancos",
+    "Barreiro", "Batalha", "Beja", "Belmonte", "Benavente", "Bombarral", "Borba", "Boticas", "Braga",
+    "Bragança", "Cabeceiras de Basto", "Cadaval", "Caldas da Rainha", "Calheta (Açores)",
+    "Calheta (Madeira)", "Câmara de Lobos", "Caminha", "Campo Maior", "Cantanhede",
+    "Carrazeda de Ansiães", "Carregal do Sal", "Cartaxo", "Cascais", "Castanheira de Pêra",
+    "Castelo Branco", "Castelo de Paiva", "Castelo de Vide", "Castro Daire", "Castro Marim",
+    "Castro Verde", "Celorico da Beira", "Celorico de Basto", "Chamusca", "Chaves", "Cinfães",
+    "Coimbra", "Condeixa-a-Nova", "Constância", "Coruche", "Corvo", "Covilhã", "Crato", "Cuba",
+    "Elvas", "Entroncamento", "Espinho", "Esposende", "Estarreja", "Estremoz", "Évora", "Fafe",
+    "Faro", "Felgueiras", "Ferreira do Alentejo", "Ferreira do Zêzere", "Figueira da Foz",
+    "Figueira de Castelo Rodrigo", "Figueiró dos Vinhos", "Fornos de Algodres",
+    "Freixo de Espada à Cinta", "Fronteira", "Funchal", "Fundão", "Gavião", "Góis", "Golegã",
+    "Gondomar", "Gouveia", "Grândola", "Guarda", "Guimarães", "Horta", "Idanha-a-Nova", "Ílhavo",
+    "Lagoa", "Lagoa (Açores)", "Lagos", "Lajes das Flores", "Lajes do Pico", "Lamego", "Leiria",
+    "Lisboa", "Loulé", "Loures", "Lourinhã", "Lousã", "Lousada", "Mação", "Macedo de Cavaleiros",
+    "Machico", "Madalena", "Mafra", "Maia", "Mangualde", "Manteigas", "Marco de Canaveses",
+    "Marinha Grande", "Marvão", "Matosinhos", "Mealhada", "Mêda", "Melgaço", "Mértola", "Mesão Frio",
+    "Mira", "Miranda do Corvo", "Miranda do Douro", "Mirandela", "Mogadouro", "Moimenta da Beira",
+    "Moita", "Monção", "Monchique", "Mondim de Basto", "Monforte", "Montalegre", "Montemor-o-Novo",
+    "Montemor-o-Velho", "Montijo", "Mora", "Mortágua", "Moura", "Mourão", "Murça", "Murtosa",
+    "Nazaré", "Nelas", "Nisa", "Nordeste", "Óbidos", "Odemira", "Odivelas", "Oeiras", "Oleiros",
+    "Olhão", "Oliveira de Azeméis", "Oliveira de Frades", "Oliveira do Bairro",
+    "Oliveira do Hospital", "Ourém", "Ourique", "Ovar", "Paços de Ferreira", "Palmela",
+    "Pampilhosa da Serra", "Paredes", "Paredes de Coura", "Pedrógão Grande", "Penacova",
+    "Penafiel", "Penalva do Castelo", "Penamacor", "Penedono", "Penela", "Peniche", "Peso da Régua",
+    "Pinhel", "Pombal", "Ponta Delgada", "Ponta do Sol", "Ponte da Barca", "Ponte de Lima",
+    "Ponte de Sor", "Portalegre", "Portel", "Portimão", "Porto", "Porto de Mós", "Porto Moniz",
+    "Porto Santo", "Póvoa de Lanhoso", "Póvoa de Varzim", "Povoação", "Proença-a-Nova", "Redondo",
+    "Reguengos de Monsaraz", "Resende", "Ribeira Brava", "Ribeira de Pena", "Ribeira Grande",
+    "Rio Maior", "Sabrosa", "Sabugal", "Salvaterra de Magos", "Santa Comba Dão", "Santa Cruz",
+    "Santa Cruz da Graciosa", "Santa Cruz das Flores", "Santa Maria da Feira", "Santa Marta de Penaguião",
+    "Santana", "Santarém", "Santiago do Cacém", "Santo Tirso", "São Brás de Alportel", "São João da Madeira",
+    "São João da Pesqueira", "São Pedro do Sul", "São Roque do Pico", "São Vicente", "Sardoal", "Sátão",
+    "Seia", "Seixal", "Sernancelhe", "Serpa", "Sertã", "Sesimbra", "Setúbal", "Sever do Vouga", "Silves",
+    "Sines", "Sintra", "Sobral de Monte Agraço", "Soure", "Sousel", "Tábua", "Tabuaço", "Tarouca", "Tavira",
+    "Terras de Bouro", "Tomar", "Tondela", "Torre de Moncorvo", "Torres Novas", "Torres Vedras", "Trancoso",
+    "Trofa", "Vagos", "Vale de Cambra", "Valença", "Valongo", "Valpaços", "Vendas Novas", "Viana do Alentejo",
+    "Viana do Castelo", "Vidigueira", "Vieira do Minho", "Vila de Rei", "Vila do Bispo", "Vila do Conde",
+    "Vila do Porto", "Vila Flor", "Vila Franca de Xira", "Vila Franca do Campo", "Vila Nova da Barquinha",
+    "Vila Nova de Cerveira", "Vila Nova de Famalicão", "Vila Nova de Foz Côa", "Vila Nova de Gaia",
+    "Vila Nova de Paiva", "Vila Nova de Poiares", "Vila Pouca de Aguiar", "Vila Real", "Vila Real de Santo António",
+    "Vila Velha de Ródão", "Vila Viçosa", "Vimioso", "Vinhais", "Viseu", "Vizela", "Vouzela"
+  ].sort((a, b) => a.localeCompare(b, 'pt'));
   
   const navigate = useNavigate();
 
@@ -126,7 +170,7 @@ export default function AdminDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           name: newSchool.trim(), 
-          region: newRegion.trim(),
+          municipality: newMunicipality.trim(), // MUDADO: region → municipality
           address: "Morada a definir"
         }),
       });
@@ -134,7 +178,7 @@ export default function AdminDashboard() {
       if (!res.ok) throw new Error(data.message || "Erro ao criar escola");
       setSchools((prev) => [...prev, data]);
       setNewSchool("");
-      setNewRegion("");
+      setNewMunicipality(""); // MUDADO
       showToast("Escola criada com sucesso!");
     } catch (err) {
       console.error(err);
@@ -176,16 +220,16 @@ export default function AdminDashboard() {
   }
 
   // Escolas - Editar
-  async function saveSchoolEdit(id, { name, region }) {
+  async function saveSchoolEdit(id, { name, municipality }) { // MUDADO: region → municipality
     try {
       const res = await fetch(`${API_URL}/api/auth/schools/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, region }),
+        body: JSON.stringify({ name, municipality }), // MUDADO
       });
       if (!res.ok) throw new Error("Erro ao atualizar escola.");
       setSchools(prev =>
-        prev.map(s => s.id === id ? { ...s, name, region } : s)
+        prev.map(s => s.id === id ? { ...s, name, municipality } : s) // MUDADO
       );
       setEditingSchoolId(null);
       showToast("Escola atualizada com sucesso!");
@@ -397,38 +441,38 @@ export default function AdminDashboard() {
   // Filtros ativos
   const filteredSchools = schools.filter(school =>
     (school.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     school.region?.toLowerCase().includes(searchTerm.toLowerCase())) &&
-    (selectedDistrict === "all" || school.region === selectedDistrict)
+     school.municipality?.toLowerCase().includes(searchTerm.toLowerCase())) && // MUDADO
+    (selectedMunicipality === "all" || school.municipality === selectedMunicipality) // MUDADO
   );
 
   const filteredTeachers = teachers.filter(teacher => {
     const schoolName = schools.find(s => s.id === teacher.schoolId)?.name || "";
-    const schoolRegion = schools.find(s => s.id === teacher.schoolId)?.region;
+    const schoolMunicipality = schools.find(s => s.id === teacher.schoolId)?.municipality; // MUDADO
     const matchesSearch = teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           teacher.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           schoolName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSchoolFilter = selectedTeacherSchool === "all" || String(teacher.schoolId) === String(selectedTeacherSchool);
-    const matchesDistrictFilter = selectedDistrict === "all" || schoolRegion === selectedDistrict;
-    return matchesSearch && matchesSchoolFilter && matchesDistrictFilter;
+    const matchesMunicipalityFilter = selectedMunicipality === "all" || schoolMunicipality === selectedMunicipality; // MUDADO
+    return matchesSearch && matchesSchoolFilter && matchesMunicipalityFilter;
   });
 
   // Filtros arquivados
   const filteredArchivedSchools = archivedSchools.filter(school =>
     (school.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     school.region?.toLowerCase().includes(searchTerm.toLowerCase())) &&
-    (selectedDistrict === "all" || school.region === selectedDistrict)
+     school.municipality?.toLowerCase().includes(searchTerm.toLowerCase())) && // MUDADO
+    (selectedMunicipality === "all" || school.municipality === selectedMunicipality) // MUDADO
   );
 
   const filteredArchivedTeachers = archivedTeachers.filter(teacher => {
     const allSchools = [...schools, ...archivedSchools];
     const schoolName = allSchools.find(s => s.id === teacher.schoolId)?.name || "";
-    const schoolRegion = allSchools.find(s => s.id === teacher.schoolId)?.region;
+    const schoolMunicipality = allSchools.find(s => s.id === teacher.schoolId)?.municipality; // MUDADO
     const matchesSearch = teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           teacher.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           schoolName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSchoolFilter = selectedTeacherSchool === "all" || String(teacher.schoolId) === String(selectedTeacherSchool);
-    const matchesDistrictFilter = selectedDistrict === "all" || schoolRegion === selectedDistrict;
-    return matchesSearch && matchesSchoolFilter && matchesDistrictFilter;
+    const matchesMunicipalityFilter = selectedMunicipality === "all" || schoolMunicipality === selectedMunicipality; // MUDADO
+    return matchesSearch && matchesSchoolFilter && matchesMunicipalityFilter;
   });
 
   // Loading State
@@ -529,14 +573,14 @@ export default function AdminDashboard() {
             </div>
             
             <select
-              value={selectedDistrict}
-              onChange={(e) => setSelectedDistrict(e.target.value)}
+              value={selectedMunicipality} // MUDADO
+              onChange={(e) => setSelectedMunicipality(e.target.value)} // MUDADO
               className="h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              aria-label="Filtrar por distrito"
+              aria-label="Filtrar por município" // MUDADO
             >
-              <option value="all">Todos os distritos</option>
-              {districts.map((d) => (
-                <option key={d} value={d}>{d}</option>
+              <option value="all">Todos os municípios</option> {/* MUDADO */}
+              {municipalities.map((m) => ( // MUDADO: districts → municipalities
+                <option key={m} value={m}>{m}</option>
               ))}
             </select>
 
@@ -566,13 +610,13 @@ export default function AdminDashboard() {
           
           <div className="flex gap-3">
             <select
-              value={selectedDistrict}
-              onChange={(e) => setSelectedDistrict(e.target.value)}
+              value={selectedMunicipality} // MUDADO
+              onChange={(e) => setSelectedMunicipality(e.target.value)} // MUDADO
               className="flex-1 h-12 rounded-lg border border-input bg-background px-4 text-base focus:outline-none focus:ring-2 focus:ring-primary"
             >
-              <option value="all">Todos distritos</option>
-              {districts.map((d) => (
-                <option key={d} value={d}>{d}</option>
+              <option value="all">Todos municípios</option> {/* MUDADO */}
+              {municipalities.map((m) => ( // MUDADO: districts → municipalities
+                <option key={m} value={m}>{m}</option>
               ))}
             </select>
 
@@ -641,14 +685,14 @@ export default function AdminDashboard() {
                     />
 
                     <select
-                      value={newRegion}
-                      onChange={(e) => setNewRegion(e.target.value)}
+                      value={newMunicipality} // MUDADO
+                      onChange={(e) => setNewMunicipality(e.target.value)} // MUDADO
                       required
                       className="w-full h-12 rounded-lg border border-input bg-background px-4 text-base focus:outline-none focus:ring-2 focus:ring-primary"
                     >
-                      <option value="">Selecionar Distrito</option>
-                      {districts.map((d) => (
-                        <option key={d} value={d}>{d}</option>
+                      <option value="">Selecionar Município</option> {/* MUDADO */}
+                      {municipalities.map((m) => ( // MUDADO: districts → municipalities
+                        <option key={m} value={m}>{m}</option>
                       ))}
                     </select>
 
@@ -685,13 +729,13 @@ export default function AdminDashboard() {
                                     />
                                     
                                     <select
-                                      value={tempEditValue.region}
-                                      onChange={(e) => setTempEditValue(prev => ({ ...prev, region: e.target.value }))}
+                                      value={tempEditValue.municipality} // MUDADO
+                                      onChange={(e) => setTempEditValue(prev => ({ ...prev, municipality: e.target.value }))} // MUDADO
                                       className="w-full sm:w-auto h-8 rounded border border-input bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                                     >
-                                      <option value="">Selecionar Distrito</option>
-                                      {districts.map((d) => (
-                                        <option key={d} value={d}>{d}</option>
+                                      <option value="">Selecionar Município</option> {/* MUDADO */}
+                                      {municipalities.map((m) => ( // MUDADO: districts → municipalities
+                                        <option key={m} value={m}>{m}</option>
                                       ))}
                                     </select>
 
@@ -718,15 +762,15 @@ export default function AdminDashboard() {
                                       className="font-semibold cursor-pointer hover:text-primary transition-colors text-lg sm:text-base"
                                       onClick={() => {
                                         setEditingSchoolId(school.id);
-                                        setTempEditValue({ name: school.name, region: school.region || "" });
+                                        setTempEditValue({ name: school.name, municipality: school.municipality || "" }); // MUDADO
                                       }}
                                     >
                                       {school.name}
                                     </h3>
                                     <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-sm text-muted-foreground mt-1">
                                       <p>{teachers.filter(t => t.schoolId === school.id).length} professores</p>
-                                      {school.region && (
-                                        <p>📍 {school.region}</p>
+                                      {school.municipality && ( // MUDADO
+                                        <p>📍 {school.municipality}</p> // MUDADO
                                       )}
                                     </div>
                                   </div>
@@ -833,7 +877,7 @@ export default function AdminDashboard() {
                                 {school.name}
                               </h3>
                               <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-sm text-amber-600 dark:text-amber-400 mt-1">
-                                {school.region && <p>📍 {school.region}</p>}
+                                {school.municipality && <p>📍 {school.municipality}</p>} {/* MUDADO */}
                                 <p>Arquivada em: {new Date(school.archivedAt).toLocaleDateString('pt-PT')}</p>
                               </div>
                             </div>

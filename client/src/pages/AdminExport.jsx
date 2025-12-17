@@ -5,7 +5,7 @@ import { Button } from "../components/ui/button";
 import { 
   Download, BarChart3, Package, Users, Database,
   FileSpreadsheet, TrendingUp, Calendar, CheckCircle,
-  Menu // ← Adicionar este ícone
+  Menu
 } from "lucide-react";
 import * as XLSX from 'xlsx';
 import { API_URL } from "../config/api";
@@ -91,9 +91,7 @@ export default function AdminExport() {
         'Escolas': schools.map(school => ({
           'ID': school.id,
           'Nome': school.name,
-          'Distrito': school.district || 'N/A',
-          'Concelho': school.municipality || 'N/A',
-          'Código Postal': school.postalCode || 'N/A',
+          'Município': school.municipality || 'N/A', // MUDADO: district → municipality
           'Endereço': school.address || 'N/A',
           'Telefone': school.phone || 'N/A',
           'Email': school.email || 'N/A',
@@ -111,6 +109,7 @@ export default function AdminExport() {
           'Telefone': teacher.phone || 'Não definido',
           'Escola': teacher.school?.name || 'N/A',
           'Escola ID': teacher.schoolId,
+          'Município Escola': teacher.school?.municipality || 'N/A', // MUDADO
           'Bloqueado': teacher.blocked ? 'Sim' : 'Não',
           'Aprovado pela Escola': teacher.schoolApproved ? 'Sim' : 'Não',
           'Formação Completa': teacher.hasCompletedTraining ? 'Sim' : 'Não',
@@ -132,6 +131,7 @@ export default function AdminExport() {
           'Professor': cls.teacher?.name || 'N/A',
           'Professor Email': cls.teacher?.email || 'N/A',
           'Escola': cls.school?.name || 'N/A',
+          'Município': cls.school?.municipality || 'N/A', // MUDADO
           'Estado': cls.state || 'ACTIVE',
           'Data Criação': cls.createdAt ? new Date(cls.createdAt).toLocaleDateString('pt-PT') : 'N/A',
           'Total Kits': kitRequests.filter(k => k.classId === cls.id).length
@@ -145,6 +145,7 @@ export default function AdminExport() {
           'Professor Email': kit.teacher?.email || 'N/A',
           'Professor Telefone': kit.teacher?.phone || 'N/A',
           'Escola': kit.teacher?.school?.name || 'N/A',
+          'Município Escola': kit.teacher?.school?.municipality || 'N/A', // MUDADO
           'Turma': kit.class?.name || 'N/A',
           'Turma Código': kit.class?.code || 'N/A',
           'Número Alunos Turma': kit.class?.students || 0,
@@ -163,6 +164,7 @@ export default function AdminExport() {
             'Tipo Kit': kit.kitType,
             'Professor': kit.teacher?.name || 'N/A',
             'Escola': kit.teacher?.school?.name || 'N/A',
+            'Município': kit.teacher?.school?.municipality || 'N/A', // MUDADO
             'Turma': kit.class?.name || 'N/A',
             'Data Pedido': new Date(kit.requestedAt).toLocaleDateString('pt-PT'),
             'Data Entrega': kit.deliveredAt ? new Date(kit.deliveredAt).toLocaleDateString('pt-PT') : 'N/A',
@@ -178,6 +180,7 @@ export default function AdminExport() {
             'Tipo Kit': kit.kitType,
             'Professor': kit.teacher?.name || 'N/A',
             'Escola': kit.teacher?.school?.name || 'N/A',
+            'Município': kit.teacher?.school?.municipality || 'N/A', // MUDADO
             'Turma': kit.class?.name || 'N/A',
             'Data Pedido': new Date(kit.requestedAt).toLocaleString('pt-PT'),
             'Dias Pendente': Math.floor((new Date() - new Date(kit.requestedAt)) / (1000 * 60 * 60 * 24))
@@ -220,9 +223,7 @@ export default function AdminExport() {
         'Escolas': schools.map(school => ({
           'ID': school.id,
           'Nome': school.name,
-          'Distrito': school.district || 'N/A',
-          'Concelho': school.municipality || 'N/A',
-          'Código Postal': school.postalCode || 'N/A',
+          'Município': school.municipality || 'N/A', // MUDADO
           'Endereço': school.address || 'N/A',
           'Telefone': school.phone || 'N/A',
           'Email': school.email || 'N/A',
@@ -236,6 +237,7 @@ export default function AdminExport() {
           'Email': teacher.email,
           'Telefone': teacher.phone || 'Não definido',
           'Escola': teacher.school?.name || 'N/A',
+          'Município Escola': teacher.school?.municipality || 'N/A', // MUDADO
           'Bloqueado': teacher.blocked ? 'Sim' : 'Não',
           'Aprovado': teacher.schoolApproved ? 'Sim' : 'Não',
           'Formação Completa': teacher.hasCompletedTraining ? 'Sim' : 'Não',
@@ -251,6 +253,7 @@ export default function AdminExport() {
           'Ano': cls.year,
           'Professor': cls.teacher?.name || 'N/A',
           'Escola': cls.school?.name || 'N/A',
+          'Município': cls.school?.municipality || 'N/A', // MUDADO
           'Estado': cls.state || 'ACTIVE'
         }))
       };
@@ -290,6 +293,7 @@ export default function AdminExport() {
           'Professor': kit.teacher?.name || 'N/A',
           'Email Professor': kit.teacher?.email || 'N/A',
           'Escola': kit.teacher?.school?.name || 'N/A',
+          'Município Escola': kit.teacher?.school?.municipality || 'N/A', // MUDADO
           'Turma': kit.class?.name || 'N/A',
           'Alunos': kit.class?.students || 0,
           'Data Pedido': new Date(kit.requestedAt).toLocaleString('pt-PT'),
@@ -356,7 +360,7 @@ export default function AdminExport() {
           'Email': kit.teacher?.email || 'N/A',
           'Telefone': kit.teacher?.phone || 'N/A',
           'Escola': kit.teacher?.school?.name || 'N/A',
-          'Distrito': kit.teacher?.school?.district || 'N/A',
+          'Município': kit.teacher?.school?.municipality || 'N/A', // MUDADO
           'Turma': kit.class?.name || 'N/A',
           'Alunos': kit.class?.students || 0,
           'Data Pedido': new Date(kit.requestedAt).toLocaleDateString('pt-PT'),
@@ -438,7 +442,6 @@ export default function AdminExport() {
         {/* Header */}
         <div className="hidden sm:flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            {/* CORREÇÃO: Remover ícone FileSpreadsheet antes do título */}
             <h1 className="text-2xl sm:text-3xl font-bold">
               Exportar Dados
             </h1>
@@ -450,7 +453,6 @@ export default function AdminExport() {
 
         {/* Exportação Principal */}
         <Card className="p-4 sm:p-6">
-          {/* CORREÇÃO: Remover ícone Database antes do título */}
           <h2 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4">
             Exportação Completa do Sistema
           </h2>
@@ -493,7 +495,6 @@ export default function AdminExport() {
         {/* Exportações Específicas */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           <Card className="p-4 sm:p-6 hover:shadow-lg transition-shadow">
-            {/* CORREÇÃO: Remover ícone Users antes do título */}
             <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
               Exportação de Utilizadores
             </h3>
@@ -514,7 +515,6 @@ export default function AdminExport() {
           </Card>
 
           <Card className="p-4 sm:p-6 hover:shadow-lg transition-shadow">
-            {/* CORREÇÃO: Remover ícone Package antes do título */}
             <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
               Exportação de Kits
             </h3>
@@ -547,7 +547,6 @@ export default function AdminExport() {
         {/* Histórico de Exportações */}
         {recentExports.length > 0 && (
           <Card className="p-4 sm:p-6">
-            {/* CORREÇÃO: Remover ícone Calendar antes do título */}
             <h3 className="text-lg font-semibold mb-3 sm:mb-4">
               Exportações Recentes
             </h3>
@@ -574,7 +573,6 @@ export default function AdminExport() {
 
         {/* Informações Técnicas */}
         <Card className="p-4 sm:p-6">
-          {/* CORREÇÃO: Remover ícone TrendingUp antes do título */}
           <h3 className="text-lg font-semibold mb-3 sm:mb-4">
             Funcionalidades de Exportação
           </h3>

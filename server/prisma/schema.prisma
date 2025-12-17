@@ -8,17 +8,17 @@ datasource db {
 }
 
 model School {
-  id         Int       @id @default(autoincrement())
-  name       String    @unique
-  code       String?   @unique
-  approved   Boolean   @default(false)
-  region     String?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  archived   Boolean   @default(false)
-  archivedAt DateTime?
-  classes    Class[]
-  teachers   Teacher[]
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  code        String?   @unique
+  approved    Boolean   @default(false)
+  municipality String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  archived    Boolean   @default(false)
+  archivedAt  DateTime?
+  classes     Class[]
+  teachers    Teacher[]
 }
 
 model TrainingSession {

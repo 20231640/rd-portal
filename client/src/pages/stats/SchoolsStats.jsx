@@ -21,7 +21,7 @@ export function SchoolsStats({ schools, teachers, classes, kitRequests }) {
     return {
       id: school.id,
       name: school.name,
-      region: school.region || "Não Definido",
+      municipality: school.municipality || "Não Definido",
       classes: schoolClasses.length,
       teachers: schoolTeachers.length,
       students: schoolClasses.reduce((sum, cls) => sum + cls.students, 0),
@@ -40,10 +40,10 @@ export function SchoolsStats({ schools, teachers, classes, kitRequests }) {
     { range: "16+ turmas", count: topSchools.filter(s => s.classes > 15).length }
   ];
 
-  // Escolas por região (top 5)
-  const regionsData = Object.entries(
+  // Escolas por município (top 5)
+  const municipalitiesData = Object.entries(
     topSchools.reduce((acc, school) => {
-      acc[school.region] = (acc[school.region] || 0) + 1;
+      acc[school.municipality] = (acc[school.municipality] || 0) + 1;
       return acc;
     }, {})
   )
@@ -62,7 +62,7 @@ export function SchoolsStats({ schools, teachers, classes, kitRequests }) {
     avgStudentsPerSchool: schools.length > 0 ? (classes.reduce((sum, cls) => sum + cls.students, 0) / schools.length).toFixed(0) : 0
   };
 
-  // Timeline por regiões
+  // Timeline por municípios
   const parseDateSafe = (d) => d ? (isNaN(new Date(d).getTime()) ? null : new Date(d)) : null;
 
   const schoolDates = schools.map(s => parseDateSafe(s.createdAt)).filter(Boolean);
@@ -81,17 +81,18 @@ export function SchoolsStats({ schools, teachers, classes, kitRequests }) {
   const [selectedMonth, setSelectedMonth] = useState('all');
   const [selectedYearFilter, setSelectedYearFilter] = useState('all');
 
-  // Top regiões
-  const regionCounts = schools.reduce((acc, s) => {
-    const r = s.region || "Não Definido";
-    acc[r] = (acc[r] || 0) + 1;
+  // Contagem total de municípios (para top municípios)
+  const allMunicipalityCounts = schools.reduce((acc, s) => {
+    const m = s.municipality || "Não Definido";
+    acc[m] = (acc[m] || 0) + 1;
     return acc;
   }, {});
-  const topRegions = Object.entries(regionCounts)
+  
+  const topMunicipalities = Object.entries(allMunicipalityCounts)
     .sort((a,b) => b[1] - a[1])
     .slice(0, 4)
     .map(([r]) => r);
-  const seriesRegions = [...topRegions, "Outros"];
+  const seriesMunicipalities = [...topMunicipalities, "Outros"];
 
   const buildSchoolTimeline = () => {
     if (selectedMonth === 'all') {
@@ -102,16 +103,16 @@ export function SchoolsStats({ schools, teachers, classes, kitRequests }) {
         const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
         if (!monthly[key]) {
           monthly[key] = { month: `${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`, ts: new Date(d.getFullYear(), d.getMonth(), 1) };
-          seriesRegions.forEach(sr => monthly[key][sr] = 0);
+          seriesMunicipalities.forEach(sr => monthly[key][sr] = 0);
         }
-        const region = school.region || "Não Definido";
-        if (topRegions.includes(region)) monthly[key][region] += 1;
+        const municipality = school.municipality || "Não Definido";
+        if (topMunicipalities.includes(municipality)) monthly[key][municipality] += 1;
         else monthly[key]["Outros"] += 1;
       });
       monthsList.forEach(m => {
         if (!monthly[m.key]) {
           monthly[m.key] = { month: m.label, ts: m.ts };
-          seriesRegions.forEach(sr => monthly[m.key][sr] = 0);
+          seriesMunicipalities.forEach(sr => monthly[m.key][sr] = 0);
         }
       });
       return Object.values(monthly)
@@ -125,7 +126,7 @@ export function SchoolsStats({ schools, teachers, classes, kitRequests }) {
         const day = i+1;
         const dt = new Date(y, mm-1, day);
         const obj = { label: `${String(day).padStart(2,'0')}/${String(mm).padStart(2,'0')}`, ts: dt };
-        seriesRegions.forEach(sr => obj[sr] = 0);
+        seriesMunicipalities.forEach(sr => obj[sr] = 0);
         return obj;
       });
       schools.forEach(school => {
@@ -133,8 +134,8 @@ export function SchoolsStats({ schools, teachers, classes, kitRequests }) {
         if (!d) return;
         if (d.getFullYear() === y && (d.getMonth()+1) === mm) {
           const idx = d.getDate() - 1;
-          const region = school.region || "Não Definido";
-          if (topRegions.includes(region)) days[idx][region] += 1;
+          const municipality = school.municipality || "Não Definido";
+          if (topMunicipalities.includes(municipality)) days[idx][municipality] += 1;
           else days[idx]["Outros"] += 1;
         }
       });
@@ -144,7 +145,7 @@ export function SchoolsStats({ schools, teachers, classes, kitRequests }) {
 
   const timelineData = buildSchoolTimeline();
  
-  const buildDistrictCounts = () => {
+  const buildMunicipalityCountsForPeriod = () => {
     const counts = {};
     const periodSchools = schools.filter(school => {
       const d = parseDateSafe(school.createdAt);
@@ -158,13 +159,13 @@ export function SchoolsStats({ schools, teachers, classes, kitRequests }) {
       }
     });
     periodSchools.forEach(s => {
-      const region = s.region || "Não Definido";
-      counts[region] = (counts[region] || 0) + 1;
+      const municipality = s.municipality || "Não Definido";
+      counts[municipality] = (counts[municipality] || 0) + 1;
     });
     return Object.entries(counts).map(([name, value]) => ({ name, value })).sort((a,b) => b.value - a.value);
   };
 
-  const districtCounts = buildDistrictCounts();
+  const municipalityPeriodCounts = buildMunicipalityCountsForPeriod();
 
   return (
     <div className="space-y-4 sm:space-y-6 px-2 sm:px-0">
@@ -218,7 +219,7 @@ export function SchoolsStats({ schools, teachers, classes, kitRequests }) {
                     <div className="font-medium text-sm sm:text-base truncate">{school.name}</div>
                     <div className="text-xs text-muted-foreground flex items-center gap-1">
                       <MapPin className="w-3 h-3 flex-shrink-0" />
-                      <span className="truncate">{school.region}</span>
+                      <span className="truncate">{school.municipality}</span>
                     </div>
                   </div>
                 </div>
@@ -233,17 +234,17 @@ export function SchoolsStats({ schools, teachers, classes, kitRequests }) {
           </div>
         </Card>
 
-        {/* Distribuição por Região - RESPONSIVO */}
+        {/* Distribuição por Município - RESPONSIVO */}
         <Card className="p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-3 sm:mb-4">
             <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-red-500 flex-shrink-0" />
-            <h3 className="text-base sm:text-lg font-semibold break-words">Top Escolas por Região</h3>
+            <h3 className="text-base sm:text-lg font-semibold break-words">Top Escolas por Município</h3>
           </div>
           <div className="w-full overflow-x-auto">
             <ResponsiveContainer width="100%" minHeight={250} height={300}>
               <PieChart>
                 <Pie
-                  data={regionsData}
+                  data={municipalitiesData}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
@@ -253,7 +254,7 @@ export function SchoolsStats({ schools, teachers, classes, kitRequests }) {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {regionsData.map((entry, index) => (
+                  {municipalitiesData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={`hsl(${index * 70}, 70%, 60%)`} />
                   ))}
                 </Pie>
@@ -270,13 +271,13 @@ export function SchoolsStats({ schools, teachers, classes, kitRequests }) {
         </Card>
       </div>
 
-      {/* Distribuição por Regiões - OTIMIZADO PARA MOBILE */}
+      {/* Distribuição por Municípios - OTIMIZADO PARA MOBILE */}
       <Card className="p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3 sm:mb-4">
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <School className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 flex-shrink-0" />
             <h3 className="text-base sm:text-lg font-semibold break-words">
-              Escolas Criadas por Região
+              Escolas Criadas por Município
             </h3>
           </div>
           
@@ -310,7 +311,7 @@ export function SchoolsStats({ schools, teachers, classes, kitRequests }) {
         </div>
 
         <div className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
-          Vê quantas escolas foram criadas por região ao longo do tempo. Seleciona um mês para ver contagens diárias.
+          Vê quantas escolas foram criadas por município ao longo do tempo. Seleciona um mês para ver contagens diárias.
         </div>
 
         <div className="w-full overflow-x-auto -mx-2 sm:mx-0 px-2 sm:px-0">
@@ -333,14 +334,14 @@ export function SchoolsStats({ schools, teachers, classes, kitRequests }) {
                 paddingTop: '10px'
               }}
             />
-            {seriesRegions.map((region, idx) => {
+            {seriesMunicipalities.map((municipality, idx) => {
               const colors = ['#3b82f6', '#f59e0b', '#fb923c', '#10b981', '#9ca3af'];
               return (
                 <Area
-                  key={region}
+                  key={municipality}
                   type="monotone"
-                  dataKey={region}
-                  name={region}
+                  dataKey={municipality}
+                  name={municipality}
                   stroke={colors[idx % colors.length]}
                   fill={colors[idx % colors.length]}
                   fillOpacity={0.18 - (idx * 0.02)}
@@ -352,20 +353,20 @@ export function SchoolsStats({ schools, teachers, classes, kitRequests }) {
         </div>
        </Card>
  
-       {/* Distritos - RESPONSIVO */}
+       {/* Municípios - RESPONSIVO */}
        <Card className="p-4 sm:p-6">
         <div className="flex items-center gap-2 mb-3 sm:mb-4">
           <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-red-500 flex-shrink-0" />
           <h3 className="text-base sm:text-lg font-semibold break-words">
-            Escolas por Distrito (período seleccionado)
+            Escolas por Município (período seleccionado)
           </h3>
         </div>
         <div className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
-          Quantidade de escolas registadas no mês/ano seleccionado por distrito
+          Quantidade de escolas registadas no mês/ano seleccionado por município
         </div>
         <div className="w-full overflow-x-auto -mx-2 sm:mx-0 px-2 sm:px-0">
           <ResponsiveContainer width="100%" minHeight={250} height={300} className="text-xs">
-             <BarChart data={districtCounts} margin={{ top: 20, right: 10, left: 0, bottom: 30 }}>
+             <BarChart data={municipalityPeriodCounts} margin={{ top: 20, right: 10, left: 0, bottom: 30 }}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis 
               dataKey="name" 
@@ -378,7 +379,7 @@ export function SchoolsStats({ schools, teachers, classes, kitRequests }) {
             <YAxis fontSize={11} />
             <Tooltip formatter={(value) => [`${value} escolas`, 'Quantidade']} />
             <Bar dataKey="value" name="Escolas" fill="#6366f1">
-              {districtCounts.map((entry, index) => <Cell key={`cell-${index}`} fill={`hsl(${index*35}, 70%, 50%)`} />)}
+              {municipalityPeriodCounts.map((entry, index) => <Cell key={`cell-${index}`} fill={`hsl(${index*35}, 70%, 50%)`} />)}
             </Bar>
           </BarChart>
           </ResponsiveContainer>

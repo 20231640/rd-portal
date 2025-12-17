@@ -1,4 +1,4 @@
-// TeacherKitsPage.jsx - VERSÃO RESPONSIVA
+// TeacherKitsPage.jsx - VERSÃO CORRIGIDA COM MENU MOBILE
 import { useState, useEffect, useRef } from "react";
 import { Sidebar } from "../components/ui/sidebar";
 import { Card } from "../components/ui/card";
@@ -487,9 +487,7 @@ export default function TeacherKitsPage() {
   if (error) {
     return (
       <div className="flex min-h-screen bg-background">
-        <div className="hidden sm:block">
-          <Sidebar />
-        </div>
+        <Sidebar />
         <div className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full flex items-center justify-center">
           <Card className="p-6 text-center">
             <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
@@ -507,9 +505,8 @@ export default function TeacherKitsPage() {
 
   return (
     <div className="flex min-h-screen bg-background" onClick={clearNotifications}>
-      <div className="hidden sm:block">
-        <Sidebar />
-      </div>
+      <Sidebar />
+      
       <div className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
         {/* Header com controles de atualização */}
         <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6 lg:mb-8">
