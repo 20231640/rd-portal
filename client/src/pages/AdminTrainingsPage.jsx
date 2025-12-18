@@ -8,25 +8,15 @@ import axios from "axios";
 import { CompleteTrainingModal } from "../components/ui/CompleteTrainingModal";
 import { API_URL } from "../config/api";
 
-const cycles = {
-  "Pré-Escolar": ["3 anos", "4 anos", "5 anos"],
-  "1º Ciclo": ["1º ano", "2º ano", "3º ano", "4º ano"],
-  "2º Ciclo": ["5º ano", "6º ano"],
-  "3º Ciclo": ["7º ano", "8º ano", "9º ano"],
-  "Secundário": ["10º ano", "11º ano", "12º ano"]
-};
-
 export default function AdminTrainingsPage() {
   const [trainings, setTrainings] = useState([]);
   const [allTeachers, setAllTeachers] = useState([]);
-  const [allClasses, setAllClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [trainingToComplete, setTrainingToComplete] = useState(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   
-  // Filtros hierárquicos
-  const [selectedCycle, setSelectedCycle] = useState("");
+  // Filtros
   const [selectedSchools, setSelectedSchools] = useState([]);
   const [selectedTeacherIds, setSelectedTeacherIds] = useState([]);
   
@@ -40,15 +30,13 @@ export default function AdminTrainingsPage() {
   // Buscar dados
   const fetchData = async () => {
     try {
-      const [trainingsRes, teachersRes, classesRes] = await Promise.all([
+      const [trainingsRes, teachersRes] = await Promise.all([
         axios.get(`${API_URL}/api/trainings`),
-        axios.get(`${API_URL}/api/auth/teachers`),
-        axios.get(`${API_URL}/api/classes`)
+        axios.get(`${API_URL}/api/auth/teachers`)
       ]);
 
       setTrainings(trainingsRes.data);
       setAllTeachers(teachersRes.data);
-      setAllClasses(classesRes.data);
     } catch (err) {
       console.error("Erro ao carregar dados:", err);
     } finally {
@@ -60,49 +48,57 @@ export default function AdminTrainingsPage() {
     fetchData();
   }, []);
 
-  // Filtrar escolas baseado no ciclo selecionado
+  // Obter todas as escolas disponíveis
   const getAvailableSchools = () => {
-    if (!selectedCycle) return [];
-    
-    const teacherIdsInCycle = new Set(
-      allClasses
-        .filter(cls => cls.cycle === selectedCycle)
-        .map(cls => cls.teacherId)
-    );
-    
     const schoolsMap = new Map();
+    
+    // Filtrar professores ativos com escolas aprovadas
     allTeachers
-      .filter(teacher => 
-        !teacher.blocked && 
-        teacher.schoolApproved &&
-        teacherIdsInCycle.has(teacher.id)
-      )
+      .filter(teacher => {
+        // Professor ativo (não bloqueado, não arquivado)
+        const teacherActive = !teacher.blocked && !teacher.archived;
+        
+        // Escola aprovada e ativa
+        const schoolActive = teacher.school && 
+                           teacher.school.approved && 
+                           !teacher.school.archived;
+        
+        return teacherActive && schoolActive;
+      })
       .forEach(teacher => {
-        if (teacher.school && !schoolsMap.has(teacher.school.id)) {
+        if (teacher.school && teacher.school.id) {
           schoolsMap.set(teacher.school.id, teacher.school);
         }
       });
     
-    return Array.from(schoolsMap.values());
+    return Array.from(schoolsMap.values()).sort((a, b) => 
+      a.name.localeCompare(b.name)
+    );
   };
 
-  // Filtrar professores baseado no ciclo e escolas selecionadas
+  // Filtrar professores baseado nas escolas selecionadas
   const getAvailableTeachers = () => {
-    if (!selectedCycle) return [];
+    // Primeiro filtrar professores ativos com escolas aprovadas
+    let filtered = allTeachers.filter(teacher => {
+      // Professor ativo
+      const teacherActive = !teacher.blocked && !teacher.archived;
+      
+      // Escola aprovada e ativa
+      const schoolActive = teacher.school && 
+                         teacher.school.approved && 
+                         !teacher.school.archived;
+      
+      return teacherActive && schoolActive;
+    });
     
-    const teacherIdsInCycle = new Set(
-      allClasses
-        .filter(cls => cls.cycle === selectedCycle)
-        .map(cls => cls.teacherId)
-    );
+    // Filtrar por escolas selecionadas (se houver)
+    if (selectedSchools.length > 0) {
+      filtered = filtered.filter(teacher => 
+        teacher.school && selectedSchools.includes(teacher.school.id.toString())
+      );
+    }
     
-    let filtered = allTeachers.filter(teacher => 
-      !teacher.blocked && 
-      teacher.schoolApproved &&
-      teacherIdsInCycle.has(teacher.id) &&
-      (selectedSchools.length === 0 || selectedSchools.includes(teacher.schoolId?.toString()))
-    );
-    
+    // Excluir professores que já têm sessões agendadas
     const teachersWithTrainings = new Set(
       trainings.map(training => training.teacherId)
     );
@@ -137,11 +133,12 @@ export default function AdminTrainingsPage() {
     setSelectedSchools(prev => {
       const idStr = schoolId.toString();
       if (prev.includes(idStr)) {
+        // Remover professores da escola desselecionada
         setSelectedTeacherIds(currentIds => {
-          return allTeachers
-            .filter(t => currentIds.includes(t.id.toString()))
-            .filter(t => t.schoolId?.toString() !== idStr)
+          const teachersToRemove = allTeachers
+            .filter(t => t.school?.id.toString() === idStr)
             .map(t => t.id.toString());
+          return currentIds.filter(id => !teachersToRemove.includes(id));
         });
         return prev.filter(id => id !== idStr);
       } else {
@@ -162,7 +159,6 @@ export default function AdminTrainingsPage() {
 
   // Resetar seleções
   const resetSelections = () => {
-    setSelectedCycle("");
     setSelectedSchools([]);
     setSelectedTeacherIds([]);
   };
@@ -191,8 +187,7 @@ export default function AdminTrainingsPage() {
           date: formData.date,
           zoomLink: formData.zoomLink,
           teacherId: teacherId,
-          groupId: groupId,
-          cycle: selectedCycle
+          groupId: groupId
         })
       );
 
@@ -269,7 +264,6 @@ export default function AdminTrainingsPage() {
         completed: training.completed,
         adminRating: training.adminRating,
         certificateUrl: training.certificateUrl,
-        cycle: training.cycle,
         groupId: training.groupId,
         isGroup: !!training.groupId,
         trainings: []
@@ -375,7 +369,7 @@ export default function AdminTrainingsPage() {
           <div>
             <h1 className="text-3xl font-bold">Sessões de Formação em Grupo</h1>
             <p className="text-muted-foreground mt-2">
-              Gerir sessões de formação em grupo por ciclo e escola
+              Gerir sessões de formação em grupo para todos os professores
             </p>
           </div>
           <div className="w-full sm:w-auto">
@@ -399,71 +393,61 @@ export default function AdminTrainingsPage() {
           <Card className="p-4 sm:p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4">Agendar Sessão de Grupo</h2>
             <form onSubmit={handleCreateTraining} className="space-y-6">
-              {/* Filtros Hierárquicos - OTIMIZADO PARA MOBILE */}
+              {/* Filtros Hierárquicos */}
               <div className="border border-border rounded-lg p-4 sm:p-6 space-y-4 sm:space-y-6 bg-card">
                 <div className="flex items-center gap-2 mb-3 sm:mb-4">
                   <Filter className="w-5 h-5 text-primary" />
                   <h3 className="font-semibold text-foreground">Filtros de Seleção</h3>
                 </div>
 
-                {/* 1. Seleção de Ciclo */}
+                {/* 1. Seleção de Escolas - RESPONSIVO (opcional) */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">
-                    1. Ciclo de Ensino *
-                  </label>
-                  <select
-                    required
-                    value={selectedCycle}
-                    onChange={(e) => {
-                      setSelectedCycle(e.target.value);
-                      setSelectedSchools([]);
-                      setSelectedTeacherIds([]);
-                    }}
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm sm:text-base"
-                  >
-                    <option value="">Selecione um ciclo</option>
-                    {Object.keys(cycles).map(cycle => (
-                      <option key={cycle} value={cycle}>{cycle}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* 2. Seleção de Escolas - RESPONSIVO */}
-                {selectedCycle && (
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="block text-sm font-medium">
-                        2. Escolas (opcional)
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium">
+                      1. Filtrar por Escola (opcional)
+                      <span className="text-xs text-muted-foreground ml-1">
+                        {availableSchools.length} escolas disponíveis
+                      </span>
+                    </label>
+                    {availableSchools.length > 0 && (
+                      <label className="flex items-center gap-2 text-xs sm:text-sm cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={allSchoolsSelected}
+                          onChange={(e) => handleSelectAllSchools(e.target.checked)}
+                          className="rounded"
+                        />
+                        Selecionar todas
                       </label>
-                      {availableSchools.length > 0 && (
-                        <label className="flex items-center gap-2 text-xs sm:text-sm cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={allSchoolsSelected}
-                            onChange={(e) => handleSelectAllSchools(e.target.checked)}
-                            className="rounded"
-                          />
-                          Selecionar todas
-                        </label>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 sm:p-3 border rounded-lg bg-background">
-                      {availableSchools.length === 0 ? (
-                        <p className="text-sm text-muted-foreground col-span-full text-center py-2">
-                          Nenhuma escola encontrada para este ciclo
-                        </p>
-                      ) : (
-                        availableSchools.map(school => {
-                          const isSelected = selectedSchools.includes(school.id.toString());
-                          return (
-                            <label 
-                              key={school.id} 
-                              className={`flex items-center gap-2 text-xs sm:text-sm cursor-pointer p-2 rounded-lg transition-all ${
-                                isSelected
-                                  ? "bg-primary/10 border-2 border-primary"
-                                  : "hover:bg-muted/50 border-2 border-transparent"
-                              }`}
-                            >
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 sm:p-3 border rounded-lg bg-background">
+                    {availableSchools.length === 0 ? (
+                      <p className="text-sm text-muted-foreground col-span-full text-center py-2">
+                        Não há escolas aprovadas com professores ativos
+                      </p>
+                    ) : (
+                      availableSchools.map(school => {
+                        const isSelected = selectedSchools.includes(school.id.toString());
+                        const teachersInSchool = allTeachers.filter(t => 
+                          t.school?.id === school.id && 
+                          !t.blocked && 
+                          !t.archived
+                        ).length;
+                        const availableInSchool = availableTeachers.filter(t => 
+                          t.school?.id === school.id
+                        ).length;
+                        
+                        return (
+                          <label 
+                            key={school.id} 
+                            className={`flex items-center justify-between gap-2 text-xs sm:text-sm cursor-pointer p-2 rounded-lg transition-all ${
+                              isSelected
+                                ? "bg-primary/10 border-2 border-primary"
+                                : "hover:bg-muted/50 border-2 border-transparent"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 flex-1">
                               <input
                                 type="checkbox"
                                 checked={isSelected}
@@ -471,74 +455,90 @@ export default function AdminTrainingsPage() {
                                 className="rounded"
                               />
                               <span className="flex-1 truncate">{school.name}</span>
-                            </label>
-                          );
-                        })
-                      )}
-                    </div>
+                            </div>
+                            <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+                              {availableInSchool}/{teachersInSchool}
+                            </span>
+                          </label>
+                        );
+                      })
+                    )}
                   </div>
-                )}
+                </div>
 
-                {/* 3. Seleção de Professores - RESPONSIVO */}
-                {selectedCycle && (
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="block text-sm font-medium">
-                        3. Professores * ({selectedTeacherIds.length} selecionados)
+                {/* 2. Seleção de Professores - RESPONSIVO */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium">
+                      2. Professores * ({selectedTeacherIds.length} selecionados)
+                      <span className="text-xs text-muted-foreground ml-1">
+                        {availableTeachers.length} professores disponíveis
+                      </span>
+                    </label>
+                    {availableTeachers.length > 0 && (
+                      <label className="flex items-center gap-2 text-xs sm:text-sm cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={allTeachersSelected}
+                          onChange={(e) => handleSelectAllTeachers(e.target.checked)}
+                          className="rounded"
+                        />
+                        Selecionar todos
                       </label>
-                      {availableTeachers.length > 0 && (
-                        <label className="flex items-center gap-2 text-xs sm:text-sm cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={allTeachersSelected}
-                            onChange={(e) => handleSelectAllTeachers(e.target.checked)}
-                            className="rounded"
-                          />
-                          Selecionar todos
-                        </label>
-                      )}
-                    </div>
-                    <div className="max-h-48 sm:max-h-60 overflow-y-auto p-2 sm:p-3 border rounded-lg bg-background space-y-2">
-                      {availableTeachers.length === 0 ? (
-                        <p className="text-sm text-muted-foreground text-center py-4">
-                          {selectedCycle 
-                            ? "Nenhum professor disponível"
-                            : "Selecione primeiro um ciclo"}
-                        </p>
-                      ) : (
-                        availableTeachers.map(teacher => {
-                          const isSelected = selectedTeacherIds.includes(teacher.id.toString());
-                          return (
-                            <label
-                              key={teacher.id}
-                              className={`flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg cursor-pointer transition-all ${
-                                isSelected 
-                                  ? "bg-primary/10 border-2 border-primary shadow-sm" 
-                                  : "hover:bg-muted/50 border-2 border-transparent"
-                              }`}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={() => handleToggleTeacher(teacher.id)}
-                                className="rounded"
-                              />
-                              <div className="flex-1 min-w-0">
-                                <div className="font-medium text-sm sm:text-base truncate">{teacher.name}</div>
-                                <div className="text-xs text-muted-foreground truncate">
-                                  {teacher.school?.name || "Escola não definida"}
-                                </div>
-                              </div>
-                              {isSelected && (
-                                <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
-                              )}
-                            </label>
-                          );
-                        })
-                      )}
-                    </div>
+                    )}
                   </div>
-                )}
+                  <div className="max-h-48 sm:max-h-60 overflow-y-auto p-2 sm:p-3 border rounded-lg bg-background space-y-2">
+                    {availableTeachers.length === 0 ? (
+                      <div className="text-center py-4">
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {selectedSchools.length > 0 
+                            ? "Nenhum professor disponível nas escolas selecionadas"
+                            : "Não há professores disponíveis"
+                          }
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Verifique se: 1) Professores não estão bloqueados/arquivados<br />
+                          2) Suas escolas estão aprovadas 3) Não têm sessões já agendadas
+                        </p>
+                      </div>
+                    ) : (
+                      availableTeachers.map(teacher => {
+                        const isSelected = selectedTeacherIds.includes(teacher.id.toString());
+                        return (
+                          <label
+                            key={teacher.id}
+                            className={`flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg cursor-pointer transition-all ${
+                              isSelected 
+                                ? "bg-primary/10 border-2 border-primary shadow-sm" 
+                                : "hover:bg-muted/50 border-2 border-transparent"
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => handleToggleTeacher(teacher.id)}
+                              className="rounded"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-sm sm:text-base truncate">{teacher.name}</div>
+                              <div className="text-xs text-muted-foreground truncate">
+                                {teacher.school?.name || "Sem escola"}
+                              </div>
+                              {teacher.classes && teacher.classes.length > 0 && (
+                                <div className="text-xs text-primary mt-1">
+                                  {teacher.classes.map(c => c.name).join(", ")}
+                                </div>
+                              )}
+                            </div>
+                            {isSelected && (
+                              <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
+                            )}
+                          </label>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Informações da Sessão - RESPONSIVO */}
@@ -551,7 +551,7 @@ export default function AdminTrainingsPage() {
                     value={formData.title}
                     onChange={(e) => setFormData({...formData, title: e.target.value})}
                     className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm sm:text-base"
-                    placeholder="Exemplo: Formação em Grupo - 1º Ciclo"
+                    placeholder="Exemplo: Formação em Grupo - Todas as Escolas"
                   />
                 </div>
 
@@ -658,19 +658,16 @@ export default function AdminTrainingsPage() {
                             <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" />
                           )}
                         </div>
-                        
-                        {group.cycle && (
-                          <div className="text-xs text-primary font-medium mb-1">
-                            {group.cycle}
-                          </div>
-                        )}
 
                         {/* Lista de Professores - COMPACTO EM MOBILE */}
                         <div className="space-y-1 mb-2">
                           {group.trainings.slice(0, 2).map((training, idx) => (
-                            <p key={idx} className="text-xs sm:text-sm text-muted-foreground truncate">
-                              {training.teacher?.name}
-                            </p>
+                            <div key={idx} className="text-xs sm:text-sm text-muted-foreground">
+                              <div className="truncate">{training.teacher?.name}</div>
+                              <div className="text-xs opacity-75 truncate">
+                                {training.teacher?.school?.name}
+                              </div>
+                            </div>
                           ))}
                           {group.trainings.length > 2 && (
                             <p className="text-xs text-muted-foreground italic">

@@ -4,12 +4,12 @@ import { PrismaClient } from "@prisma/client";
 const router = express.Router();
 const prisma = new PrismaClient();
 
-// No seu routes/teachers.js - MODIFIQUE a rota POST
+// ROTA POST para criar professor
 router.post("/", async (req, res) => {
   try {
     console.log('📥 Recebendo dados para criar professor:', req.body);
     
-    const { supabaseUserId, name, email, phone, school, municipality } = req.body; // MUDADO: region → municipality
+    const { supabaseUserId, name, email, phone, school, municipality } = req.body;
 
     // VALIDAÇÕES
     if (!supabaseUserId || !name || !email) {
@@ -17,7 +17,7 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "Dados incompletos" });
     }
 
-    // Verificar se email já existe (incluindo arquivados)
+    // Verificar se email já existe
     const existingTeacher = await prisma.teacher.findUnique({
       where: { email }
     });
@@ -27,11 +27,11 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "Email já registado" });
     }
 
-    // Encontra ou cria escola (verificando escolas arquivadas)
+    // Encontra ou cria escola
     let schoolRecord = await prisma.school.findFirst({ 
       where: { 
         name: school,
-        archived: false // Só considerar escolas não arquivadas
+        archived: false
       } 
     });
     
@@ -40,7 +40,7 @@ router.post("/", async (req, res) => {
       schoolRecord = await prisma.school.create({
         data: {
           name: school,
-          municipality: municipality || null, // MUDADO: region → municipality
+          municipality: municipality || null,
           approved: false,
           code: `SCH${Date.now()}`,
           archived: false
@@ -49,7 +49,6 @@ router.post("/", async (req, res) => {
     }
 
     console.log('👨‍🏫 Criando professor...');
-    // Cria professor
     const teacher = await prisma.teacher.create({
       data: {
         supabaseUserId,
@@ -57,10 +56,9 @@ router.post("/", async (req, res) => {
         email,
         phone: phone || null,
         schoolId: schoolRecord.id,
-        schoolApproved: schoolRecord.approved,
         emailVerified: false,
         password: "supabase_auth",
-        archived: false // ✅ Garantir que novo professor não está arquivado
+        archived: false
       },
       include: { 
         school: {
@@ -68,13 +66,19 @@ router.post("/", async (req, res) => {
             id: true,
             name: true,
             approved: true,
-            archived: true, // ✅ Incluir status da escola
+            archived: true
           }
         }
       },
     });
 
-    console.log('✅ Professor criado com sucesso:', teacher.id);
+    console.log('✅ Professor criado com sucesso:', {
+      id: teacher.id,
+      schoolName: teacher.school.name,
+      schoolApproved: teacher.school.approved
+    });
+    
+    // ✅ CORRETO: Retornar apenas o teacher
     res.status(201).json(teacher);
     
   } catch (err) {
@@ -83,7 +87,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-// ✅ ROTA ATUALIZADA: Buscar professor por email (verificar arquivado)
+// ✅ ROTA ATUALIZADA: Buscar professor por email
 router.get("/email/:email", async (req, res) => {
   try {
     const { email } = req.params;
@@ -96,7 +100,7 @@ router.get("/email/:email", async (req, res) => {
             id: true,
             name: true,
             approved: true,
-            archived: true // ✅ INCLUIR ARCHIVED DA ESCOLA
+            archived: true
           }
         },
         classes: {
@@ -116,18 +120,39 @@ router.get("/email/:email", async (req, res) => {
       id: teacher.id, 
       name: teacher.name, 
       archived: teacher.archived,
-      schoolArchived: teacher.school?.archived 
+      schoolArchived: teacher.school?.archived,
+      schoolApproved: teacher.school?.approved
     });
 
-    // ✅ RETORNAR O CAMPO archived PARA O LOGIN VERIFICAR
+    // ✅ VERIFICAÇÕES
+    if (teacher.archived) {
+      return res.status(403).json({ 
+        error: "A sua conta foi arquivada. Contacte o administrador." 
+      });
+    }
+
+    if (teacher.school && teacher.school.archived) {
+      return res.status(403).json({ 
+        error: "A sua escola foi arquivada. Contacte o administrador." 
+      });
+    }
+
+    if (teacher.school && !teacher.school.approved) {
+      return res.status(403).json({ 
+        error: "A sua escola ainda não foi aprovada pelo administrador. Aguarde a aprovação." 
+      });
+    }
+
+    console.log('✅ Professor válido para login:', teacher.id);
     res.json(teacher);
+    
   } catch (err) {
     console.error("❌ Erro ao buscar professor:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// ✅ ROTA ATUALIZADA: Buscar professor por ID do Supabase
+// ROTA: Buscar professor por ID do Supabase
 router.get("/supabase/:supabaseUserId", async (req, res) => {
   try {
     const { supabaseUserId } = req.params;
@@ -140,7 +165,8 @@ router.get("/supabase/:supabaseUserId", async (req, res) => {
             id: true,
             name: true,
             approved: true,
-            archived: true // ✅ INCLUIR ARCHIVED DA ESCOLA
+            archived: true,
+            municipality: true
           }
         },
         classes: {
@@ -163,21 +189,22 @@ router.get("/supabase/:supabaseUserId", async (req, res) => {
   }
 });
 
-// ✅ ROTA ATUALIZADA: Listar professores (só não arquivados por padrão)
+// ROTA: Listar professores
 router.get("/", async (req, res) => {
   try {
     console.log('📋 GET /api/teachers - Listar professores');
-    const { includeArchived } = req.query; // Opcional: incluir arquivados
+    const { includeArchived } = req.query;
     
     const teachers = await prisma.teacher.findMany({
-      where: includeArchived === 'true' ? {} : { archived: false }, // ✅ Filtrar arquivados
+      where: includeArchived === 'true' ? {} : { archived: false },
       include: {
         school: {
           select: {
             id: true,
             name: true,
             approved: true,
-            archived: true // ✅ Incluir status da escola
+            archived: true,
+            municipality: true
           }
         },
         classes: {
@@ -198,7 +225,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ✅ ROTA ADICIONAL: Buscar professores arquivados
+// ROTA: Buscar professores arquivados
 router.get("/archived", async (req, res) => {
   try {
     console.log('📋 GET /api/teachers/archived - Listar professores arquivados');
@@ -211,7 +238,8 @@ router.get("/archived", async (req, res) => {
             id: true,
             name: true,
             approved: true,
-            archived: true
+            archived: true,
+            municipality: true
           }
         },
         classes: {

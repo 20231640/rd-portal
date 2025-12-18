@@ -8,17 +8,17 @@ datasource db {
 }
 
 model School {
-  id          Int       @id @default(autoincrement())
-  name        String    @unique
-  code        String?   @unique
-  approved    Boolean   @default(false)
+  id           Int       @id @default(autoincrement())
+  name         String    @unique
+  code         String?   @unique
+  approved     Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  archived     Boolean   @default(false)
+  archivedAt   DateTime?
   municipality String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  archived    Boolean   @default(false)
-  archivedAt  DateTime?
-  classes     Class[]
-  teachers    Teacher[]
+  updatedAt    DateTime  @updatedAt
+  classes      Class[]
+  teachers     Teacher[]
 }
 
 model TrainingSession {
@@ -34,8 +34,8 @@ model TrainingSession {
   adminRating            Int?
   certificateGeneratedAt DateTime?
   feedback               String?
-  groupId                String?
   cycle                  String?
+  groupId                String?
   teacher                Teacher   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 }
 
@@ -46,20 +46,19 @@ model Teacher {
   password             String
   phone                String?
   blocked              Boolean           @default(false)
-  schoolApproved       Boolean           @default(false)
   schoolId             Int
   resetPasswordExpires DateTime?
   resetPasswordToken   String?
-  certificateUrl       String?
-  hasCompletedTraining Boolean           @default(false)
-  emailVerified        Boolean           @default(false)
-  verificationExpires  DateTime?
-  verificationToken    String?
-  supabaseUserId       String?           @unique
-  updatedAt            DateTime          @updatedAt
-  createdAt            DateTime          @default(now())
   archived             Boolean           @default(false)
   archivedAt           DateTime?
+  certificateUrl       String?
+  createdAt            DateTime          @default(now())
+  emailVerified        Boolean           @default(false)
+  hasCompletedTraining Boolean           @default(false)
+  supabaseUserId       String?           @unique
+  updatedAt            DateTime          @updatedAt
+  verificationExpires  DateTime?
+  verificationToken    String?
   classes              Class[]
   kitRequests          KitRequest[]
   reportFolders        ReportFolder[]

@@ -1,4 +1,4 @@
-// server/routes/auth.js - VERSÃO COMPLETA PARA ADMIN COM ARQUIVAR
+// server/routes/auth.js - VERSÃO SEM schoolApproved
 import express from "express";
 import { PrismaClient } from "@prisma/client";
 
@@ -20,7 +20,7 @@ router.get("/schools", async (req, res) => {
       where: includeArchived === 'true' ? {} : { archived: false },
       include: { 
         teachers: {
-          where: { archived: false }, // Só mostrar professores não arquivados
+          where: { archived: false },
           select: {
             id: true,
             name: true,
@@ -44,17 +44,16 @@ router.get("/schools", async (req, res) => {
    ============================================ */
 router.post("/schools", async (req, res) => {
   try {
-    const { name, municipality, address } = req.body; // MUDADO: region → municipality
+    const { name, municipality, address } = req.body;
 
     if (!name?.trim()) {
       return res.status(400).json({ error: "Nome da escola é obrigatório" });
     }
 
-    // Verificar se escola já existe (incluindo arquivadas)
     const existingSchool = await prisma.school.findFirst({
       where: { 
         name: name.trim(),
-        archived: false // Só considerar escolas ativas
+        archived: false
       }
     });
 
@@ -65,7 +64,7 @@ router.post("/schools", async (req, res) => {
     const school = await prisma.school.create({
       data: {
         name: name.trim(),
-        municipality: municipality?.trim() || null, // MUDADO: region → municipality
+        municipality: municipality?.trim() || null,
         approved: false,
         code: `SCH${Date.now()}`,
         archived: false
@@ -82,6 +81,7 @@ router.post("/schools", async (req, res) => {
       }
     });
 
+    console.log(`✅ Escola "${school.name}" criada (approved: ${school.approved})`);
     res.status(201).json(school);
   } catch (err) {
     console.error("❌ Erro ao criar escola:", err);
@@ -95,12 +95,14 @@ router.post("/schools", async (req, res) => {
 router.put("/schools/:id/approve", async (req, res) => {
   try {
     const { id } = req.params;
+    console.log(`✅ Aprovar escola ID: ${id}`);
 
     const school = await prisma.school.update({
       where: { id: parseInt(id) },
       data: { approved: true },
       include: {
         teachers: {
+          where: { archived: false },
           select: {
             id: true,
             name: true,
@@ -110,6 +112,8 @@ router.put("/schools/:id/approve", async (req, res) => {
         }
       }
     });
+
+    console.log(`🏫 Escola "${school.name}" aprovada.`);
 
     res.json(school);
   } catch (err) {
@@ -129,7 +133,7 @@ router.put("/schools/:id/approve", async (req, res) => {
 router.put("/schools/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, municipality } = req.body; // MUDADO: region → municipality
+    const { name, municipality, approved } = req.body;
 
     if (!name?.trim()) {
       return res.status(400).json({ error: "Nome da escola é obrigatório" });
@@ -139,10 +143,12 @@ router.put("/schools/:id", async (req, res) => {
       where: { id: parseInt(id) },
       data: {
         name: name.trim(),
-        municipality: municipality?.trim() || null // MUDADO: region → municipality
+        municipality: municipality?.trim() || null,
+        ...(approved !== undefined && { approved: approved })
       },
       include: {
         teachers: {
+          where: { archived: false },
           select: {
             id: true,
             name: true,
@@ -156,6 +162,44 @@ router.put("/schools/:id", async (req, res) => {
     res.json(school);
   } catch (err) {
     console.error("❌ Erro ao editar escola:", err);
+    
+    if (err.code === 'P2025') {
+      return res.status(404).json({ error: "Escola não encontrada" });
+    }
+    
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/* ============================================
+   🔹 DESAPROVAR ESCOLA
+   ============================================ */
+router.put("/schools/:id/disapprove", async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log(`❌ Desaprovar escola ID: ${id}`);
+
+    const school = await prisma.school.update({
+      where: { id: parseInt(id) },
+      data: { approved: false },
+      include: {
+        teachers: {
+          where: { archived: false },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            blocked: true
+          }
+        }
+      }
+    });
+
+    console.log(`🏫 Escola "${school.name}" desaprovada.`);
+
+    res.json(school);
+  } catch (err) {
+    console.error("❌ Erro ao desaprovar escola:", err);
     
     if (err.code === 'P2025') {
       return res.status(404).json({ error: "Escola não encontrada" });
@@ -190,6 +234,8 @@ router.put("/schools/:id/archive", async (req, res) => {
       }
     });
 
+    console.log(`📦 Escola "${school.name}" arquivada.`);
+    
     res.json(school);
   } catch (err) {
     console.error("❌ Erro ao arquivar escola:", err);
@@ -227,6 +273,7 @@ router.put("/schools/:id/restore", async (req, res) => {
       }
     });
 
+    console.log(`♻️ Escola "${school.name}" restaurada.`);
     res.json(school);
   } catch (err) {
     console.error("❌ Erro ao restaurar escola:", err);
@@ -246,12 +293,11 @@ router.delete("/schools/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Verificar se a escola tem professores
     const schoolWithTeachers = await prisma.school.findUnique({
       where: { id: parseInt(id) },
       include: { 
         teachers: {
-          where: { archived: false } // Só considerar professores ativos
+          where: { archived: false }
         }
       }
     });
@@ -283,7 +329,7 @@ router.delete("/schools/:id", async (req, res) => {
 // ============================================
 
 /* ============================================
-   🔹 LISTAR PROFESSORES (com suporte para arquivados)
+   🔹 LISTAR PROFESSORES
    ============================================ */
 router.get("/teachers", async (req, res) => {
   try {
@@ -298,7 +344,7 @@ router.get("/teachers", async (req, res) => {
             name: true,
             approved: true,
             archived: true,
-            municipality: true // MUDADO: Adicionado municipality
+            municipality: true
           }
         },
         classes: {
@@ -332,7 +378,7 @@ router.get("/teachers/:id", async (req, res) => {
             id: true,
             name: true,
             approved: true,
-            municipality: true // MUDADO: Adicionado municipality
+            municipality: true
           }
         },
         classes: {
@@ -374,7 +420,7 @@ router.put("/teachers/:id/archive", async (req, res) => {
             id: true,
             name: true,
             approved: true,
-            municipality: true // MUDADO: Adicionado municipality
+            municipality: true
           }
         },
         classes: {
@@ -417,7 +463,7 @@ router.put("/teachers/:id/restore", async (req, res) => {
             id: true,
             name: true,
             approved: true,
-            municipality: true // MUDADO: Adicionado municipality
+            municipality: true
           }
         },
         classes: {
@@ -458,7 +504,7 @@ router.put("/teachers/:id/block", async (req, res) => {
             id: true,
             name: true,
             approved: true,
-            municipality: true // MUDADO: Adicionado municipality
+            municipality: true
           }
         },
         classes: {
@@ -488,9 +534,8 @@ router.put("/teachers/:id/block", async (req, res) => {
 router.put("/teachers/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, phone, municipality } = req.body; // MUDADO: Adicionado municipality
+    const { name, email, phone, municipality } = req.body;
 
-    // Verificar se email já existe noutro professor (só professores ativos)
     if (email) {
       const existingTeacher = await prisma.teacher.findFirst({
         where: {
@@ -514,7 +559,7 @@ router.put("/teachers/:id", async (req, res) => {
         ...(municipality !== undefined && {
           school: {
             update: {
-              municipality: municipality?.trim() || null // MUDADO: Atualiza municipality da escola
+              municipality: municipality?.trim() || null
             }
           }
         })
@@ -525,7 +570,7 @@ router.put("/teachers/:id", async (req, res) => {
             id: true,
             name: true,
             approved: true,
-            municipality: true // MUDADO: Adicionado municipality
+            municipality: true
           }
         },
         classes: {
@@ -556,12 +601,11 @@ router.delete("/teachers/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Verificar se professor existe
     const teacher = await prisma.teacher.findUnique({
       where: { id: parseInt(id) },
       include: { 
         classes: {
-          where: { archived: false } // Só considerar turmas ativas
+          where: { archived: false }
         }
       }
     });
@@ -570,7 +614,6 @@ router.delete("/teachers/:id", async (req, res) => {
       return res.status(404).json({ error: "Professor não encontrado" });
     }
 
-    // Se o professor tem turmas, impedir a eliminação
     if (teacher.classes.length > 0) {
       return res.status(400).json({ 
         error: "Não é possível eliminar professor com turmas associadas. Transfira as turmas primeiro." 

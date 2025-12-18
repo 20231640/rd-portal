@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { LogIn, GraduationCap, Home, Mail } from "lucide-react";
+import { LogIn, GraduationCap, Home } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { ThemeToggle } from "../components/ui/theme-toggle";
 import { API_URL } from "../config/api";
@@ -35,6 +35,7 @@ export default function Login() {
           return;
         } else {
           setError("Credenciais de administrador inválidas");
+          setIsLoading(false);
           return;
         }
       }
@@ -42,20 +43,22 @@ export default function Login() {
       // Login normal para professores
       console.log('🔄 Step 1: Fazendo login com Supabase...');
       
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error: supabaseError } = await supabase.auth.signInWithPassword({
         email: email,
         password: password
       });
 
-      if (error) {
-        console.error('❌ Erro no Supabase Auth:', error);
+      if (supabaseError) {
+        console.error('❌ Erro no Supabase Auth:', supabaseError);
         
-        if (error.message.includes('Email not confirmed')) {
+        if (supabaseError.message.includes('Email not confirmed')) {
           setError("Por favor, verifique o seu email antes de fazer login.");
+          setIsLoading(false);
           return;
         }
         
-        setError("❌ " + error.message);
+        setError("❌ " + supabaseError.message);
+        setIsLoading(false);
         return;
       }
 
@@ -71,57 +74,116 @@ export default function Login() {
         const teacherResponse = await fetch(`${API_URL}/api/teachers/email/${user.email}`);
         console.log('📡 Status da resposta teacher:', teacherResponse.status);
         
-        if (teacherResponse.ok) {
-          const teacherData = await teacherResponse.json();
-          console.log('✅ Dados do professor:', teacherData);
+        // 🔴 SE FOR ERRO 403 (ESCOLA NÃO APROVADA, PROFESSOR/ESCOLA ARQUIVADO)
+        if (teacherResponse.status === 403) {
+          const errorData = await teacherResponse.json();
+          console.log('🚫 ERRO 403 DETETADO:', errorData.error);
+          setError(errorData.error || "Não pode fazer login. Contacte o administrador.");
           
-          // ✅ VERIFICAÇÃO DE PROFESSOR ARQUIVADO
-          if (teacherData.archived) {
-            console.log('🚫 Professor arquivado, bloqueando login...');
-            setError("Esta conta foi arquivada. Contacte o administrador.");
-            
-            // Fazer logout do Supabase para limpar sessão
-            await supabase.auth.signOut();
-            return;
-          }
+          // Fazer logout do Supabase para limpar sessão
+          await supabase.auth.signOut();
+          setIsLoading(false);
+          return; // ⛔ PARAR AQUI!
+        }
+        
+        // 🔴 SE FOR ERRO 404 (PROFESSOR NÃO ENCONTRADO)
+        if (teacherResponse.status === 404) {
+          const errorData = await teacherResponse.json();
+          console.log('🚫 Professor não encontrado na BD:', errorData.message);
+          setError("Conta não encontrada. Registe-se primeiro.");
           
-          localStorage.setItem("teacherData", JSON.stringify(teacherData));
-          localStorage.setItem("loggedInTeacher", user.email);
+          await supabase.auth.signOut();
+          setIsLoading(false);
+          return;
+        }
+        
+        // 🔴 SE FOR OUTRO ERRO
+        if (!teacherResponse.ok) {
+          console.error('❌ Erro ao buscar professor:', teacherResponse.status);
+          setError("Erro ao carregar dados. Tente novamente.");
           
-          console.log('💾 Dados salvos no localStorage');
-        } else {
-          console.warn('⚠️ Professor não encontrado na nossa BD, mas continuando...');
-          
-          // Criar dados básicos no localStorage
+          // Continuar com dados básicos (modo emergência)
+          console.warn('⚠️ Continuando com dados básicos...');
           localStorage.setItem("teacherData", JSON.stringify({
             id: user.id,
             name: user.user_metadata?.name || user.email.split('@')[0],
             email: user.email,
-            school: { name: "Escola não definida" }
+            school: { name: "Escola não definida", approved: false }
           }));
           localStorage.setItem("loggedInTeacher", user.email);
+          
+          navigate("/teacher-dashboard");
+          setIsLoading(false);
+          return;
         }
+        
+        // ✅ RESPOSTA OK - CONTINUAR
+        const teacherData = await teacherResponse.json();
+        console.log('✅ Dados do professor recebidos:', {
+          id: teacherData.id,
+          name: teacherData.name,
+          archived: teacherData.archived,
+          school: teacherData.school
+        });
+        
+        // ✅ VERIFICAÇÃO 1: Professor arquivado
+        if (teacherData.archived) {
+          console.log('🚫 Professor arquivado, bloqueando login...');
+          setError("Esta conta foi arquivada. Contacte o administrador.");
+          
+          await supabase.auth.signOut();
+          setIsLoading(false);
+          return;
+        }
+        
+        // ✅ VERIFICAÇÃO 2: Escola arquivada
+        if (teacherData.school && teacherData.school.archived) {
+          console.log('🚫 Escola arquivada, bloqueando login...');
+          setError("A sua escola foi arquivada. Contacte o administrador.");
+          
+          await supabase.auth.signOut();
+          setIsLoading(false);
+          return;
+        }
+        
+        // ✅ VERIFICAÇÃO 3: Escola não aprovada
+        if (teacherData.school && !teacherData.school.approved) {
+          console.log('🚫 Escola não aprovada, bloqueando login...');
+          setError("A sua escola ainda não foi aprovada pelo administrador. Aguarde a aprovação.");
+          
+          await supabase.auth.signOut();
+          setIsLoading(false);
+          return;
+        }
+        
+        // ✅ TUDO OK - SALVAR DADOS
+        localStorage.setItem("teacherData", JSON.stringify(teacherData));
+        localStorage.setItem("loggedInTeacher", user.email);
+        
+        console.log('💾 Dados salvos no localStorage, redirecionando...');
+        
+        // Pequeno delay para garantir que tudo foi processado
+        setTimeout(() => {
+          console.log('🎯 Executando navigate para teacher-dashboard...');
+          navigate("/teacher-dashboard");
+        }, 50);
+        
       } catch (err) {
         console.error('❌ Erro ao buscar dados do professor:', err);
+        setError("Erro de rede. Verifique a ligação ao servidor.");
         
-        // Criar dados básicos mesmo com erro
+        // Em caso de erro de rede, criar dados básicos (modo emergência)
         localStorage.setItem("teacherData", JSON.stringify({
           id: user.id,
           name: user.user_metadata?.name || user.email.split('@')[0],
           email: user.email,
-          school: { name: "Escola não definida" }
+          school: { name: "Escola não definida", approved: false }
         }));
         localStorage.setItem("loggedInTeacher", user.email);
-      }
-
-      console.log('🔄 Step 3: Redirecionando para teacher-dashboard...');
-      
-      // Forçar redirecionamento
-      setTimeout(() => {
-        console.log('🎯 Executando navigate...');
+        
         navigate("/teacher-dashboard");
-      }, 100);
-
+      }
+      
     } catch (err) {
       console.error('💥 Erro fatal no login:', err);
       setError("Erro de rede. Verifique a ligação ao servidor.");
@@ -249,7 +311,7 @@ export default function Login() {
                 <p className="text-destructive text-sm font-medium py-2 bg-destructive/10 rounded-lg">
                   {error}
                 </p>
-                {/* Botão para reenviar verificação */}
+                {/* Botão para reenviar verificação - APARECE APENAS se for erro de email não verificado */}
                 {error.includes("verifique o seu email") && (
                   <Button
                     type="button"
