@@ -1,5 +1,6 @@
 // src/pages/TeacherFeedback.jsx - VERSÃO CORRIGIDA COM MENU MOBILE
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Sidebar } from "../components/ui/sidebar";
@@ -11,6 +12,7 @@ export default function TeacherFeedback() {
   const [loading, setLoading] = useState(false);
   const [teacher, setTeacher] = useState(null);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   // Buscar pastas do professor
   useEffect(() => {
@@ -256,7 +258,7 @@ export default function TeacherFeedback() {
                 Nenhuma pasta disponível
               </h3>
               <p className="text-muted-foreground text-sm lg:text-base mb-6">
-                Contacte o administrador para criar pastas no Google Drive para as suas turmas.
+                Contacte o administrador para criar pastas no Google Drive para as suas turmas. Para isso, dirija-se à página <strong>Contactar Administrador</strong>.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -269,15 +271,13 @@ export default function TeacherFeedback() {
                   Tentar Novamente
                 </Button>
                 
-                {/* Botão de contacto (opcional) */}
+                {/* Ir para a página Contactar Administrador */}
                 <Button 
                   variant="default"
-                  asChild
+                  onClick={() => navigate('/contact-admin')}
                   className="flex-1 sm:flex-none"
                 >
-                  <a href="mailto:admin@escola.pt?subject=Solicitação de Pastas Google Drive">
-                    Contactar Administrador
-                  </a>
+                  Contactar Administrador
                 </Button>
               </div>
 

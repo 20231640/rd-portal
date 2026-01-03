@@ -9,7 +9,8 @@ import {
   ChevronRight, 
   FileText,
   Package,
-  Menu
+  Menu,
+  Mail
 } from "lucide-react";
 import { Button } from "./button";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -168,6 +169,17 @@ export function Sidebar() {
                 {theme === "dark" ? "Modo Claro" : "Modo Escuro"}
               </span>
             )}
+          </Button>
+
+          {/* Contactar Administrador */}
+          <Button
+            variant="ghost"
+            className={`w-full justify-start ${isCollapsed ? 'px-2' : 'px-3'}`}
+            onClick={() => handleNavigation('/contact-admin')}
+            title={isCollapsed ? "Contactar Admin" : ''}
+          >
+            <Mail className="w-4 h-4" />
+            {!isCollapsed && <span className="ml-3">Contactar Administrador</span>}
           </Button>
 
           {/* Logout */}

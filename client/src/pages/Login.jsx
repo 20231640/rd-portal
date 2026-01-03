@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { LogIn, GraduationCap, Home } from "lucide-react";
+import { LogIn, GraduationCap, Home, Eye, EyeOff } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { ThemeToggle } from "../components/ui/theme-toggle";
 import { API_URL } from "../config/api";
@@ -9,6 +9,7 @@ import { supabase } from "../config/supabase";
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -296,14 +297,24 @@ export default function Login() {
 
             <div className="space-y-2">
               <label className="block text-sm font-medium">Palavra-passe</label>
-              <input
-                type="password"
-                className="w-full rounded-xl border border-input bg-background px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
-                placeholder="Escreva a sua palavra-passe"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className="w-full rounded-xl border border-input bg-background px-4 py-3 pr-12 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                  placeholder="Escreva a sua palavra-passe"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
+                  aria-label={showPassword ? "Esconder palavra-passe" : "Mostrar palavra-passe"}
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
             </div>
 
             {error && (

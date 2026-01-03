@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Key, ArrowLeft } from "lucide-react";
+import { Key, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { ThemeToggle } from "../components/ui/theme-toggle";
 import { supabase } from "../config/supabase";
@@ -8,6 +8,8 @@ import { supabase } from "../config/supabase";
 export default function ResetPassword() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -91,26 +93,46 @@ export default function ResetPassword() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <label className="block text-sm font-medium">Nova Password</label>
-              <input
-                type="password"
-                placeholder="Mínimo 6 caracteres"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full rounded-xl border border-input bg-background px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Mínimo 6 caracteres"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full rounded-xl border border-input bg-background px-4 py-3 pr-12 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
+                  aria-label={showPassword ? "Esconder password" : "Mostrar password"}
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
             </div>
 
             <div className="space-y-2">
               <label className="block text-sm font-medium">Confirmar Password</label>
-              <input
-                type="password"
-                placeholder="Confirma a nova password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                className="w-full rounded-xl border border-input bg-background px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
-              />
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Confirma a nova password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className="w-full rounded-xl border border-input bg-background px-4 py-3 pr-12 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
+                  aria-label={showConfirmPassword ? "Esconder confirmação" : "Mostrar confirmação"}
+                >
+                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
             </div>
 
             {message && (

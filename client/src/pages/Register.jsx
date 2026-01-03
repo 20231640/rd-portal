@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import PhoneInput from "react-phone-input-2";
-import { UserPlus, GraduationCap, Home } from "lucide-react";
+import { UserPlus, GraduationCap, Home, Eye, EyeOff } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { ThemeToggle } from "../components/ui/theme-toggle";
 import "react-phone-input-2/lib/style.css";
@@ -101,6 +101,8 @@ export default function Register() {
   const [schools, setSchools] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [municipalities, setMunicipalities] = useState([]);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   const navigate = useNavigate();
 
@@ -349,15 +351,37 @@ export default function Register() {
             ].map(({ label, name, type, placeholder }) => (
               <div key={name} className="space-y-2">
                 <label className="block text-sm font-medium">{label}</label>
-                <input
-                  type={type}
-                  name={name}
-                  placeholder={placeholder}
-                  value={form[name]}
-                  onChange={handleChange}
-                  required
-                  className="w-full rounded-xl border border-input bg-background px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
-                />
+                { (name === "password" || name === "confirmPassword") ? (
+                  <div className="relative">
+                    <input
+                      type={name === "password" ? (showPassword ? "text" : "password") : (showConfirmPassword ? "text" : "password")}
+                      name={name}
+                      placeholder={placeholder}
+                      value={form[name]}
+                      onChange={handleChange}
+                      required
+                      className="w-full rounded-xl border border-input bg-background px-4 py-3 pr-12 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => name === "password" ? setShowPassword(!showPassword) : setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
+                      aria-label={name === "password" ? (showPassword ? "Esconder palavra-passe" : "Mostrar palavra-passe") : (showConfirmPassword ? "Esconder confirmação" : "Mostrar confirmação")}
+                    >
+                      {name === "password" ? (showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />) : (showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />)}
+                    </button>
+                  </div>
+                ) : (
+                  <input
+                    type={type}
+                    name={name}
+                    placeholder={placeholder}
+                    value={form[name]}
+                    onChange={handleChange}
+                    required
+                    className="w-full rounded-xl border border-input bg-background px-4 py-3 text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200"
+                  />
+                )}
               </div>
             ))}
 

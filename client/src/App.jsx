@@ -12,6 +12,7 @@ import AdminTrainingsPage from "./pages/AdminTrainingsPage";
 import TeacherTrainingsPage from "./pages/TeacherTrainingsPage";
 import TeacherFeedback from './pages/TeacherFeedback'; 
 import AdminFeedbackReports from './pages/AdminFeedbackReports'; 
+import ContactAdmin from './pages/ContactAdmin';
 import TeacherKitsPage from "./pages/TeacherKitsPage";
 import AdminKitsPage from "./pages/AdminKitsPage";
 import AdminExport from "./pages/AdminExport";
@@ -59,6 +60,7 @@ export default function App() {
           <Route path="/classes" element={<ClassesPage />} />
           <Route path="/trainings" element={<TeacherTrainingsPage />} />
           <Route path="/feedback" element={<TeacherFeedback />} />
+          <Route path="/contact-admin" element={<ContactAdmin />} />
           <Route path="/kits" element={<TeacherKitsPage />} /> 
           
           {/* Rotas do Admin */}
