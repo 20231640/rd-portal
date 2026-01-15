@@ -1,4 +1,3 @@
-// AdminKitsPage.jsx - COMPLETO COM MOBILE RESPONSIVE
 import { useState, useEffect, useRef } from "react";
 import { AdminSidebar } from "../components/ui/admin-sidebar";
 import { Card } from "../components/ui/card";
@@ -10,7 +9,7 @@ import { API_URL } from "../config/api";
 import { 
   Package, Search, CheckCircle, Truck, X, RefreshCw, 
   Users, School, AlertCircle, BookOpen, Calendar, Filter,
-  Menu // ← Adicionar este ícone
+  Menu 
 } from "lucide-react";
 
 export default function AdminKitsPage() {
@@ -26,11 +25,10 @@ export default function AdminKitsPage() {
   const [showArchivedTeachers, setShowArchivedTeachers] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(null);
   const [newUpdates, setNewUpdates] = useState(0);
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false); // ← Estado novo para mobile
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false); 
   
   const previousRequestsRef = useRef([]);
 
-  // Buscar dados
   const fetchData = async () => {
     try {
       setError("");
@@ -51,7 +49,6 @@ export default function AdminKitsPage() {
         classesRes.json()
       ]);
 
-      // Detectar mudanças para notificações
       detectChanges(requestsData || []);
 
       setKitRequests(requestsData || []);
@@ -67,7 +64,6 @@ export default function AdminKitsPage() {
     }
   };
 
-  // Detectar mudanças nos pedidos
   const detectChanges = (newRequests) => {
     if (previousRequestsRef.current.length === 0) {
       previousRequestsRef.current = newRequests;
@@ -80,7 +76,6 @@ export default function AdminKitsPage() {
       reports: []
     };
 
-    // Encontrar novos pedidos e problemas reportados
     newRequests.forEach(request => {
       const existing = previousRequestsRef.current.find(r => r.id === request.id);
       
@@ -114,17 +109,14 @@ export default function AdminKitsPage() {
     previousRequestsRef.current = newRequests;
   };
 
-  // Efeito inicial
   useEffect(() => {
     fetchData();
   }, []);
 
-  // Limpar notificações quando o utilizador interage
   const clearNotifications = () => {
     setNewUpdates(0);
   };
 
-  // Contar problemas reportados não resolvidos
   const getUnresolvedReportsCount = () => {
     return kitRequests.reduce((count, request) => {
       return count + (request.reports?.filter(r => !r.resolved).length || 0);
@@ -298,7 +290,6 @@ export default function AdminKitsPage() {
     const matchesCycle = selectedCycle === "all" || classInfo?.cycle === selectedCycle;
     const matchesYear = selectedYear === "all" || String(classInfo?.year) === String(selectedYear);
     
-    // Novo filtro para professores arquivados
     const teacherExists = !!teacher;
     const matchesArchivedFilter = showArchivedTeachers || teacherExists;
     
@@ -309,7 +300,6 @@ export default function AdminKitsPage() {
     return kitRequests.filter(req => req.status === status).length;
   };
 
-  // Componente RequestCard atualizado para mobile
   const RequestCard = ({ request }) => {
     const teacher = teachers.find(t => t.id === request.teacherId);
     const school = teacher?.school;

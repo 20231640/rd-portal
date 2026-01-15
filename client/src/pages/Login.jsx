@@ -24,7 +24,6 @@ export default function Login() {
     console.log('🔍 A iniciar o LOGIN...');
 
     try {
-      // Verificação especial para admin
       if (email === "admin@rd.pt") {
         console.log('👨‍💼 Tentando login como admin...');
         
@@ -41,7 +40,6 @@ export default function Login() {
         }
       }
 
-      // Login normal para professores
       console.log('🔄 Step 1: Fazendo login com Supabase...');
       
       const { data, error: supabaseError } = await supabase.auth.signInWithPassword({
@@ -65,29 +63,24 @@ export default function Login() {
 
       console.log('✅ Step 1: Login Supabase bem-sucedido:', data.user.id);
       
-      // Login bem-sucedido
       const user = data.user;
       
       console.log('👨‍🏫 Step 2: Buscando dados do professor...');
       
-      // Buscar dados do professor da nossa tabela
       try {
         const teacherResponse = await fetch(`${API_URL}/api/teachers/email/${user.email}`);
         console.log('📡 Status da resposta teacher:', teacherResponse.status);
         
-        // 🔴 SE FOR ERRO 403 (ESCOLA NÃO APROVADA, PROFESSOR/ESCOLA ARQUIVADO)
         if (teacherResponse.status === 403) {
           const errorData = await teacherResponse.json();
           console.log('🚫 ERRO 403 DETETADO:', errorData.error);
           setError(errorData.error || "Não pode fazer login. Contacte o administrador.");
           
-          // Fazer logout do Supabase para limpar sessão
           await supabase.auth.signOut();
           setIsLoading(false);
-          return; // ⛔ PARAR AQUI!
+          return; 
         }
         
-        // 🔴 SE FOR ERRO 404 (PROFESSOR NÃO ENCONTRADO)
         if (teacherResponse.status === 404) {
           const errorData = await teacherResponse.json();
           console.log('🚫 Professor não encontrado na BD:', errorData.message);
@@ -98,12 +91,10 @@ export default function Login() {
           return;
         }
         
-        // 🔴 SE FOR OUTRO ERRO
         if (!teacherResponse.ok) {
           console.error('❌ Erro ao buscar professor:', teacherResponse.status);
           setError("Erro ao carregar dados. Tente novamente.");
           
-          // Continuar com dados básicos (modo emergência)
           console.warn('⚠️ Continuando com dados básicos...');
           localStorage.setItem("teacherData", JSON.stringify({
             id: user.id,
@@ -118,7 +109,6 @@ export default function Login() {
           return;
         }
         
-        // ✅ RESPOSTA OK - CONTINUAR
         const teacherData = await teacherResponse.json();
         console.log('✅ Dados do professor recebidos:', {
           id: teacherData.id,
@@ -127,7 +117,6 @@ export default function Login() {
           school: teacherData.school
         });
         
-        // ✅ VERIFICAÇÃO 1: Professor arquivado
         if (teacherData.archived) {
           console.log('🚫 Professor arquivado, bloqueando login...');
           setError("Esta conta foi arquivada. Contacte o administrador.");
@@ -137,7 +126,6 @@ export default function Login() {
           return;
         }
         
-        // ✅ VERIFICAÇÃO 2: Escola arquivada
         if (teacherData.school && teacherData.school.archived) {
           console.log('🚫 Escola arquivada, bloqueando login...');
           setError("A sua escola foi arquivada. Contacte o administrador.");
@@ -147,7 +135,6 @@ export default function Login() {
           return;
         }
         
-        // ✅ VERIFICAÇÃO 3: Escola não aprovada
         if (teacherData.school && !teacherData.school.approved) {
           console.log('🚫 Escola não aprovada, bloqueando login...');
           setError("A sua escola ainda não foi aprovada pelo administrador. Aguarde a aprovação.");
@@ -157,13 +144,11 @@ export default function Login() {
           return;
         }
         
-        // ✅ TUDO OK - SALVAR DADOS
         localStorage.setItem("teacherData", JSON.stringify(teacherData));
         localStorage.setItem("loggedInTeacher", user.email);
         
         console.log('💾 Dados salvos no localStorage, redirecionando...');
         
-        // Pequeno delay para garantir que tudo foi processado
         setTimeout(() => {
           console.log('🎯 Executando navigate para teacher-dashboard...');
           navigate("/teacher-dashboard");

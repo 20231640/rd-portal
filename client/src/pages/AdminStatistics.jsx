@@ -16,7 +16,7 @@ export default function AdminStatistics() {
   const [classes, setClasses] = useState([]);
   const [kitRequests, setKitRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedMunicipality, setSelectedMunicipality] = useState(""); // MUDADO: district → municipality
+  const [selectedMunicipality, setSelectedMunicipality] = useState(""); 
   const [activeTab, setActiveTab] = useState("overview");
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
@@ -101,12 +101,11 @@ export default function AdminStatistics() {
     classes,
     schools,
     teachers,
-    selectedMunicipality, // MUDADO
-    municipalities: [...new Set(schools.map(s => s.municipality || "Não Definido"))].sort(), // MUDADO: districts → municipalities
-    onMunicipalityChange: setSelectedMunicipality // MUDADO
+    selectedMunicipality, 
+    municipalities: [...new Set(schools.map(s => s.municipality || "Não Definido"))].sort(), 
+    onMunicipalityChange: setSelectedMunicipality 
   };
 
-  // Renderização segura das tabs: evita página em branco se um componente filho lançar
   const renderActiveTab = () => {
     try {
       if (activeTab === 'overview') return <OverviewStats {...statsData} />;

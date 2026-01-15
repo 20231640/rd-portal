@@ -1,4 +1,3 @@
-// components/ui/feature-card.tsx
 import { ReactNode } from "react";
 import { Card } from "./card";
 

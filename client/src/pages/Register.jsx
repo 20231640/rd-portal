@@ -107,13 +107,11 @@ export default function Register() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Fetch schools
     fetch(`${API_URL}/api/auth/schools`)
       .then(res => res.json())
       .then(data => setSchools(data.filter(s => s.approved).map(s => s.name)))
       .catch(console.error);
     
-    // Carregar municípios do pacote
     loadMunicipalities();
   }, []);
 
@@ -124,7 +122,6 @@ export default function Register() {
       
       let munList = [];
       
-      // Tentar diferentes formas de acesso
       if (module.municipalities && Array.isArray(module.municipalities)) {
         munList = module.municipalities;
       } else if (module.default && Array.isArray(module.default)) {
@@ -132,15 +129,12 @@ export default function Register() {
       } else if (Array.isArray(module)) {
         munList = module;
       } else {
-        // Se não encontrar array, usar fallback
         console.warn('Não foi possível extrair lista de municípios do pacote');
         munList = getFallbackMunicipalities();
       }
       
-      // Filtrar apenas municípios (remover distritos se houver)
       const filteredMunicipalities = munList.filter(item => {
         const lower = item.toLowerCase();
-        // Remover distritos se estiverem na lista
         return ![
           'aveiro', 'beja', 'braga', 'bragança', 'castelo branco', 'coimbra',
           'évora', 'faro', 'guarda', 'leiria', 'lisboa', 'portalegre',

@@ -1,4 +1,3 @@
-// routes/report-folders.js
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
 
@@ -11,7 +10,6 @@ router.get('/', async (req, res) => {
     const { teacherEmail } = req.query;
     
     if (teacherEmail) {
-      // Buscar pastas específicas do professor
       const teacher = await prisma.teacher.findUnique({
         where: { email: teacherEmail }
       });
@@ -39,7 +37,6 @@ router.get('/', async (req, res) => {
       return res.json(folders);
     }
 
-    // Buscar todas as pastas (admin)
     const allFolders = await prisma.reportFolder.findMany({
       include: {
         teacher: {
@@ -64,7 +61,6 @@ router.post('/', async (req, res) => {
   try {
     const { title, driveLink, teacherId, classId } = req.body;
     
-    // Validar campos obrigatórios
     if (!title || !driveLink || !teacherId) {
       return res.status(400).json({ 
         error: "Título, link do Drive e professor são obrigatórios" 

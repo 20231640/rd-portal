@@ -50,7 +50,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           
-          {/* 🔥 NOVAS ROTAS DE AUTENTICAÇÃO */}
+          {/* NOVAS ROTAS DE AUTENTICAÇÃO */}
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />

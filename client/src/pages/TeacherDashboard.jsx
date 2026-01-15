@@ -16,7 +16,6 @@ export default function TeacherDashboard() {
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState({ classes: 0, kits: 0, students: 0 });
 
-  // Buscar dados do professor
   useEffect(() => {
     const teacherData = localStorage.getItem("teacherData");
     const loggedInTeacher = localStorage.getItem("loggedInTeacher");
@@ -242,7 +241,6 @@ export default function TeacherDashboard() {
             <div className="lg:col-span-2">
               <Card className="p-4 lg:p-6">
                 {!editing ? (
-                  // MODO VISUALIZAÇÃO
                   <>
                     <h3 className="text-lg font-semibold mb-4 lg:mb-6 text-foreground">Informações Pessoais</h3>
                     
@@ -291,7 +289,6 @@ export default function TeacherDashboard() {
                     </div>
                   </>
                 ) : (
-                  // MODO EDIÇÃO
                   <>
                     <h3 className="text-lg font-semibold mb-4 lg:mb-6 text-foreground">Editar Informações</h3>
                     

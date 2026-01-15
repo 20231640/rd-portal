@@ -14,7 +14,6 @@ export default function TeacherFeedback() {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  // Buscar pastas do professor
   useEffect(() => {
     const teacherDataStr = localStorage.getItem("teacherData");
     const loggedInTeacher = localStorage.getItem("loggedInTeacher");
@@ -35,14 +34,12 @@ export default function TeacherFeedback() {
     }
   }, []);
 
-  // Função para buscar pastas
   async function fetchFolders(teacherId) {
     try {
       setLoading(true);
       setError(null);
       console.log('🔄 Buscando pastas para professor:', teacherId);
 
-      // Buscar todas as pastas e filtrar
       const res = await fetch(`${API_URL}/api/report-folders`);
       
       if (!res.ok) {
@@ -52,7 +49,6 @@ export default function TeacherFeedback() {
       const allFolders = await res.json();
       console.log('📊 Todas as pastas:', allFolders);
 
-      // Filtrar pastas do professor atual
       const teacherFolders = allFolders.filter(folder => folder.teacherId === teacherId);
       console.log('✅ Pastas do professor:', teacherFolders);
 
@@ -66,14 +62,12 @@ export default function TeacherFeedback() {
     }
   }
 
-  // Função para recarregar
   const handleRetry = () => {
     if (teacher) {
       fetchFolders(teacher.id);
     }
   };
 
-  // Loading state melhorado e responsivo
   if (loading) {
     return (
       <div className="flex min-h-screen bg-background">

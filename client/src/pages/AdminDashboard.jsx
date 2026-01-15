@@ -28,15 +28,15 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [newSchool, setNewSchool] = useState("");
-  const [newMunicipality, setNewMunicipality] = useState(""); // MUDADO: region → municipality
+  const [newMunicipality, setNewMunicipality] = useState(""); 
   const [editingSchoolId, setEditingSchoolId] = useState(null);
   const [editingTeacherId, setEditingTeacherId] = useState(null);
-  const [tempEditValue, setTempEditValue] = useState({ name: "", municipality: "" }); // MUDADO
+  const [tempEditValue, setTempEditValue] = useState({ name: "", municipality: "" }); 
   const [toast, setToast] = useState(null);
   const [expandedSchool, setExpandedSchool] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("schools");
-  const [selectedMunicipality, setSelectedMunicipality] = useState("all"); // MUDADO: district → municipality
+  const [selectedMunicipality, setSelectedMunicipality] = useState("all"); 
   const [selectedTeacherSchool, setSelectedTeacherSchool] = useState("all");
   const [archivedSchools, setArchivedSchools] = useState([]);
   const [archivedTeachers, setArchivedTeachers] = useState([]);
@@ -170,7 +170,7 @@ export default function AdminDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           name: newSchool.trim(), 
-          municipality: newMunicipality.trim(), // MUDADO: region → municipality
+          municipality: newMunicipality.trim(), 
           address: "Morada a definir"
         }),
       });
@@ -178,7 +178,7 @@ export default function AdminDashboard() {
       if (!res.ok) throw new Error(data.message || "Erro ao criar escola");
       setSchools((prev) => [...prev, data]);
       setNewSchool("");
-      setNewMunicipality(""); // MUDADO
+      setNewMunicipality(""); 
       showToast("Escola criada com sucesso!");
     } catch (err) {
       console.error(err);
@@ -220,16 +220,16 @@ export default function AdminDashboard() {
   }
 
   // Escolas - Editar
-  async function saveSchoolEdit(id, { name, municipality }) { // MUDADO: region → municipality
+  async function saveSchoolEdit(id, { name, municipality }) { 
     try {
       const res = await fetch(`${API_URL}/api/auth/schools/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, municipality }), // MUDADO
+        body: JSON.stringify({ name, municipality }), 
       });
       if (!res.ok) throw new Error("Erro ao atualizar escola.");
       setSchools(prev =>
-        prev.map(s => s.id === id ? { ...s, name, municipality } : s) // MUDADO
+        prev.map(s => s.id === id ? { ...s, name, municipality } : s) 
       );
       setEditingSchoolId(null);
       showToast("Escola atualizada com sucesso!");
@@ -316,10 +316,21 @@ export default function AdminDashboard() {
       const updatedSchool = await res.json();
       console.log('✅ Escola arquivada na BD:', updatedSchool);
       
+      // Remove a escola da lista ativa
       setSchools(prev => prev.filter(s => s.id !== id));
+      
+      // Move a escola para arquivados
       setArchivedSchools(prev => [...prev, updatedSchool]);
       
-      showToast("Escola arquivada com sucesso!");
+      // Remove os professores da escola da lista ativa
+      const teacherIdsToArchive = updatedSchool.teachers.map(t => t.id);
+      setTeachers(prev => prev.filter(t => !teacherIdsToArchive.includes(t.id)));
+      
+      // Move os professores para a lista de arquivados
+      const archivedTeachersToAdd = updatedSchool.teachers;
+      setArchivedTeachers(prev => [...prev, ...archivedTeachersToAdd]);
+      
+      showToast("Escola e professores arquivados com sucesso!");
     } catch (err) {
       console.error('❌ Erro ao arquivar escola:', err);
       showToast(err.message, "error");
@@ -441,37 +452,37 @@ export default function AdminDashboard() {
   // Filtros ativos
   const filteredSchools = schools.filter(school =>
     (school.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     school.municipality?.toLowerCase().includes(searchTerm.toLowerCase())) && // MUDADO
-    (selectedMunicipality === "all" || school.municipality === selectedMunicipality) // MUDADO
+     school.municipality?.toLowerCase().includes(searchTerm.toLowerCase())) && 
+    (selectedMunicipality === "all" || school.municipality === selectedMunicipality) 
   );
 
   const filteredTeachers = teachers.filter(teacher => {
     const schoolName = schools.find(s => s.id === teacher.schoolId)?.name || "";
-    const schoolMunicipality = schools.find(s => s.id === teacher.schoolId)?.municipality; // MUDADO
+    const schoolMunicipality = schools.find(s => s.id === teacher.schoolId)?.municipality; 
     const matchesSearch = teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           teacher.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           schoolName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSchoolFilter = selectedTeacherSchool === "all" || String(teacher.schoolId) === String(selectedTeacherSchool);
-    const matchesMunicipalityFilter = selectedMunicipality === "all" || schoolMunicipality === selectedMunicipality; // MUDADO
+    const matchesMunicipalityFilter = selectedMunicipality === "all" || schoolMunicipality === selectedMunicipality; 
     return matchesSearch && matchesSchoolFilter && matchesMunicipalityFilter;
   });
 
   // Filtros arquivados
   const filteredArchivedSchools = archivedSchools.filter(school =>
     (school.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     school.municipality?.toLowerCase().includes(searchTerm.toLowerCase())) && // MUDADO
-    (selectedMunicipality === "all" || school.municipality === selectedMunicipality) // MUDADO
+     school.municipality?.toLowerCase().includes(searchTerm.toLowerCase())) && 
+    (selectedMunicipality === "all" || school.municipality === selectedMunicipality)
   );
 
   const filteredArchivedTeachers = archivedTeachers.filter(teacher => {
     const allSchools = [...schools, ...archivedSchools];
     const schoolName = allSchools.find(s => s.id === teacher.schoolId)?.name || "";
-    const schoolMunicipality = allSchools.find(s => s.id === teacher.schoolId)?.municipality; // MUDADO
+    const schoolMunicipality = allSchools.find(s => s.id === teacher.schoolId)?.municipality; 
     const matchesSearch = teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           teacher.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           schoolName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSchoolFilter = selectedTeacherSchool === "all" || String(teacher.schoolId) === String(selectedTeacherSchool);
-    const matchesMunicipalityFilter = selectedMunicipality === "all" || schoolMunicipality === selectedMunicipality; // MUDADO
+    const matchesMunicipalityFilter = selectedMunicipality === "all" || schoolMunicipality === selectedMunicipality; 
     return matchesSearch && matchesSchoolFilter && matchesMunicipalityFilter;
   });
 
@@ -573,13 +584,13 @@ export default function AdminDashboard() {
             </div>
             
             <select
-              value={selectedMunicipality} // MUDADO
-              onChange={(e) => setSelectedMunicipality(e.target.value)} // MUDADO
+              value={selectedMunicipality} 
+              onChange={(e) => setSelectedMunicipality(e.target.value)} 
               className="h-10 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              aria-label="Filtrar por município" // MUDADO
+              aria-label="Filtrar por município" 
             >
               <option value="all">Todos os municípios</option> {/* MUDADO */}
-              {municipalities.map((m) => ( // MUDADO: districts → municipalities
+              {municipalities.map((m) => ( 
                 <option key={m} value={m}>{m}</option>
               ))}
             </select>
@@ -610,12 +621,12 @@ export default function AdminDashboard() {
           
           <div className="flex gap-3">
             <select
-              value={selectedMunicipality} // MUDADO
-              onChange={(e) => setSelectedMunicipality(e.target.value)} // MUDADO
+              value={selectedMunicipality} 
+              onChange={(e) => setSelectedMunicipality(e.target.value)} 
               className="flex-1 h-12 rounded-lg border border-input bg-background px-4 text-base focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="all">Todos municípios</option> {/* MUDADO */}
-              {municipalities.map((m) => ( // MUDADO: districts → municipalities
+              {municipalities.map((m) => ( 
                 <option key={m} value={m}>{m}</option>
               ))}
             </select>
@@ -685,13 +696,13 @@ export default function AdminDashboard() {
                     />
 
                     <select
-                      value={newMunicipality} // MUDADO
-                      onChange={(e) => setNewMunicipality(e.target.value)} // MUDADO
+                      value={newMunicipality} 
+                      onChange={(e) => setNewMunicipality(e.target.value)} 
                       required
                       className="w-full h-12 rounded-lg border border-input bg-background px-4 text-base focus:outline-none focus:ring-2 focus:ring-primary"
                     >
                       <option value="">Selecionar Município</option> {/* MUDADO */}
-                      {municipalities.map((m) => ( // MUDADO: districts → municipalities
+                      {municipalities.map((m) => ( 
                         <option key={m} value={m}>{m}</option>
                       ))}
                     </select>
@@ -729,12 +740,12 @@ export default function AdminDashboard() {
                                     />
                                     
                                     <select
-                                      value={tempEditValue.municipality} // MUDADO
-                                      onChange={(e) => setTempEditValue(prev => ({ ...prev, municipality: e.target.value }))} // MUDADO
+                                      value={tempEditValue.municipality} 
+                                      onChange={(e) => setTempEditValue(prev => ({ ...prev, municipality: e.target.value }))} 
                                       className="w-full sm:w-auto h-8 rounded border border-input bg-background px-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                                     >
                                       <option value="">Selecionar Município</option> {/* MUDADO */}
-                                      {municipalities.map((m) => ( // MUDADO: districts → municipalities
+                                      {municipalities.map((m) => ( 
                                         <option key={m} value={m}>{m}</option>
                                       ))}
                                     </select>
@@ -762,15 +773,15 @@ export default function AdminDashboard() {
                                       className="font-semibold cursor-pointer hover:text-primary transition-colors text-lg sm:text-base"
                                       onClick={() => {
                                         setEditingSchoolId(school.id);
-                                        setTempEditValue({ name: school.name, municipality: school.municipality || "" }); // MUDADO
+                                        setTempEditValue({ name: school.name, municipality: school.municipality || "" }); 
                                       }}
                                     >
                                       {school.name}
                                     </h3>
                                     <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-sm text-muted-foreground mt-1">
                                       <p>{teachers.filter(t => t.schoolId === school.id).length} professores</p>
-                                      {school.municipality && ( // MUDADO
-                                        <p>📍 {school.municipality}</p> // MUDADO
+                                      {school.municipality && ( 
+                                        <p>📍 {school.municipality}</p> 
                                       )}
                                     </div>
                                   </div>

@@ -31,12 +31,10 @@ export default function AdminExport() {
   const exportToExcel = async (data, filename) => {
     const wb = XLSX.utils.book_new();
     
-    // Adicionar cada conjunto de dados como uma sheet separada
     Object.entries(data).forEach(([sheetName, sheetData]) => {
       if (sheetData && sheetData.length > 0) {
         const ws = XLSX.utils.json_to_sheet(sheetData);
         
-        // Ajustar largura das colunas automaticamente
         const colWidths = [];
         const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
         
@@ -73,7 +71,6 @@ export default function AdminExport() {
         fetchData('kits/requests')
       ]);
 
-      // Preparar dados completos e organizados
       const exportData = {
         'Resumo': [{
           'Total Escolas': schools.length,
@@ -91,7 +88,7 @@ export default function AdminExport() {
         'Escolas': schools.map(school => ({
           'ID': school.id,
           'Nome': school.name,
-          'Município': school.municipality || 'N/A', // MUDADO: district → municipality
+          'Município': school.municipality || 'N/A', 
           'Endereço': school.address || 'N/A',
           'Telefone': school.phone || 'N/A',
           'Email': school.email || 'N/A',
@@ -109,7 +106,7 @@ export default function AdminExport() {
           'Telefone': teacher.phone || 'Não definido',
           'Escola': teacher.school?.name || 'N/A',
           'Escola ID': teacher.schoolId,
-          'Município Escola': teacher.school?.municipality || 'N/A', // MUDADO
+          'Município Escola': teacher.school?.municipality || 'N/A', 
           'Bloqueado': teacher.blocked ? 'Sim' : 'Não',
           'Aprovado pela Escola': teacher.schoolApproved ? 'Sim' : 'Não',
           'Formação Completa': teacher.hasCompletedTraining ? 'Sim' : 'Não',
@@ -131,7 +128,7 @@ export default function AdminExport() {
           'Professor': cls.teacher?.name || 'N/A',
           'Professor Email': cls.teacher?.email || 'N/A',
           'Escola': cls.school?.name || 'N/A',
-          'Município': cls.school?.municipality || 'N/A', // MUDADO
+          'Município': cls.school?.municipality || 'N/A', 
           'Estado': cls.state || 'ACTIVE',
           'Data Criação': cls.createdAt ? new Date(cls.createdAt).toLocaleDateString('pt-PT') : 'N/A',
           'Total Kits': kitRequests.filter(k => k.classId === cls.id).length
@@ -145,7 +142,7 @@ export default function AdminExport() {
           'Professor Email': kit.teacher?.email || 'N/A',
           'Professor Telefone': kit.teacher?.phone || 'N/A',
           'Escola': kit.teacher?.school?.name || 'N/A',
-          'Município Escola': kit.teacher?.school?.municipality || 'N/A', // MUDADO
+          'Município Escola': kit.teacher?.school?.municipality || 'N/A', 
           'Turma': kit.class?.name || 'N/A',
           'Turma Código': kit.class?.code || 'N/A',
           'Número Alunos Turma': kit.class?.students || 0,
@@ -164,7 +161,7 @@ export default function AdminExport() {
             'Tipo Kit': kit.kitType,
             'Professor': kit.teacher?.name || 'N/A',
             'Escola': kit.teacher?.school?.name || 'N/A',
-            'Município': kit.teacher?.school?.municipality || 'N/A', // MUDADO
+            'Município': kit.teacher?.school?.municipality || 'N/A', 
             'Turma': kit.class?.name || 'N/A',
             'Data Pedido': new Date(kit.requestedAt).toLocaleDateString('pt-PT'),
             'Data Entrega': kit.deliveredAt ? new Date(kit.deliveredAt).toLocaleDateString('pt-PT') : 'N/A',
@@ -180,7 +177,7 @@ export default function AdminExport() {
             'Tipo Kit': kit.kitType,
             'Professor': kit.teacher?.name || 'N/A',
             'Escola': kit.teacher?.school?.name || 'N/A',
-            'Município': kit.teacher?.school?.municipality || 'N/A', // MUDADO
+            'Município': kit.teacher?.school?.municipality || 'N/A', 
             'Turma': kit.class?.name || 'N/A',
             'Data Pedido': new Date(kit.requestedAt).toLocaleString('pt-PT'),
             'Dias Pendente': Math.floor((new Date() - new Date(kit.requestedAt)) / (1000 * 60 * 60 * 24))
@@ -223,7 +220,7 @@ export default function AdminExport() {
         'Escolas': schools.map(school => ({
           'ID': school.id,
           'Nome': school.name,
-          'Município': school.municipality || 'N/A', // MUDADO
+          'Município': school.municipality || 'N/A', 
           'Endereço': school.address || 'N/A',
           'Telefone': school.phone || 'N/A',
           'Email': school.email || 'N/A',
@@ -237,7 +234,7 @@ export default function AdminExport() {
           'Email': teacher.email,
           'Telefone': teacher.phone || 'Não definido',
           'Escola': teacher.school?.name || 'N/A',
-          'Município Escola': teacher.school?.municipality || 'N/A', // MUDADO
+          'Município Escola': teacher.school?.municipality || 'N/A', 
           'Bloqueado': teacher.blocked ? 'Sim' : 'Não',
           'Aprovado': teacher.schoolApproved ? 'Sim' : 'Não',
           'Formação Completa': teacher.hasCompletedTraining ? 'Sim' : 'Não',
@@ -253,7 +250,7 @@ export default function AdminExport() {
           'Ano': cls.year,
           'Professor': cls.teacher?.name || 'N/A',
           'Escola': cls.school?.name || 'N/A',
-          'Município': cls.school?.municipality || 'N/A', // MUDADO
+          'Município': cls.school?.municipality || 'N/A', 
           'Estado': cls.state || 'ACTIVE'
         }))
       };
@@ -293,7 +290,7 @@ export default function AdminExport() {
           'Professor': kit.teacher?.name || 'N/A',
           'Email Professor': kit.teacher?.email || 'N/A',
           'Escola': kit.teacher?.school?.name || 'N/A',
-          'Município Escola': kit.teacher?.school?.municipality || 'N/A', // MUDADO
+          'Município Escola': kit.teacher?.school?.municipality || 'N/A', 
           'Turma': kit.class?.name || 'N/A',
           'Alunos': kit.class?.students || 0,
           'Data Pedido': new Date(kit.requestedAt).toLocaleString('pt-PT'),
@@ -360,7 +357,7 @@ export default function AdminExport() {
           'Email': kit.teacher?.email || 'N/A',
           'Telefone': kit.teacher?.phone || 'N/A',
           'Escola': kit.teacher?.school?.name || 'N/A',
-          'Município': kit.teacher?.school?.municipality || 'N/A', // MUDADO
+          'Município': kit.teacher?.school?.municipality || 'N/A', 
           'Turma': kit.class?.name || 'N/A',
           'Alunos': kit.class?.students || 0,
           'Data Pedido': new Date(kit.requestedAt).toLocaleDateString('pt-PT'),

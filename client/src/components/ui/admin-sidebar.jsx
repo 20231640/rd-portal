@@ -23,7 +23,6 @@ export function AdminSidebar() {
   );
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  // 🔧 MENU ITEMS SIMPLIFICADO - apenas funcionalidades adicionais
   const menuItems = [
     { id: "dashboard", path: "/admin", label: "Dashboard Principal", icon: Home },
     { id: "formacoes", path: "/admin/trainings", label: "Sessões de Formação", icon: BookOpen },

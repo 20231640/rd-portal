@@ -115,7 +115,6 @@ router.put("/:id/complete", async (req, res) => {
 
   console.log('📝 Completando sessão:', trainingId, 'Rating:', adminRating);
 
-  // Validar rating
   if (!adminRating || adminRating < 1 || adminRating > 5) {
     return res.status(400).json({ 
       message: "Avaliação de 1-5 estrelas é obrigatória" 
@@ -123,7 +122,6 @@ router.put("/:id/complete", async (req, res) => {
   }
 
   try {
-    // Buscar sessão com dados do professor
     const training = await prisma.trainingSession.findUnique({
       where: { id: trainingId },
       include: {
@@ -139,17 +137,13 @@ router.put("/:id/complete", async (req, res) => {
       return res.status(400).json({ message: "Sessão já está concluída" });
     }
 
-    // Generate certificate
     console.log('📄 A gerar certificado...');
     const certificateUrl = await generateCertificate(training, training.teacher);
     console.log('✅ Certificado gerado:', certificateUrl);
 
-    // ⭐⭐ ATUALIZAÇÃO CRÍTICA: Marcar professor como formado ⭐⭐
     console.log('👨‍🏫 Atualizando estado do professor...');
     
-    // Usar transaction para garantir que ambas as operações são bem sucedidas
     const [updatedTraining] = await prisma.$transaction([
-      // 1. Update training session
       prisma.trainingSession.update({
         where: { id: trainingId },
         data: {
@@ -168,12 +162,11 @@ router.put("/:id/complete", async (req, res) => {
         }
       }),
       
-      // 2. Update teacher - MARCA COMO FORMADO!
       prisma.teacher.update({
         where: { id: training.teacherId },
         data: {
           hasCompletedTraining: true,
-          certificateUrl: certificateUrl // Também atualiza no professor
+          certificateUrl: certificateUrl 
         }
       })
     ]);

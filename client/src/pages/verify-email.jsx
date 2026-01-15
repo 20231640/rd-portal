@@ -7,7 +7,7 @@ import { API_URL } from "../config/api";
 export default function VerifyEmail() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [status, setStatus] = useState("loading"); // loading, success, error
+  const [status, setStatus] = useState("loading"); 
   const [message, setMessage] = useState("");
   const token = searchParams.get("token");
 
@@ -35,7 +35,6 @@ export default function VerifyEmail() {
       setStatus("success");
       setMessage(data.message || "Email verificado com sucesso!");
       
-      // Redireciona para login após 3 segundos
       setTimeout(() => navigate("/login"), 3000);
     } catch (err) {
       console.error(err);
@@ -46,7 +45,6 @@ export default function VerifyEmail() {
 
   async function resendVerification() {
     try {
-      // Precisa do email - pode pedir ao user ou guardar no localStorage durante o registo
       const email = localStorage.getItem("pendingVerificationEmail");
       
       if (!email) {

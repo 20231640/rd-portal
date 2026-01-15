@@ -1,11 +1,9 @@
-// server/routes/classes.js
 import express from "express";
 import { PrismaClient } from "@prisma/client";
 
 const router = express.Router();
 const prisma = new PrismaClient();
 
-// Listar turmas de um professor
 router.get("/", async (req, res) => {
   const { teacherId } = req.query;
   try {
@@ -27,17 +25,14 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Criar nova turma
 router.post("/", async (req, res) => {
   try {
     const { name, students, cycle, year, teacherId, state } = req.body;
 
-    // Verificar dados obrigatórios
     if (!name || !students || !cycle || !year || !teacherId) {
       return res.status(400).json({ message: "Dados incompletos" });
     }
 
-    // Verificar se o professor completou a formação
     const teacher = await prisma.teacher.findUnique({
       where: { id: parseInt(teacherId) },
       select: { hasCompletedTraining: true, certificateUrl: true }
@@ -49,7 +44,6 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // Buscar o professor e a escola
     const teacherWithSchool = await prisma.teacher.findUnique({
       where: { id: parseInt(teacherId) },
       include: { school: true },
@@ -63,17 +57,15 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ message: "Professor não tem escola associada" });
     }
     
-    // Contar turmas existentes do professor
     const count = await prisma.class.count({ 
       where: { teacherId: parseInt(teacherId) } 
     });
 
-    // Gerar código: usar código da escola se existir, senão usar abreviação do nome
     let newCode;
-    if (teacherWithSchool.school.code) {  // ← CORRIGIDO
-      newCode = `${teacherWithSchool.school.code}-${count + 1}`;  // ← CORRIGIDO
+    if (teacherWithSchool.school.code) {  
+      newCode = `${teacherWithSchool.school.code}-${count + 1}`;  
     } else {
-      const schoolAbbrev = teacherWithSchool.school.name.substring(0, 3).toUpperCase();  // ← CORRIGIDO
+      const schoolAbbrev = teacherWithSchool.school.name.substring(0, 3).toUpperCase();  
       newCode = `${schoolAbbrev}-${count + 1}`;
     }
 
@@ -84,7 +76,7 @@ router.post("/", async (req, res) => {
         cycle: cycle.trim(),
         year: year.trim(),
         teacherId: parseInt(teacherId),
-        schoolId: teacherWithSchool.school.id,  // ← CORRIGIDO
+        schoolId: teacherWithSchool.school.id,  
         code: newCode,
         state: state || "ACTIVE",
       },
@@ -108,7 +100,6 @@ router.post("/", async (req, res) => {
   }
 });
 
-// Editar turma
 router.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -139,7 +130,6 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-// Apagar turma
 router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -151,7 +141,6 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-// Atualizar apenas o estado da turma
 router.put("/:id/state", async (req, res) => {
   try {
     const { id } = req.params;

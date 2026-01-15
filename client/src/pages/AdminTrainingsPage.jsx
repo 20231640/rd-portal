@@ -748,18 +748,6 @@ export default function AdminTrainingsPage() {
                         Concluir Sessão
                       </Button>
                     )}
-                    
-                    {/* Link para Certificado */}
-                    {group.completed && group.certificateUrl && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => window.open(`${API_URL}${group.certificateUrl}`, '_blank')}
-                        className="w-full text-xs sm:text-sm"
-                      >
-                        Ver Certificado
-                      </Button>
-                    )}
                   </div>
                 </Card>
               ))}

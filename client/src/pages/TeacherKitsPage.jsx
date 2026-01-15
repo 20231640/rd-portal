@@ -30,13 +30,11 @@ export default function TeacherKitsPage() {
   const [newUpdates, setNewUpdates] = useState(0);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
-  // Novos estados para filtros por ciclo e ano
   const [selectedCycle, setSelectedCycle] = useState("all");
   const [selectedYear, setSelectedYear] = useState("all");
   
   const previousRequestsRef = useRef([]);
 
-  // Buscar dados
   const fetchData = async () => {
     try {
       const teacherDataStr = localStorage.getItem("teacherData");
@@ -53,7 +51,6 @@ export default function TeacherKitsPage() {
       let allClasses = [];
       let teacherKits = [];
 
-      // Buscar turmas
       try {
         const classesRes = await fetch(`${API_URL}/api/classes`);
         if (classesRes.ok) {
@@ -65,7 +62,6 @@ export default function TeacherKitsPage() {
         throw new Error("Falha ao carregar turmas: " + classesError.message);
       }
 
-      // Buscar kits do professor
       try {
         const kitsRes = await fetch(`${API_URL}/api/kits/teacher/${currentTeacher.id}`);
         if (kitsRes.ok) {
@@ -83,10 +79,8 @@ export default function TeacherKitsPage() {
         }
       }
 
-      // Detectar mudanças
       detectChanges(teacherKits);
 
-      // Filtrar turmas do professor
       const teacherClasses = allClasses.filter(cls => cls.teacherId === currentTeacher.id);
       
       setClasses(teacherClasses);
@@ -101,7 +95,6 @@ export default function TeacherKitsPage() {
     }
   };
 
-  // Detectar mudanças nos pedidos
   const detectChanges = (newRequests) => {
     if (previousRequestsRef.current.length === 0) {
       previousRequestsRef.current = newRequests;
@@ -119,14 +112,12 @@ export default function TeacherKitsPage() {
       if (!existing) {
         changes.new.push(request);
       } else {
-        // Verificar mudanças de status
         if (existing.status !== request.status) {
           changes.updated.push({ from: existing.status, to: request.status, request });
         }
       }
     });
 
-    // Atualizar contador de novas atualizações
     const totalChanges = changes.new.length + changes.updated.length;
     if (totalChanges > 0) {
       setNewUpdates(prev => prev + totalChanges);
@@ -135,12 +126,10 @@ export default function TeacherKitsPage() {
     previousRequestsRef.current = newRequests;
   };
 
-  // Limpar notificações
   const clearNotifications = () => {
     setNewUpdates(0);
   };
 
-  // Função de pedir kit
   const handleRequestKit = async (e) => {
     e.preventDefault();
     if (!selectedClass) return;
@@ -185,7 +174,6 @@ export default function TeacherKitsPage() {
     }
   };
 
-  // Função de marcar como entregue
   const handleMarkAsDelivered = async (requestId) => {
     try {
       const res = await fetch(`${API_URL}/api/kits/${requestId}/deliver`, {
@@ -216,7 +204,6 @@ export default function TeacherKitsPage() {
     }
   };
 
-  // Função de reportar problema
   const handleReportProblem = async (e) => {
     e.preventDefault();
     if (!reportMessage.trim()) return;
@@ -255,7 +242,6 @@ export default function TeacherKitsPage() {
     }
   };
 
-  // Verificar se uma turma já tem pedido
   const classHasRequest = (classId) => {
     return kitRequests.some(request => 
       request.classId === classId && 

@@ -1,4 +1,3 @@
-// server/routes/auth.js - VERSÃO SEM schoolApproved
 import express from "express";
 import { PrismaClient } from "@prisma/client";
 
@@ -216,6 +215,16 @@ router.put("/schools/:id/archive", async (req, res) => {
   try {
     const { id } = req.params;
 
+    await prisma.teacher.updateMany({
+      where: { schoolId: parseInt(id) },
+      data: {
+        archived: true,
+        archivedAt: new Date()
+      }
+    });
+
+    console.log(`👨‍🏫 Todos os professores da escola arquivados.`);
+
     const school = await prisma.school.update({
       where: { id: parseInt(id) },
       data: { 
@@ -228,7 +237,8 @@ router.put("/schools/:id/archive", async (req, res) => {
             id: true,
             name: true,
             email: true,
-            blocked: true
+            blocked: true,
+            archived: true
           }
         }
       }

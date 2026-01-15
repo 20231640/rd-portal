@@ -11,13 +11,11 @@ router.post("/", async (req, res) => {
     
     const { supabaseUserId, name, email, phone, school, municipality } = req.body;
 
-    // VALIDAÇÕES
     if (!supabaseUserId || !name || !email) {
       console.log('❌ Dados incompletos:', { supabaseUserId, name, email });
       return res.status(400).json({ error: "Dados incompletos" });
     }
 
-    // Verificar se email já existe
     const existingTeacher = await prisma.teacher.findUnique({
       where: { email }
     });
@@ -27,7 +25,6 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "Email já registado" });
     }
 
-    // Encontra ou cria escola
     let schoolRecord = await prisma.school.findFirst({ 
       where: { 
         name: school,
@@ -78,7 +75,6 @@ router.post("/", async (req, res) => {
       schoolApproved: teacher.school.approved
     });
     
-    // ✅ CORRETO: Retornar apenas o teacher
     res.status(201).json(teacher);
     
   } catch (err) {
@@ -87,7 +83,6 @@ router.post("/", async (req, res) => {
   }
 });
 
-// ✅ ROTA ATUALIZADA: Buscar professor por email
 router.get("/email/:email", async (req, res) => {
   try {
     const { email } = req.params;
@@ -124,7 +119,6 @@ router.get("/email/:email", async (req, res) => {
       schoolApproved: teacher.school?.approved
     });
 
-    // ✅ VERIFICAÇÕES
     if (teacher.archived) {
       return res.status(403).json({ 
         error: "A sua conta foi arquivada. Contacte o administrador." 
@@ -152,7 +146,7 @@ router.get("/email/:email", async (req, res) => {
   }
 });
 
-// ROTA: Buscar professor por ID do Supabase
+// GET: Buscar professor por ID do Supabase
 router.get("/supabase/:supabaseUserId", async (req, res) => {
   try {
     const { supabaseUserId } = req.params;
@@ -189,7 +183,7 @@ router.get("/supabase/:supabaseUserId", async (req, res) => {
   }
 });
 
-// ROTA: Listar professores
+// GET: Listar professores
 router.get("/", async (req, res) => {
   try {
     console.log('📋 GET /api/teachers - Listar professores');
@@ -225,7 +219,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ROTA: Buscar professores arquivados
+// GET: Buscar professores arquivados
 router.get("/archived", async (req, res) => {
   try {
     console.log('📋 GET /api/teachers/archived - Listar professores arquivados');
